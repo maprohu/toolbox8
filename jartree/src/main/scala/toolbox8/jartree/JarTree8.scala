@@ -6,6 +6,7 @@ import akka.NotUsed
 import akka.stream.scaladsl.{Flow, Framing, Sink, Source}
 import akka.util.ByteString
 import jartree.util.{CaseJarKey, RunRequestImpl}
+import toolbox8.akka.stream.ByteStreams
 
 import scala.util.{Failure, Success, Try}
 import scala.pickling.binary._
@@ -30,9 +31,11 @@ object JarTree8 {
   def exec(
     flow: Flow[ByteString, ByteString, NotUsed]
   ) = {
+    ByteStreams.groupFirstBytes(4)
+      .prefixAndTail(1)
+      .flatMapConcat({})
     Flow[ByteString]
-        .prefixAndTail()
-      .al
+      .prefixAndTail(1)
     Sink.combine(
       FrameDecoder
         .to(
