@@ -34,6 +34,20 @@ object Streams {
       })
   }
 
-  def stateMachineMapAsyncConcat
+  def stateMachineMapAsyncConcat[In, Out](
+    initial: State[In, Out]
+  ) = {
+    statefulMapAsyncConcat[State[In, Out], In, Out](
+      initial,
+      (state, in) => state(in)
+    )
+  }
+
+  trait State[In, Out] {
+
+    def apply(in: In) : Future[(State[In, Out], Out)]
+
+  }
 
 }
+
