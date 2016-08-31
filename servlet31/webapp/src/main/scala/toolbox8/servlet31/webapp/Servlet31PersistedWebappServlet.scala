@@ -56,6 +56,8 @@ class Servlet31PersistedWebappServlet(
     Option(req.getPathInfo) match {
       case Some("/_admin/reset") =>
         start()
+      case Some("/_admin/exec") =>
+        start()
       case _ =>
         super.service(req, resp)
     }
