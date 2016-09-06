@@ -254,6 +254,7 @@ object Streams {
   trait SubState {
 
   }
+  
 
   def processSubStreams[In, Out](
     initial: NewSubStream[In, Out]
