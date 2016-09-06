@@ -255,16 +255,31 @@ object Streams {
 //
 //  }
 
-  trait SubState[In, Out] extends State[In, Seq[Either[Flow[In, Out, Future[SubState[In, Out]]], In]]]
+  trait SubState[In, Out] {
+    def apply(in: In) : Seq[Either[Flow[In, Out, Future[SubState[In, Out]]], In]]]
+  }
 
   def processSubStreams[In, Out](
     initial: SubState[In, Out]
   ) : Flow[In, Out, NotUsed] = {
-    def state = ???
+    def state(s: SubState[In, Out]) : SubState[In, Out] = new SubState[In, Out] {
+      override def apply(in: In): StateResult[In, Seq[Either[Flow[In, Out, Future[SubState[In, Out]]], In]]] = {
+        s
+          .apply(in)
+          .flatMap({ sfOpt =>
+            sfOpt
+              .map({
+                case (nextState, output) =>
+              })
+          })
+
+      }
+    }
 
     Flow[In]
       .via(
         stateMachineMapAsyncConcat(
+
           initial
         )
       )
