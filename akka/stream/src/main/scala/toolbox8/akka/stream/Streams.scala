@@ -1,7 +1,8 @@
 package toolbox8.akka.stream
 
 import akka.NotUsed
-import akka.stream.scaladsl.Flow
+import akka.stream.javadsl.BidiFlow
+import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.util.ByteString
 
 import scala.collection.immutable._
@@ -18,7 +19,7 @@ object Streams {
 
   def statefulMapAsyncConcat[State, In, Out](
     initial: State,
-    fn: (State, In) => Future[(State, Seq[Out])]
+    fn: (State, In) => Future[CompleteOr[(State, Seq[Out])]]
   )(implicit
     executionContext: ExecutionContext
   ) : Flow[In, Out, NotUsed] = {
@@ -30,7 +31,7 @@ object Streams {
 
   def statefulMapAsync[State, In, Out](
     initial: State,
-    fn: (State, In) => Future[(State, Out)]
+    fn: (State, In) => Future[CompleteOr[(State, Out)]]
   )(implicit
     executionContext: ExecutionContext
   ) = {
@@ -38,16 +39,23 @@ object Streams {
       .statefulMapConcat({ () =>
         val holder = new StateHolder(initial)
 
-        { in => Iterable((holder, in)) }
+        { in =>
+          Iterable((holder, in))
+        }
       })
       .mapAsync(1)({
         case (holder, in) =>
-          fn(holder.state, in).map({
-            case (state, out) =>
-              holder.state = state
-              out
-          })
+          fn(holder.state, in)
+            .map({ stateOutOpt =>
+              stateOutOpt.map({
+                case (state, out) =>
+                  holder.state = state
+                  out
+              })
+            })
       })
+      .takeWhile(_.isDefined)
+      .map(_.get)
   }
 
   def stateMachineMapAsyncConcat[In, Out](
@@ -72,7 +80,8 @@ object Streams {
     )
   }
 
-  type StateResult[In, Out] = Future[(State[In, Out], Out)]
+  type CompleteOr[T] = Option[T]
+  type StateResult[In, Out] = Future[CompleteOr[(State[In, Out], Out)]]
   trait State[In, Out] {
     def apply(in: In) : StateResult[In, Out]
   }
@@ -83,7 +92,7 @@ object Streams {
     }
   }
   implicit def concatState2result[In, Out](state: State[In, Seq[Out]]) : StateResult[In, Seq[Out]] = {
-    Future.successful(state, Seq())
+    Future.successful(Some((state, Seq())))
   }
 
 
@@ -142,21 +151,42 @@ object Streams {
       override def apply(in: ByteString): ByteStringStateResult = {
         if (in.length < n) {
           Future.successful(
-            (takeBytesNext(n - in.length, buffer ++ in, andThen), Seq())
+            Some((takeBytesNext(n - in.length, buffer ++ in, andThen), Seq()))
           )
         } else {
           val (taken, left) = in.splitAt(n)
 
           for {
-            (state1, out1) <- andThen(buffer ++ taken)
-            (state2, out2) <- state1(left)
+            stateOutOpt1 <- andThen(buffer ++ taken)
+            stateOutOpt2 <- {
+              stateOutOpt1
+                .map({
+                  case (state1, out1) =>
+                    state1(left)
+                      .map({ soOpt =>
+                        soOpt
+                          .map({
+                            case (state2, out2) =>
+                              (state2, out1 ++ out2)
+                          })
+                      })
+                })
+                .getOrElse(
+                  Future.successful(None)
+                )
+            }
           } yield {
-            (state2, out1 ++ out2)
+            stateOutOpt2
           }
         }
       }
     }
 
+  }
+
+
+  def toInt(bytes: Array[Byte]) : Int = {
+    (((((bytes(0) << 8) | (bytes(1) & 0xff)) << 8) | (bytes(2) & 0xff)) << 8) | (bytes(3) & 0xff)
   }
 
   def takeInt(
@@ -165,7 +195,7 @@ object Streams {
     executionContext: ExecutionContext
   ) = {
     takeBytes(4)({ bs =>
-      val int = bs.foldLeft(0)((int, b) => (int << 8) | b)
+      val int = bs.foldLeft(0)((int, b) => (int << 8) | (b & 0xff))
 
       andThen(int)
     })
@@ -178,6 +208,86 @@ object Streams {
   }
 
   val ignoreByteString = ignore[ByteString, ByteString]
+
+  def groupFirstBytes(
+    n: Int
+  )(implicit
+    executionContext: ExecutionContext
+  ) : Flow[ByteString, ByteString, NotUsed] = {
+    stateMachineMapAsyncConcat(
+      takeBytes(n)({ firstNBytes =>
+        Future.successful(
+          Some((NoopSeqState[ByteString], Seq(firstNBytes)))
+        )
+      })
+    )
+  }
+
+  def processFirstBytes[M](
+    n: Int
+  )(
+    fn: (ByteString, Source[ByteString, NotUsed]) => Unit
+  )(implicit
+    executionContext: ExecutionContext
+  ) = {
+    Flow[ByteString]
+      .via(Streams.groupFirstBytes(n))
+      .prefixAndTail(1)
+      .to(
+        Sink.foreach({
+          case (Seq(firstBytes), source) =>
+            fn(firstBytes, source)
+        })
+      )
+  }
+
+  def NoopSeqState[T] = new State[T, Seq[T]] {
+    override def apply(in: T): StateResult[T, Seq[T]] = {
+      Future.successful(Some(this, Seq(in)))
+    }
+  }
+
+  type NewSubStream[In, Out] = Flow[In, Out, Future[SubStreamProcessorState[In, Out]]]
+  type SubStreamProcessorElement[In, Out] = Either[NewSubStream[In, Out], In]
+  type SubStreamProcessorState[In, Out] = State[In, Seq[SubStreamProcessorElement[In, Out]]]
+
+  trait SubState {
+
+  }
+
+  def processSubStreams[In, Out](
+    initial: NewSubStream[In, Out]
+  ) : Flow[In, Out, NotUsed] = {
+
+    Flow[In]
+      .via(
+        stateMachineMapAsyncConcat(
+          state(initial)
+        )
+      )
+      .splitWhen(_.isLeft)
+      .prefixAndTail(1)
+      .flatMapConcat ({
+        case (Seq(Left(stream)), source) =>
+          source
+            .map({
+              case Right(in) =>
+                in
+              case _ => ???
+            })
+            .via(stream)
+        case _ => ???
+      })
+      .concatSubstreams
+
+  }
+
+  def subTakeBytes[Out](
+    n: Long
+  )(
+    flow: NewSubStream[ByteString, Out]
+
+  )
 
 }
 
