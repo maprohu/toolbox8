@@ -335,6 +335,7 @@ object Streams {
         } else {
           val (taken, left) = in.splitAt(n)
           Seq(
+            
             Future.successful(
               SubStreamIn(
                 buffer ++ taken
