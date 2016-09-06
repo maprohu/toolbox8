@@ -12,6 +12,7 @@ import toolbox8.akka.stream.{ByteStreams, Streams}
 import scala.util.{Failure, Success, Try}
 import scala.pickling.binary._
 import scala.collection.immutable._
+import scala.concurrent.ExecutionContext
 import scala.pickling.Unpickler
 
 /**
@@ -63,7 +64,9 @@ object JarTree8 {
   import scala.pickling.shareNothing._
 //  implicit val runRequestUnpickler = Unpickler.generate[RunRequestWithAttachments]
 
-  def server : Flow[ByteString, ByteString, NotUsed] = {
+  def server(implicit
+    executionContext: ExecutionContext
+  ) : Flow[ByteString, ByteString, NotUsed] = {
     val RequestLength = Streams.takeInt({ size =>
       Streams.takeBytes(size)({ bytes =>
         val request = bytes.toArray.unpickle[RunRequestWithAttachments]
