@@ -272,7 +272,12 @@ object Streams {
 //    def apply(in: In) : Seq[Future[SubStateItem[In, Out]]]
 //  }
 
-  type SubState[In, Out] = State[In, Seq[Future[Seq[SubStateItem[In, Out]]]]]
+  type SubStateOut[In, Out] = Seq[Future[Seq[SubStateItem[In, Out]]]]
+  type SubState[In, Out] = State[In, SubStateOut[In, Out]]
+  trait SubNext[In, Out] {
+    def next() : Flow[In, Out, SubNextFuture[In, Out]]
+  }
+  type SubNextFuture[In, Out] = Future[SubNext[In, Out]]
 
   def processSubStreams[In, Out](
     initial: SubState[In, Out]
@@ -313,8 +318,45 @@ object Streams {
         case _ => ???
       })
       .concatSubstreams
+  }
+
+  type ByteSubStateOut = SubStateOut[ByteString, ByteString]
+  type ByteSubState = SubState[ByteString, ByteString]
+
+  def subTakeBytes(
+    n: Int,
+    buffer: ByteString,
+    next: SubNextFuture[ByteString, ByteString]
+  ) : ByteSubState = {
+    new State[ByteString, ByteSubStateOut] {
+      override def apply(in: ByteString): StateResult[ByteString, ByteSubStateOut] = {
+        if (n > in.length) {
+          subTakeBytes(n - in.length, buffer ++ in, next)
+        } else {
+          val (taken, left) = in.splitAt(n)
+          Seq(
+            Future.successful(
+              SubStreamIn(
+                buffer ++ taken
+              )
+            ),
+            next
+              .flatMap({ sn =>
+                Seq(
+
+                )
+              })
+
+          )
+
+          ???
+        }
+
+      }
+    }
 
   }
+
 //
 //  def subTakeBytes[Out](
 //    n: Long
