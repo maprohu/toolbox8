@@ -255,41 +255,57 @@ object Streams {
 //
 //  }
 
-  trait SubState[In, Out] {
-    def apply(in: In) : Seq[Either[Flow[In, Out, Future[SubState[In, Out]]], In]]]
-  }
+  sealed trait SubStateItem[In, Out]
+
+  case class NewSubStream[In, Out](
+    flow: Flow[In, Out, _]
+  ) extends SubStateItem[In, Out]
+
+  case class SubStreamIn[In, Out](
+    in: In
+  ) extends SubStateItem[In, Out]
+
+//
+//  case class SubStreamEnd[In, Out]() extends SubStateItem[In, Out]
+//
+//  trait SubState[In, Out] {
+//    def apply(in: In) : Seq[Future[SubStateItem[In, Out]]]
+//  }
+
+  type SubState[In, Out] = State[In, Seq[Future[Seq[SubStateItem[In, Out]]]]]
 
   def processSubStreams[In, Out](
     initial: SubState[In, Out]
   ) : Flow[In, Out, NotUsed] = {
-    def state(s: SubState[In, Out]) : SubState[In, Out] = new SubState[In, Out] {
-      override def apply(in: In): StateResult[In, Seq[Either[Flow[In, Out, Future[SubState[In, Out]]], In]]] = {
-        s
-          .apply(in)
-          .flatMap({ sfOpt =>
-            sfOpt
-              .map({
-                case (nextState, output) =>
-              })
-          })
-
-      }
-    }
+//    def state(s: SubState[In, Out]) : SubState[In, Out] = new SubState[In, Out] {
+//      override def apply(in: In): StateResult[In, Seq[Either[Flow[In, Out, Future[SubState[In, Out]]], In]]] = {
+//        s
+//          .apply(in)
+//          .flatMap({ sfOpt =>
+//            sfOpt
+//              .map({
+//                case (nextState, output) =>
+//              })
+//          })
+//
+//      }
+//    }
 
     Flow[In]
       .via(
         stateMachineMapAsyncConcat(
-
           initial
         )
       )
-      .splitWhen(_.isLeft)
+      .mapAsync(1)(identity)
+      .mapConcat(identity)
+      .splitWhen(_.isInstanceOf[NewSubStream])
       .prefixAndTail(1)
       .flatMapConcat ({
-        case (Seq(Left(stream)), source) =>
+        case (Seq(NewSubStream(stream)), source) =>
           source
             .map({
-              case Right(in) =>
+              case SubStreamIn(in) =>
                 in
               case _ => ???
             })
