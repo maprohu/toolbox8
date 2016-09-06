@@ -247,23 +247,25 @@ object Streams {
     }
   }
 
-  type NewSubStream[In, Out] = Flow[In, Out, Future[SubStreamProcessorState[In, Out]]]
-  type SubStreamProcessorElement[In, Out] = Either[NewSubStream[In, Out], In]
-  type SubStreamProcessorState[In, Out] = State[In, Seq[SubStreamProcessorElement[In, Out]]]
+//  type NewSubStream[In, Out] = Flow[In, Out, Future[SubStreamProcessorState[In, Out]]]
+//  type SubStreamProcessorElement[In, Out] = Either[NewSubStream[In, Out], In]
+//  type SubStreamProcessorState[In, Out] = State[In, Seq[SubStreamProcessorElement[In, Out]]]
+//
+//  trait SubState {
+//
+//  }
 
-  trait SubState {
-
-  }
-  
+  trait SubState[In, Out] extends State[In, Seq[Either[Flow[In, Out, Future[SubState[In, Out]]], In]]]
 
   def processSubStreams[In, Out](
-    initial: NewSubStream[In, Out]
+    initial: SubState[In, Out]
   ) : Flow[In, Out, NotUsed] = {
+    def state = ???
 
     Flow[In]
       .via(
         stateMachineMapAsyncConcat(
-          state(initial)
+          initial
         )
       )
       .splitWhen(_.isLeft)
@@ -282,13 +284,13 @@ object Streams {
       .concatSubstreams
 
   }
-
-  def subTakeBytes[Out](
-    n: Long
-  )(
-    flow: NewSubStream[ByteString, Out]
-
-  )
+//
+//  def subTakeBytes[Out](
+//    n: Long
+//  )(
+//    flow: NewSubStream[ByteString, Out]
+//
+//  )
 
 }
 
