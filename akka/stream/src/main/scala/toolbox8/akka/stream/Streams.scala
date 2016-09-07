@@ -255,108 +255,108 @@ object Streams {
 //
 //  }
 
-  sealed trait SubStateItem[In, Out]
-
-  case class NewSubStream[In, Out](
-    flow: Flow[In, Out, _]
-  ) extends SubStateItem[In, Out]
-
-  case class SubStreamIn[In, Out](
-    in: In
-  ) extends SubStateItem[In, Out]
-
+//  sealed trait SubStateItem[In, Out]
 //
-//  case class SubStreamEnd[In, Out]() extends SubStateItem[In, Out]
+//  case class NewSubStream[In, Out](
+//    flow: Flow[In, Out, _]
+//  ) extends SubStateItem[In, Out]
 //
-//  trait SubState[In, Out] {
-//    def apply(in: In) : Seq[Future[SubStateItem[In, Out]]]
+//  case class SubStreamIn[In, Out](
+//    in: In
+//  ) extends SubStateItem[In, Out]
+//
+////
+////  case class SubStreamEnd[In, Out]() extends SubStateItem[In, Out]
+////
+////  trait SubState[In, Out] {
+////    def apply(in: In) : Seq[Future[SubStateItem[In, Out]]]
+////  }
+//
+//  type SubStateOut[In, Out] = Seq[Future[Seq[SubStateItem[In, Out]]]]
+//  type SubState[In, Out] = State[In, SubStateOut[In, Out]]
+//  trait SubNext[In, Out] {
+//    def next() : Flow[In, Out, SubNextFuture[In, Out]]
 //  }
-
-  type SubStateOut[In, Out] = Seq[Future[Seq[SubStateItem[In, Out]]]]
-  type SubState[In, Out] = State[In, SubStateOut[In, Out]]
-  trait SubNext[In, Out] {
-    def next() : Flow[In, Out, SubNextFuture[In, Out]]
-  }
-  type SubNextFuture[In, Out] = Future[SubNext[In, Out]]
-
-  def processSubStreams[In, Out](
-    initial: SubState[In, Out]
-  ) : Flow[In, Out, NotUsed] = {
-//    def state(s: SubState[In, Out]) : SubState[In, Out] = new SubState[In, Out] {
-//      override def apply(in: In): StateResult[In, Seq[Either[Flow[In, Out, Future[SubState[In, Out]]], In]]] = {
-//        s
-//          .apply(in)
-//          .flatMap({ sfOpt =>
-//            sfOpt
-//              .map({
-//                case (nextState, output) =>
+//  type SubNextFuture[In, Out] = Future[SubNext[In, Out]]
+//
+//  def processSubStreams[In, Out](
+//    initial: SubState[In, Out]
+//  ) : Flow[In, Out, NotUsed] = {
+////    def state(s: SubState[In, Out]) : SubState[In, Out] = new SubState[In, Out] {
+////      override def apply(in: In): StateResult[In, Seq[Either[Flow[In, Out, Future[SubState[In, Out]]], In]]] = {
+////        s
+////          .apply(in)
+////          .flatMap({ sfOpt =>
+////            sfOpt
+////              .map({
+////                case (nextState, output) =>
+////              })
+////          })
+////
+////      }
+////    }
+//
+//    Flow[In]
+//      .via(
+//        stateMachineMapAsyncConcat(
+//          initial
+//        )
+//      )
+//      .mapAsync(1)(identity)
+//      .mapConcat(identity)
+//      .splitWhen(_.isInstanceOf[NewSubStream])
+//      .prefixAndTail(1)
+//      .flatMapConcat ({
+//        case (Seq(NewSubStream(stream)), source) =>
+//          source
+//            .map({
+//              case SubStreamIn(in) =>
+//                in
+//              case _ => ???
+//            })
+//            .via(stream)
+//        case _ => ???
+//      })
+//      .concatSubstreams
+//  }
+//
+//  type ByteSubStateOut = SubStateOut[ByteString, ByteString]
+//  type ByteSubState = SubState[ByteString, ByteString]
+//
+//  def subTakeBytes(
+//    n: Int,
+//    buffer: ByteString,
+//    next: SubNextFuture[ByteString, ByteString]
+//  ) : ByteSubState = {
+//    new State[ByteString, ByteSubStateOut] {
+//      override def apply(in: ByteString): StateResult[ByteString, ByteSubStateOut] = {
+//        if (n > in.length) {
+//          subTakeBytes(n - in.length, buffer ++ in, next)
+//        } else {
+//          val (taken, left) = in.splitAt(n)
+//          Seq(
+//
+//            Future.successful(
+//              SubStreamIn(
+//                buffer ++ taken
+//              )
+//            ),
+//            next
+//              .flatMap({ sn =>
+//                Seq(
+//
+//                )
 //              })
-//          })
+//
+//          )
+//
+//          ???
+//        }
 //
 //      }
 //    }
-
-    Flow[In]
-      .via(
-        stateMachineMapAsyncConcat(
-          initial
-        )
-      )
-      .mapAsync(1)(identity)
-      .mapConcat(identity)
-      .splitWhen(_.isInstanceOf[NewSubStream])
-      .prefixAndTail(1)
-      .flatMapConcat ({
-        case (Seq(NewSubStream(stream)), source) =>
-          source
-            .map({
-              case SubStreamIn(in) =>
-                in
-              case _ => ???
-            })
-            .via(stream)
-        case _ => ???
-      })
-      .concatSubstreams
-  }
-
-  type ByteSubStateOut = SubStateOut[ByteString, ByteString]
-  type ByteSubState = SubState[ByteString, ByteString]
-
-  def subTakeBytes(
-    n: Int,
-    buffer: ByteString,
-    next: SubNextFuture[ByteString, ByteString]
-  ) : ByteSubState = {
-    new State[ByteString, ByteSubStateOut] {
-      override def apply(in: ByteString): StateResult[ByteString, ByteSubStateOut] = {
-        if (n > in.length) {
-          subTakeBytes(n - in.length, buffer ++ in, next)
-        } else {
-          val (taken, left) = in.splitAt(n)
-          Seq(
-            
-            Future.successful(
-              SubStreamIn(
-                buffer ++ taken
-              )
-            ),
-            next
-              .flatMap({ sn =>
-                Seq(
-
-                )
-              })
-
-          )
-
-          ???
-        }
-
-      }
-    }
-
-  }
+//
+//  }
 
 //
 //  def subTakeBytes[Out](

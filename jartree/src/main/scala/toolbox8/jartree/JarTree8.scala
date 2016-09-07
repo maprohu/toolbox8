@@ -103,23 +103,24 @@ object JarTree8 {
 //      })
 //    })
 
-    Flow[ByteString]
-      .via(
-        Streams.processFirstBytes(4)({ (first4Bytes, source) =>
-          val requestSize = Streams.toInt(first4Bytes.toArray)
-          source.via(
-            Streams.processFirstBytes(requestSize)({ (requestBytes, rest) =>
-              val request = requestBytes.toArray.unpickle[RunRequestWithAttachments]
+//    Flow[ByteString]
+//      .via(
+//        Streams.processFirstBytes(4)({ (first4Bytes, source) =>
+//          val requestSize = Streams.toInt(first4Bytes.toArray)
+//          source.via(
+//            Streams.processFirstBytes(requestSize)({ (requestBytes, rest) =>
+//              val request = requestBytes.toArray.unpickle[RunRequestWithAttachments]
+//
+//              println(request)
+//
+//              rest
+//                .splitAfter()
+//            })
+//          )
+//        })
+//      )
 
-              println(request)
-
-              rest
-                .splitAfter()
-            })
-          )
-        })
-      )
-
+    ???
   }
 
   def toBytes(int: Int) : Array[Byte] = {
