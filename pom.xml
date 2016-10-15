@@ -14,9 +14,6 @@
         </plugins>
     </build>
     <modules>
-        <module>servlet31</module>
-        <module>akka</module>
-        <module>common</module>
         <module>jartree</module>
     </modules>
 </project>
