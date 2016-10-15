@@ -15,3 +15,7 @@ trait IncomingConnection {
   def peerInfo() : PeerInfo
   def flow() : Processor[Array[Byte], Array[Byte]]
 }
+
+trait JarTreeStandaloneContext {
+
+}

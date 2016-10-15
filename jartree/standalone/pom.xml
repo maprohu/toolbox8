@@ -109,7 +109,7 @@
     <dependencies>
         <dependency>
             <groupId>toolbox6</groupId>
-            <artifactId>toolbox6-jartree-api</artifactId>
+            <artifactId>toolbox6-jartree-impl</artifactId>
             <version>2-SNAPSHOT</version>
         </dependency>
         <dependency>

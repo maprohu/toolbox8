@@ -18,7 +18,7 @@ object JarTree8Modules {
 
   object Standalone extends ScalaModule(
     "standalone",
-    JarTreeModules.Api,
+    JarTreeModules.Impl,
     StandaloneApi,
     mvn.`com.typesafe.akka:akka-http-experimental_2.11:jar:2.4.11`
   )
