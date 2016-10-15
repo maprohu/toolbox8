@@ -13,7 +13,17 @@ object JarTree8Modules {
 
   object Standalone extends ScalaModule(
     "standalone",
-    JarTreeModules.Api
+    JarTreeModules.Api,
+    mvn.`com.typesafe.akka:akka-http-experimental_2.11:jar:2.4.11`
+  )
+
+  object Installer extends ScalaModule(
+    "installer",
+    mvn.`com.lihaoyi:ammonite-ops_2.11:jar:0.7.7`
+  )
+
+  object Packaging extends ScalaModule(
+    "packaging"
   )
 
   object Testing extends ScalaModule(

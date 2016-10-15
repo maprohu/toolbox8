@@ -15,5 +15,8 @@
     </build>
     <modules>
         <module>standalone</module>
+        <module>installer</module>
+        <module>packaging</module>
+        <module>testing</module>
     </modules>
 </project>
