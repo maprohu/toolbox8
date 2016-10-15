@@ -17,6 +17,12 @@ object Toolbox8Modules {
     mvn.`io.monix:monix_2.11:jar:2.0.2`
   )
 
+  object Rpi extends ScalaModule(
+    "rpi",
+    mvn.`com.lihaoyi:ammonite-ops_2.11:jar:0.7.7`,
+    mvn.`com.jcraft:jsch:jar:0.1.54`
+  )
+
 //  object Common extends ScalaModule(
 //    "common",
 //    "1.0.0-SNAPSHOT",

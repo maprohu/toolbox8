@@ -1,8 +1,9 @@
 package toolbox8.jartree.standalone
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
+import akka.stream.scaladsl.{Flow, Tcp}
+import akka.util.ByteString
 import toolbox6.jartree.impl.JarTreeBootstrap
 import toolbox8.jartree.standaloneapi.JarTreeStandaloneContext
 
@@ -21,16 +22,14 @@ object JarTreeStandalone {
       )
 
 
+    val flow =
+      Flow[ByteString]
 
-    import akka.http.scaladsl.server.Directives._
-    val route = {
-      complete("ok")
-    }
 
     implicit val actorSystem = ActorSystem()
     implicit val materializer = ActorMaterializer()
 
-    Http()
+    Tcp()
       .bindAndHandle(
         route,
         "0.0.0.0",

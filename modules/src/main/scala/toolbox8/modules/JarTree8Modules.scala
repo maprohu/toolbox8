@@ -11,6 +11,13 @@ object JarTree8Modules {
   implicit val Container = SubModuleContainer(Toolbox8Modules.Root, "jartree")
 
 
+  object Protocol extends ScalaModule(
+    "protocol",
+    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`,
+    mvn.`io.monix:monix_2.11:jar:2.0.4`,
+    StandaloneApi
+  )
+
   object StandaloneApi extends ScalaModule(
     "standaloneapi",
     mvn.`org.reactivestreams:reactive-streams:jar:1.0.0`
@@ -20,7 +27,7 @@ object JarTree8Modules {
     "standalone",
     JarTreeModules.Impl,
     StandaloneApi,
-    mvn.`com.typesafe.akka:akka-http-experimental_2.11:jar:2.4.11`
+    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`
   )
 
   object Installer extends ScalaModule(

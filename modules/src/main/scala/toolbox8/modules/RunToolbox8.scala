@@ -18,7 +18,9 @@ object RunToolbox8 {
   )
 
   val Modules = Seq[ConfiguredModule](
+    Toolbox8Modules.Rpi,
     JarTree8Modules.StandaloneApi,
+    JarTree8Modules.Protocol,
     JarTree8Modules.Standalone,
     JarTree8Modules.Installer,
     JarTree8Modules.Packaging,

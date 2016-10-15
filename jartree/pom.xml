@@ -15,6 +15,7 @@
     </build>
     <modules>
         <module>standaloneapi</module>
+        <module>protocol</module>
         <module>standalone</module>
         <module>installer</module>
         <module>packaging</module>
