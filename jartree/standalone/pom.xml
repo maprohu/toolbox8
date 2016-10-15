@@ -113,6 +113,11 @@
             <version>2-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>toolbox8</groupId>
+            <artifactId>toolbox8-jartree-standaloneapi</artifactId>
+            <version>2-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-http-experimental_2.11</artifactId>
             <version>2.4.11</version>
