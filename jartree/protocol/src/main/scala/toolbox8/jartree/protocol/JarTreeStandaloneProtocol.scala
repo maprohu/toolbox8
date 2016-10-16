@@ -1,9 +1,13 @@
 package toolbox8.jartree.protocol
 
-import monix.reactive.Observable
+import monix.execution.{Ack, Cancelable}
+import monix.reactive.{Observable, Observer}
 import monix.reactive.observers.Subscriber
+import monix.reactive.subjects.{PublishSubject, Subject}
 import sun.plugin2.message.Message
 import toolbox8.jartree.standaloneapi.ByteArray
+
+import scala.concurrent.Future
 
 /**
   * Created by martonpapp on 15/10/16.
@@ -108,66 +112,119 @@ object JarTreeStandaloneProtocol {
 
   object Multiplex {
 
-    final case class Message(
-      header: Byte,
-      data: Array[Byte]
+    case class Layer(
+      headerCount: Int,
+      flow: Observable[Message] => Observable[Message]
     )
 
+    final case class Message(
+      header: Int, // 1 Byte
+      data: Iterable[Byte]
+    )
 
-    def demultiplex(
-      o: Observable[Stream[Byte]],
-      routes: Seq[Subscriber[Message]],
-      fn: Byte => Int = _.toInt
-    ) = {
+    def connect(
+      layers: Seq[Layer]
+    ) : Observable[Iterable[Byte]] => Observable[Iterable[Byte]] = { o =>
+      val layersWithOffset =
+        layers
+          .zip(
+            layers
+              .init
+              .scanLeft(0)(_ + _.headerCount)
+          )
+
+      val headerToLayerIndex =
+        layers
+          .init
+          .zipWithIndex
+          .flatMap({
+            case (layer, idx) =>
+              Seq.fill(layer.headerCount)(idx)
+          }) :+ layers.size - 1
+
+      val lastLayerFirstHeader = headerToLayerIndex.size - 1
+
       o
-        .map(bs => Message(bs.head, bs.tail.toArray))
-        .groupBy({ bs =>
-          fn(bs.header)
+        .map({ bs =>
+          val header = bs.head
+          val layerIdx = headerToLayerIndex(math.min(header, lastLayerFirstHeader))
+          (layerIdx, header, bs.tail)
         })
-        .foreach({ g =>
-          g
-            .subscribe(routes(g.key))
-        })
-    }
+        .groupBy(_._1)
+        .mergeMap({ g =>
+          val (layer, offset) = layersWithOffset(g.key)
 
-    def multiplex[T](
-      os : Seq[Observable[T]],
-      fn: T => Message
-    ) = {
-      Observable
-        .merge(
-          os
-            .map({ o =>
-              o
-                .map(fn)
-            }):_*
-        )
+          g
+            .map({
+              case (_, header, data) =>
+                Message(header - offset, data)
+            })
+            .transform(layer.flow)
+            .map(m => m.copy(header = m.header + offset))
+        })
         .flatMap({ m =>
           Observable(
-            Array(m.header),
+            Array(m.header.toByte),
             m.data
           )
         })
     }
 
-    def multiplex(
-      os : Seq[Observable[Array[Byte]]]
-    ) = {
-      multiplex[Message](
-        os
-          .zipWithIndex
-          .map({
-            case (o, idx) =>
-              o
-                .map({ ba =>
-                  Message(idx.toByte, ba)
-                })
 
-          }),
-        identity
-      )
-
-    }
+//    def demultiplex(
+//      o: Observable[Iterable[Byte]],
+//      routes: Seq[Subscriber[Message]],
+//      fn: Byte => Int = _.toInt
+//    ) = {
+//      o
+//        .map(bs => Message(bs.head, bs.tail.toArray))
+//        .groupBy({ bs =>
+//          fn(bs.header)
+//        })
+//        .foreach({ g =>
+//          g
+//            .subscribe(routes(g.key))
+//        })
+//    }
+//
+//    def multiplex[T](
+//      os : Seq[Observable[T]],
+//      fn: T => Message
+//    ) = {
+//      Observable
+//        .merge(
+//          os
+//            .map({ o =>
+//              o
+//                .map(fn)
+//            }):_*
+//        )
+//        .flatMap({ m =>
+//          Observable(
+//            Array(m.header),
+//            m.data
+//          )
+//        })
+//    }
+//
+//    def multiplex(
+//      os : Seq[Observable[Array[Byte]]]
+//    ) = {
+//      multiplex[Message](
+//        os
+//          .zipWithIndex
+//          .map({
+//            case (o, idx) =>
+//              o
+//                .map({ ba =>
+//                  Message(idx.toByte, ba)
+//                })
+//
+//          }),
+//        identity
+//      )
+//
+//    }
 
 
 
@@ -175,44 +232,46 @@ object JarTreeStandaloneProtocol {
 
     object Management {
 
-      sealed trait Layer {
-        lazy val header : Byte = Layers.indexOf(this).toByte
-      }
-      case object Data extends Layer
-      case object Management extends Layer
+      val LayerCount = 1
 
-      val Layers = Seq(
-        Data,
-        Management
-      )
-
-      def demultiplex(
-        o: Observable[Stream[Byte]],
-        data: Subscriber[Message],
-        management: Subscriber[Message]
-      ) = {
-        Multiplex.demultiplex(
-          o,
-          Layers.map({
-            case Data => data
-            case Management => management
-          })
-        )
-      }
-
-      def multiplex(
-        data: Observable[Array[Byte]],
-        management: Observable[Array[Byte]]
-      ) = {
-        Multiplex.multiplex(
-          Layers
-            .map({
-              case Data => data
-              case Management => management
-            })
-        )
-      }
-
+//      sealed trait Layer {
+//        lazy val header : Byte = Layers.indexOf(this).toByte
+//      }
+//      case object Data extends Layer
+//      case object Management extends Layer
+//
+//      val Layers = Seq(
+//        Data,
+//        Management
+//      )
+//
+//      def demultiplex(
+//        o: Observable[Stream[Byte]],
+//        management: Subscriber[Message],
+//        data: Subscriber[Message]
+//      ) = {
+//        Multiplex.demultiplex(
+//          o,
+//          Layers.map({
+//            case Data => data
+//            case Management => management
+//          })
+//        )
+//      }
+//
+//      def multiplex(
+//        data: Observable[Array[Byte]],
+//        management: Observable[Array[Byte]]
+//      ) = {
+//        Multiplex.multiplex(
+//          Layers
+//            .map({
+//              case Data => data
+//              case Management => management
+//            })
+//        )
+//      }
+//
 
     }
 
