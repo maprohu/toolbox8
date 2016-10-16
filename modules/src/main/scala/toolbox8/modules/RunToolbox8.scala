@@ -22,6 +22,7 @@ object RunToolbox8 {
     JarTree8Modules.StandaloneApi,
     JarTree8Modules.Protocol,
     JarTree8Modules.Standalone,
+    JarTree8Modules.Echo,
     JarTree8Modules.Client,
     JarTree8Modules.Installer,
     JarTree8Modules.Packaging,

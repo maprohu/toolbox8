@@ -32,6 +32,12 @@ object JarTree8Modules {
     mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`
   )
 
+  object Echo extends ScalaModule(
+    "echo",
+    StandaloneApi,
+    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`
+  )
+
   object Client extends ScalaModule(
     "client",
     JarTreeModules.Client,

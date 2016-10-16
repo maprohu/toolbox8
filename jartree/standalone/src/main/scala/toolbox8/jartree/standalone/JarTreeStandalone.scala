@@ -15,11 +15,11 @@ object JarTreeStandalone {
   def run[Processor](
     port: Int
   ) = {
-//    JarTreeBootstrap
-//      .init[Processor, JarTreeStandaloneContext](
-//
-//
-//      )
+    JarTreeBootstrap
+      .init[Processor, JarTreeStandaloneContext](
+
+
+      )
 
 
     val flow =
@@ -30,11 +30,16 @@ object JarTreeStandalone {
     implicit val materializer = ActorMaterializer()
 
     Tcp()
-      .bindAndHandle(
-        flow,
+      .bind(
         "0.0.0.0",
         port
       )
+      .runForeach({ incoming =>
+        incoming
+          .flow
+          .join(flow)
+          .run()
+      })
 
 
   }
