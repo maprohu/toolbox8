@@ -1,5 +1,6 @@
 package toolbox8.jartree.protocol
 
+import akka.util.ByteString
 import monix.reactive.Observable
 
 import scala.io.StdIn
@@ -35,15 +36,11 @@ object RunProtocolTest {
     Observable
       .fromIterable(data)
       .map(_.toArray)
-      .map(ba => Iterable(ByteArrayImpl(ba)))
+      .map(ByteString.apply)
       .transform(JarTreeStandaloneProtocol.Framing.Encoder)
-      .toListL
+      .foldLeftL(ByteString.empty)(_ ++ _)
       .runAsync
-      .foreach { list =>
-        val flow =
-          list
-            .map(ByteArrayImpl.apply)
-            .flatMap(_.toSeq)
+      .foreach { flow =>
         println(flow)
 
         Observable
@@ -51,7 +48,7 @@ object RunProtocolTest {
             flow
               .grouped(20)
               .map(_.toArray)
-              .map(ByteArrayImpl.apply)
+              .map(ByteString.apply)
           )
           .transform(JarTreeStandaloneProtocol.Framing.Decoder)
           .map(_.toList)

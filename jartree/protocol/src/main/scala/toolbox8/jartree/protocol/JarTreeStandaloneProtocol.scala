@@ -1,5 +1,6 @@
 package toolbox8.jartree.protocol
 
+import akka.util.ByteString
 import monix.execution.{Ack, Cancelable}
 import monix.reactive.{Observable, Observer}
 import monix.reactive.observers.Subscriber
@@ -19,33 +20,32 @@ object JarTreeStandaloneProtocol {
   object Framing {
     val MaxSize = 1024 * 32
 
+    val Akka = akka.stream.scaladsl.Framing.simpleFramingProtocol(MaxSize)
+
     def check(size: Int) = {
       require(size <= MaxSize, "maximum package size exceeded")
     }
 
     case class Decoding(
       remaining: Int = 0,
-      bufferSize: Int = 0,
-      buffered: Stream[Byte] = Stream.empty,
-      output: List[Stream[Byte]] = List.empty
+      buffered: ByteString = ByteString.empty,
+      output: List[ByteString] = List.empty
     ) {
       def start : Decoding = {
-        if (bufferSize >= 2) {
+        if (buffered.size >= 2) {
           val (header, data) = buffered.splitAt(2)
           val nextSize = ((header(0) & 0xFF) << 8) | (header(1) & 0xFF)
           if (nextSize == 0) {
             Decoding(
               0,
-              bufferSize - 2,
               data,
-              Stream.empty +: output
+              ByteString.empty +: output
             ).start
           } else {
             check(nextSize)
 
             Decoding(
               nextSize,
-              bufferSize - 2,
               data,
               output
             ).extract
@@ -58,12 +58,11 @@ object JarTreeStandaloneProtocol {
       def extract : Decoding = {
         if (remaining == 0) {
           start
-        } else if (remaining <= bufferSize) {
+        } else if (remaining <= buffered.size) {
           val (out, keep) = buffered.splitAt(remaining)
 
           Decoding(
             remaining = 0,
-            bufferSize = bufferSize - remaining,
             buffered = keep,
             output = out +: output
           ).start
@@ -72,13 +71,16 @@ object JarTreeStandaloneProtocol {
         }
       }
 
-      def :+(elem: ByteArrayImpl) : Decoding = {
-        Decoding(
-          remaining = remaining,
-          bufferSize = bufferSize + elem.count,
-          buffered = buffered ++ elem.toSeq,
-          output = List.empty
-        ).extract
+      def :+(elem: ByteString) : Decoding = {
+        if (elem.isEmpty) {
+          this
+        } else {
+          Decoding(
+            remaining = remaining,
+            buffered = buffered ++ elem,
+            output = List.empty
+          ).extract
+        }
       }
     }
 
@@ -86,31 +88,22 @@ object JarTreeStandaloneProtocol {
       val Empty = Decoding()
     }
 
-    val Decoder : Observable[ByteArray] => Observable[Stream[Byte]] = { o =>
+    val Decoder : Observable[ByteString] => Observable[ByteString] = { o =>
       o
-        .filter(_.count() != 0)
         .scan(Decoding.Empty)(_ :+ _)
         .flatMap(d => Observable.fromIterable(d.output.reverse))
     }
 
-    val Encoder : Observable[Iterable[ByteArray]] => Observable[ByteArray] = { o =>
+    val Encoder : Observable[ByteString] => Observable[ByteString] = { o =>
       o
-        .flatMap({ ba =>
-          val size = ba.map(_.count()).sum
+        .map({ ba =>
+          val size = ba.size
           check(size)
-          Observable.concat(
-            Observable(
-              ByteArrayImpl(
-                Array(
-                  ((size >> 8) & 0xff).toByte,
-                  (size & 0xff).toByte
-                )
-              )
-            ),
-            Observable.fromIterable(
-              ba
-            )
-          )
+
+          ByteString(
+            ((size >> 8) & 0xff).toByte,
+            (size & 0xff).toByte
+          ) ++ ba
         })
     }
 
@@ -176,7 +169,7 @@ object JarTreeStandaloneProtocol {
         })
     }
 
-    val DropHeader : Observable[Stream[Byte]] => Observable[Stream[Byte]] = { o =>
+    val DropHeader : Observable[ByteString] => Observable[ByteString] = { o =>
       o
         .map(s => s.tail)
     }
@@ -248,6 +241,10 @@ object JarTreeStandaloneProtocol {
 
   object Management {
 
+    type Plugger = JarPlugger[Service, JarTreeStandaloneContext]
+
+    val Header = 0
+
     val LayerCount = 1
 
     final case class VerifyRequest(
@@ -263,7 +260,7 @@ object JarTreeStandaloneProtocol {
     )
 
     final case class PlugRequest(
-      classRequest: ClassRequestImpl[JarPlugger[Service, JarTreeStandaloneContext]],
+      classRequest: ClassRequestImpl[Plugger],
       param: Array[Byte]
     )
 

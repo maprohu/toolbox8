@@ -1,8 +1,11 @@
 package toolbox8.jartree.client
 
+import java.io.File
+import java.nio.ByteBuffer
+
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
-import akka.stream.scaladsl.{Flow, Keep, Sink, Source, Tcp}
+import akka.stream.{ActorMaterializer, Materializer}
+import akka.stream.scaladsl.{FileIO, Flow, Keep, Sink, Source, Tcp}
 import akka.util.ByteString
 import maven.modules.builder.NamedModule
 import monix.execution.Cancelable
@@ -11,9 +14,11 @@ import monix.reactive.subjects.PublishToOneSubject
 import org.reactivestreams.{Processor, Publisher, Subscriber, Subscription}
 import toolbox6.jartree.client.JarTreeClient
 import toolbox6.jartree.packaging.JarTreePackaging
-import toolbox6.jartree.packaging.JarTreePackaging.RunHierarchy
-import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.VerifyRequest
+import toolbox6.jartree.packaging.JarTreePackaging.{RunHierarchy, RunMavenHierarchy}
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.{Framing, Management}
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{PlugRequest, PutHeader, VerifyRequest, VerifyResponse}
 import toolbox8.jartree.protocol.{ByteArrayImpl, JarTreeStandaloneProtocol}
+import toolbox8.jartree.standaloneapi.ByteArray
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -34,6 +39,13 @@ object JarTreeStandaloneClient {
     implicit val actorSystem = ActorSystem()
     implicit val materializer = ActorMaterializer()
 
+    val peer =
+      Tcp()
+        .outgoingConnection(
+          host,
+          port
+        )
+
     val flow =
       Flow
         .fromSinkAndSourceMat(
@@ -42,10 +54,9 @@ object JarTreeStandaloneClient {
         )(Keep.both)
 
     val (pub, sub) =
-      Tcp()
-        .outgoingConnection(
-          host,
-          port
+      peer
+        .join(
+          Framing.Akka
         )
         .joinMat(
           flow
@@ -55,56 +66,42 @@ object JarTreeStandaloneClient {
     process(pub, sub, runHierarchy, target)
   }
 
+  case class State(
+    out: Observable[ByteString] = Observable.empty,
+    fn: ByteString => State
+  )
+
   def process(
     pub: Publisher[ByteString],
     sub: Subscriber[ByteString],
     runHierarchy: RunHierarchy,
     target: NamedModule
+  )(implicit
+    materializer: Materializer
   ) = {
     import monix.execution.Scheduler.Implicits.global
 
-    val rmh =
-      runHierarchy
-        .forTarget(
-          JarTreePackaging.target(
-            target
-          )
-        )
 
-    val jars = JarTreeClient.resolverJars(rmh)
 
-    import boopickle.Default._
+    val Header = ByteString(Management.Header.toByte)
 
-    val input =
-      Observable
-        .fromReactivePublisher(pub)
-        .map(bs => ByteArrayImpl(bs.toArray))
-        .transform(JarTreeStandaloneProtocol.Framing.Decoder)
-        .transform(JarTreeStandaloneProtocol.Multiplex.DropHeader)
-        .map(_ => ByteArrayImpl.Empty)
-
-    val first =
-      Observable(
-        ByteArrayImpl(
-          Pickle
-            .intoBytes(
-              VerifyRequest(
-                ids = jars.map(_._1)
-              )
-            )
-        )
-      )
-
-    val Header = ByteArrayImpl(Array[Byte](0.toByte))
+    val init =
+      start(runHierarchy, target)
 
     Observable
-      .concat(
-        first,
-        input
-      )
-      .map(bs => Iterable(Header, bs))
-      .transform(JarTreeStandaloneProtocol.Framing.Encoder)
-      .map(ba => ByteString.fromArray(ba.bytes(), ba.offset(), ba.count()))
+      .fromReactivePublisher(pub)
+      .map({ bs =>
+        require(bs(0) == Management.Header)
+        bs.tail
+      })
+      .scan(
+        init
+      )({ (state, in) =>
+        state.fn(in)
+      })
+      .startWith(Seq(init))
+      .flatMap(_.out)
+      .map(bs => Header ++ bs)
       .dump("x")
       .subscribe(
         monix.reactive.observers.Subscriber.fromReactiveSubscriber(
@@ -115,6 +112,113 @@ object JarTreeStandaloneClient {
 
 
   }
+
+  import boopickle.Default._
+
+  implicit class ByteBuffersOps(bbs: Iterable[ByteBuffer]) {
+    def asByteString : ByteString = {
+      bbs
+        .map(ByteString.apply)
+        .foldLeft(ByteString.empty)(_ ++ _)
+    }
+
+  }
+
+  def start(
+    runHierarchy: RunHierarchy,
+    target: NamedModule
+  )(implicit
+    materializer: Materializer
+  ) : State = {
+    val rmh =
+      runHierarchy
+        .forTarget(
+          JarTreePackaging.target(
+            target
+          )
+        )
+
+    val jars = JarTreeClient.resolverJarsFile(rmh)
+
+    val first =
+      Observable(
+        Pickle
+          .intoByteBuffers(
+            VerifyRequest(
+              ids = jars.map(_._1)
+            )
+          )
+          .asByteString
+      )
+
+    State(
+      out = first,
+      fn = verifying(rmh, jars.map(_._2))
+    )
+  }
+
+  def verifying(
+    rmh: RunMavenHierarchy,
+    files: IndexedSeq[File]
+  )(
+    bs: ByteString
+  )(implicit
+    materializer: Materializer
+  ) : State = {
+    val res = Unpickle[VerifyResponse].fromBytes(bs.asByteBuffer)
+
+    val mfiles =
+      res
+        .missing
+        .map(files)
+
+    val out = Observable.concat(
+      Observable(
+        Pickle
+          .intoByteBuffers(
+            PutHeader(
+              mfiles
+                .map(_.length())
+            )
+          )
+          .asByteString
+      ),
+      Observable
+        .fromIterable(mfiles)
+        .concatMap({ f =>
+          Observable
+            .fromReactivePublisher(
+              FileIO
+                .fromPath(
+                  f.toPath,
+                  JarTreeStandaloneProtocol.Framing.MaxSize - 100
+                )
+                .runWith(
+                  Sink.asPublisher(false)
+                )
+            )
+        }),
+      Observable(
+        Pickle
+          .intoByteBuffers(
+            PlugRequest(
+              rmh.request[Management.Plugger],
+              Array.emptyByteArray
+            )
+          )
+          .asByteString
+      )
+    )
+
+    end(out)
+  }
+
+  def end(out: Observable[ByteString]) : State = State(
+    out = out,
+    fn = _ => end(Observable.empty)
+  )
+
+
 
 
 
