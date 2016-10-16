@@ -5,7 +5,6 @@ import monix.execution.{Ack, Cancelable}
 import monix.reactive.{Observable, Observer}
 import monix.reactive.observers.Subscriber
 import monix.reactive.subjects.{PublishSubject, Subject}
-import sun.plugin2.message.Message
 import toolbox6.jartree.api.JarPlugger
 import toolbox6.jartree.util.{CaseClassLoaderKey, ClassRequestImpl}
 import toolbox8.jartree.standaloneapi.{ByteArray, JarTreeStandaloneContext, Service}
