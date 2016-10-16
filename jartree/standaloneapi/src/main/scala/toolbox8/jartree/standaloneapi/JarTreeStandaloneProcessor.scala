@@ -3,10 +3,11 @@ package toolbox8.jartree.standaloneapi
 import java.nio.ByteBuffer
 
 import org.reactivestreams.{Processor, Subscriber}
+import toolbox6.jartree.api.{InstanceResolver, JarUpdatable}
 
 
-trait Service {
-  def subscriber() : Subscriber[IncomingConnection]
+trait Service extends JarUpdatable {
+//  def subscriber() : Subscriber[IncomingConnection]
 }
 
 trait PeerInfo {
@@ -24,6 +25,6 @@ trait IncomingConnection {
   def flow() : Processor[ByteArray, ByteArray]
 }
 
-trait JarTreeStandaloneContext {
+trait JarTreeStandaloneContext extends InstanceResolver {
 
 }

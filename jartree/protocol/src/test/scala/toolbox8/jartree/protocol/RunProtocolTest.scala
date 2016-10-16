@@ -35,7 +35,7 @@ object RunProtocolTest {
     Observable
       .fromIterable(data)
       .map(_.toArray)
-      .map(ByteArrayImpl.apply)
+      .map(ba => Iterable(ByteArrayImpl(ba)))
       .transform(JarTreeStandaloneProtocol.Framing.Encoder)
       .toListL
       .runAsync

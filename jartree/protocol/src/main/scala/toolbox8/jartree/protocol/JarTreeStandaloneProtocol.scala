@@ -5,7 +5,9 @@ import monix.reactive.{Observable, Observer}
 import monix.reactive.observers.Subscriber
 import monix.reactive.subjects.{PublishSubject, Subject}
 import sun.plugin2.message.Message
-import toolbox8.jartree.standaloneapi.ByteArray
+import toolbox6.jartree.api.JarPlugger
+import toolbox6.jartree.util.{CaseClassLoaderKey, ClassRequestImpl}
+import toolbox8.jartree.standaloneapi.{ByteArray, JarTreeStandaloneContext, Service}
 
 import scala.concurrent.Future
 
@@ -91,19 +93,23 @@ object JarTreeStandaloneProtocol {
         .flatMap(d => Observable.fromIterable(d.output.reverse))
     }
 
-    val Encoder : Observable[ByteArray] => Observable[ByteArray] = { o =>
+    val Encoder : Observable[Iterable[ByteArray]] => Observable[ByteArray] = { o =>
       o
         .flatMap({ ba =>
-          val size = ba.count()
+          val size = ba.map(_.count()).sum
           check(size)
-          Observable[ByteArray](
-            ByteArrayImpl(
-              Array(
-                ((size >> 8) & 0xff).toByte,
-                (size & 0xff).toByte
+          Observable.concat(
+            Observable(
+              ByteArrayImpl(
+                Array(
+                  ((size >> 8) & 0xff).toByte,
+                  (size & 0xff).toByte
+                )
               )
             ),
-            ba
+            Observable.fromIterable(
+              ba
+            )
           )
         })
     }
@@ -170,6 +176,11 @@ object JarTreeStandaloneProtocol {
         })
     }
 
+    val DropHeader : Observable[Stream[Byte]] => Observable[Stream[Byte]] = { o =>
+      o
+        .map(s => s.tail)
+    }
+
 
 //    def demultiplex(
 //      o: Observable[Iterable[Byte]],
@@ -230,54 +241,39 @@ object JarTreeStandaloneProtocol {
 
 
 
-    object Management {
-
-      val LayerCount = 1
-
-//      sealed trait Layer {
-//        lazy val header : Byte = Layers.indexOf(this).toByte
-//      }
-//      case object Data extends Layer
-//      case object Management extends Layer
-//
-//      val Layers = Seq(
-//        Data,
-//        Management
-//      )
-//
-//      def demultiplex(
-//        o: Observable[Stream[Byte]],
-//        management: Subscriber[Message],
-//        data: Subscriber[Message]
-//      ) = {
-//        Multiplex.demultiplex(
-//          o,
-//          Layers.map({
-//            case Data => data
-//            case Management => management
-//          })
-//        )
-//      }
-//
-//      def multiplex(
-//        data: Observable[Array[Byte]],
-//        management: Observable[Array[Byte]]
-//      ) = {
-//        Multiplex.multiplex(
-//          Layers
-//            .map({
-//              case Data => data
-//              case Management => management
-//            })
-//        )
-//      }
-//
-
-    }
 
 
   }
 
 
+  object Management {
+
+    val LayerCount = 1
+
+    final case class VerifyRequest(
+      ids: Seq[String]
+    )
+
+    final case class VerifyResponse(
+      missing: Seq[Int]
+    )
+
+    final case class PutHeader(
+      sizes: Seq[Long]
+    )
+
+    final case class PlugRequest(
+      classRequest: ClassRequestImpl[JarPlugger[Service, JarTreeStandaloneContext]],
+      param: Array[Byte]
+    )
+
+    case object Done
+
+    final case class Error(
+      reason: String
+    )
+
+
+  }
 
 }

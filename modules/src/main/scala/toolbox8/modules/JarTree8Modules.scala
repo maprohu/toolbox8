@@ -1,7 +1,7 @@
 package toolbox8.modules
 
 import maven.modules.builder.{ScalaModule, SubModuleContainer}
-import toolbox6.modules.JarTreeModules
+import toolbox6.modules.{JarTreeModules, Toolbox6Modules}
 
 /**
   * Created by martonpapp on 31/08/16.
@@ -15,11 +15,13 @@ object JarTree8Modules {
     "protocol",
     mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`,
     mvn.`io.monix:monix_2.11:jar:2.0.4`,
-    StandaloneApi
+    StandaloneApi,
+    JarTreeModules.Util
   )
 
   object StandaloneApi extends ScalaModule(
     "standaloneapi",
+    JarTreeModules.Api,
     mvn.`org.reactivestreams:reactive-streams:jar:1.0.0`
   )
 
@@ -28,6 +30,14 @@ object JarTree8Modules {
     JarTreeModules.Impl,
     StandaloneApi,
     mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`
+  )
+
+  object Client extends ScalaModule(
+    "client",
+    JarTreeModules.Client,
+    JarTreeModules.Packaging,
+    Protocol,
+    mvn.`me.chrons:boopickle_2.11:jar:1.2.4`
   )
 
   object Installer extends ScalaModule(
@@ -39,10 +49,12 @@ object JarTree8Modules {
     "packaging"
   )
 
+
   object Testing extends ScalaModule(
     "testing",
     Standalone
   )
+
 
 
 }

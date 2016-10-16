@@ -17,6 +17,7 @@
         <module>standaloneapi</module>
         <module>protocol</module>
         <module>standalone</module>
+        <module>client</module>
         <module>installer</module>
         <module>packaging</module>
         <module>testing</module>

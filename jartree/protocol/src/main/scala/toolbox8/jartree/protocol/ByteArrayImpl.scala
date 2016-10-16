@@ -1,5 +1,7 @@
 package toolbox8.jartree.protocol
 
+import java.nio.ByteBuffer
+
 import toolbox8.jartree.standaloneapi.ByteArray
 
 /**
@@ -27,6 +29,15 @@ object ByteArrayImpl {
   }
 
   val Empty = ByteArrayImpl(Array.emptyByteArray)
+
+  def apply(
+    buffer: ByteBuffer
+  ) : ByteArrayImpl = {
+    val data = Array.ofDim[Byte](buffer.remaining())
+    buffer.get(data)
+    apply(data)
+  }
+
 
   implicit def apply(
     byteArray: ByteArray

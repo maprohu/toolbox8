@@ -15,11 +15,11 @@ object JarTreeStandalone {
   def run[Processor](
     port: Int
   ) = {
-    JarTreeBootstrap
-      .init[Processor, JarTreeStandaloneContext](
-
-
-      )
+//    JarTreeBootstrap
+//      .init[Processor, JarTreeStandaloneContext](
+//
+//
+//      )
 
 
     val flow =
@@ -31,7 +31,7 @@ object JarTreeStandalone {
 
     Tcp()
       .bindAndHandle(
-        route,
+        flow,
         "0.0.0.0",
         port
       )
