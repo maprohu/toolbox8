@@ -21,21 +21,26 @@ object JarTree8Modules {
 
   object StandaloneApi extends ScalaModule(
     "standaloneapi",
+    Toolbox6Modules.JavaApi,
     JarTreeModules.Api,
     mvn.`org.reactivestreams:reactive-streams:jar:1.0.0`
   )
 
   object Standalone extends ScalaModule(
     "standalone",
+    Toolbox6Modules.JavaImpl,
     JarTreeModules.Impl,
     StandaloneApi,
-    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`
+    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`,
+    Protocol
   )
 
   object Echo extends ScalaModule(
     "echo",
     StandaloneApi,
-    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`
+    JarTreeModules.Util,
+    mvn.`io.monix:monix-reactive_2.11:jar:2.0.4`,
+    Toolbox6Modules.JavaImpl
   )
 
   object Client extends ScalaModule(
@@ -58,7 +63,10 @@ object JarTree8Modules {
 
   object Testing extends ScalaModule(
     "testing",
-    Standalone
+    Standalone,
+    Toolbox8Modules,
+    Echo,
+    JarTreeModules.Packaging
   )
 
 

@@ -17,8 +17,7 @@ import toolbox6.jartree.packaging.JarTreePackaging
 import toolbox6.jartree.packaging.JarTreePackaging.{RunHierarchy, RunMavenHierarchy}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.{Framing, Management}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{PlugRequest, PutHeader, VerifyRequest, VerifyResponse}
-import toolbox8.jartree.protocol.{ByteArrayImpl, JarTreeStandaloneProtocol}
-import toolbox8.jartree.standaloneapi.ByteArray
+import toolbox8.jartree.protocol.{JarTreeStandaloneProtocol}
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration

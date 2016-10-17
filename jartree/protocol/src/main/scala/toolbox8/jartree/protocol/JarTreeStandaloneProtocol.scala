@@ -7,7 +7,8 @@ import monix.reactive.observers.Subscriber
 import monix.reactive.subjects.{PublishSubject, Subject}
 import toolbox6.jartree.api.JarPlugger
 import toolbox6.jartree.util.{CaseClassLoaderKey, ClassRequestImpl}
-import toolbox8.jartree.standaloneapi.{ByteArray, JarTreeStandaloneContext, Service}
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Multiplex.{Layer, Message}
+import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Service}
 
 import scala.concurrent.Future
 
@@ -117,12 +118,12 @@ object JarTreeStandaloneProtocol {
 
     final case class Message(
       header: Int, // 1 Byte
-      data: Iterable[Byte]
+      data: ByteString
     )
 
     def connect(
       layers: Seq[Layer]
-    ) : Observable[Iterable[Byte]] => Observable[Iterable[Byte]] = { o =>
+    ) : Observable[ByteString] => Observable[ByteString] = { o =>
       val layersWithOffset =
         layers
           .zip(
@@ -160,11 +161,8 @@ object JarTreeStandaloneProtocol {
             .transform(layer.flow)
             .map(m => m.copy(header = m.header + offset))
         })
-        .flatMap({ m =>
-          Observable(
-            Array(m.header.toByte),
-            m.data
-          )
+        .map({ m =>
+          ByteString(m.header.toByte) ++ m.data
         })
     }
 
@@ -245,6 +243,25 @@ object JarTreeStandaloneProtocol {
     val Header = 0
 
     val LayerCount = 1
+
+    def layer(
+      flow: Observable[ByteString] => Observable[ByteString]
+    ) : Layer = {
+      Layer(
+        headerCount = LayerCount,
+        flow = { o =>
+          o
+            .map({ m =>
+              require(m.header == Header)
+              m.data
+            })
+            .transform(flow)
+            .map({ bs =>
+              Message(Header, bs)
+            })
+        }
+      )
+    }
 
     final case class VerifyRequest(
       ids: Seq[String]

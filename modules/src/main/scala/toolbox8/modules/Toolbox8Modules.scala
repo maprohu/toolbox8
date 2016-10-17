@@ -1,11 +1,16 @@
 package toolbox8.modules
 
 import maven.modules.builder.{RootModuleContainer, ScalaModule}
+import maven.modules.utils.MavenCentralModule
 
 /**
   * Created by martonpapp on 29/08/16.
   */
-object Toolbox8Modules {
+object Toolbox8Modules extends MavenCentralModule(
+  "toolbox8-modules",
+  "toolbox8-modules",
+  "1.0.0-SNAPSHOT"
+) {
 
   implicit val Root = RootModuleContainer("toolbox8")
 
