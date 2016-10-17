@@ -18,6 +18,7 @@
         <module>protocol</module>
         <module>standalone</module>
         <module>echo</module>
+        <module>util</module>
         <module>client</module>
         <module>installer</module>
         <module>packaging</module>

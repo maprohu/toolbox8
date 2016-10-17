@@ -5,13 +5,14 @@ import java.nio.ByteBuffer
 import java.util
 
 import akka.actor.ActorSystem
-import akka.stream.ActorMaterializer
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source, Tcp}
 import akka.util.ByteString
+import com.typesafe.scalalogging.LazyLogging
 import monix.execution.Cancelable
 import monix.reactive.Observable
 import monix.reactive.observers.Subscriber
-import toolbox6.jartree.impl.JarTreeBootstrap
+import toolbox6.jartree.impl.{JarCache, JarTreeBootstrap}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.{Management, Multiplex}
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Message, PeerInfo, Service}
@@ -23,7 +24,10 @@ import toolbox6.jartree.util.CaseJarKey
 import toolbox6.jartree.wiring.PlugRequestImpl
 import toolbox6.javaapi.{AsyncCallback, AsyncValue}
 import toolbox6.javaimpl.JavaImpl
+import toolbox6.statemachine.State
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{PutHeader, VerifyRequest, VerifyResponse}
 import toolbox8.jartree.standaloneapi.Message.Header
+import toolbox8.jartree.util.VoidService
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -31,7 +35,7 @@ import scala.collection.JavaConverters._
 /**
   * Created by martonpapp on 15/10/16.
   */
-object JarTreeStandalone {
+object JarTreeStandalone extends LazyLogging {
 
   def run(
     name: String,
@@ -57,9 +61,16 @@ object JarTreeStandalone {
       )
 
 
-
     implicit val actorSystem = ActorSystem()
-    implicit val materializer = ActorMaterializer()
+    implicit val materializer = ActorMaterializer(
+      Some(
+        ActorMaterializerSettings(actorSystem)
+          .withSupervisionStrategy({ ex =>
+            logger.error(ex.getMessage, ex)
+            Supervision.Stop
+          })
+      )
+    )
 
     Tcp()
       .bind(
@@ -67,6 +78,7 @@ object JarTreeStandalone {
         port
       )
       .mapAsync(1)({ incoming =>
+        logger.info("incoming: {}", incoming.remoteAddress)
         JavaImpl
           .wrap(
             rt
@@ -84,12 +96,10 @@ object JarTreeStandalone {
       .toMat(
         Sink.foreach({
           case (peerFlow, dataProc) =>
+            val management = createManagement(
+              rt.jarTree.cache
+            )
 
-            val management =
-              Management
-                .layer { o =>
-                  o
-                }
 
             val data = Multiplex.Layer(
               headerCount = 0,
@@ -141,7 +151,7 @@ object JarTreeStandalone {
             val (pub, sub) =
               peerFlow
                 .join(
-                  JarTreeStandaloneProtocol.Framing.Akka
+                  JarTreeStandaloneProtocol.Framing.Akka.reversed
                 )
                 .joinMat(
                   Flow
@@ -178,29 +188,67 @@ object JarTreeStandalone {
 
   }
 
+  def createManagement(
+    jarCache: JarCache
+
+  ) = {
+    import boopickle.Default._
+    def state(
+      out: Observable[ByteString] = Observable.empty,
+      fn: ByteString => State[ByteString, ByteString]
+    ) = State(out, fn)
+
+    val init = state(
+      fn = { bs =>
+        val vq = Unpickle[VerifyRequest].fromBytes(bs.asByteBuffer)
+
+        logger.info(s"verifying: ${vq.ids.mkString(", ")}")
+
+        val (missingId, missingIdx) =
+          vq
+            .ids
+            .zipWithIndex
+            .filter({
+              case (id, idx) if !jarCache.contains(id) => true
+              case _ => false
+            })
+            .unzip
+
+        state(
+          Observable(
+            ByteString.fromByteBuffer(
+              Pickle.intoBytes(
+                VerifyResponse(
+                  missingIdx
+                )
+              )
+            )
+          ),
+          { bs =>
+            val ph = Unpickle[PutHeader].fromBytes(bs.asByteBuffer)
+            missingId
+              .zip(ph.sizes)
 
 
 
-}
+            ???
+          }
 
-object VoidService extends Service {
-  override def update(param: Array[Header]): Unit = ()
-  override def apply(input: PeerInfo): AsyncValue[Processor[Message, Message]] = {
-    JavaImpl
-      .asyncSuccess(
-        JavaImpl
-          .processor(
-            monix.reactive.observers.Subscriber
-              .toReactiveSubscriber(
-                monix.reactive.observers.Subscriber.empty[Message]
-              ),
-            Observable
-              .empty[Message]
-              .toReactivePublisher
-          )
+        )
+      }
+    )
 
-      )
+    Management
+      .layer { o =>
+        o
+          .dump("mgmt")
+          .transform(init.transformer)
+      }
+
   }
 
-  override def close(): Unit = ()
+
+
+
 }
+

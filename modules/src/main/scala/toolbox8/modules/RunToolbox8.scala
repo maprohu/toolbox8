@@ -23,10 +23,12 @@ object RunToolbox8 {
     JarTree8Modules.Protocol,
     JarTree8Modules.Standalone,
     JarTree8Modules.Echo,
+    JarTree8Modules.Util,
     JarTree8Modules.Client,
     JarTree8Modules.Installer,
     JarTree8Modules.Packaging,
-    JarTree8Modules.Testing
+    JarTree8Modules.Testing,
+    Akka8Modules.StateMachine
 //    Toolbox8Modules.JarTree,
 //    Servlet31Modules.SingleApi,
 //    Servlet31Modules.RunApi,

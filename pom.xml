@@ -15,6 +15,7 @@
     </build>
     <modules>
         <module>jartree</module>
+        <module>akka</module>
         <module>rpi</module>
     </modules>
 </project>

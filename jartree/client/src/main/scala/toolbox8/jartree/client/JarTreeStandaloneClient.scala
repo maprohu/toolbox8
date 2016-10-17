@@ -55,7 +55,7 @@ object JarTreeStandaloneClient {
     val (pub, sub) =
       peer
         .join(
-          Framing.Akka
+          Framing.Akka.reversed
         )
         .joinMat(
           flow
@@ -65,10 +65,7 @@ object JarTreeStandaloneClient {
     process(pub, sub, runHierarchy, target)
   }
 
-  case class State(
-    out: Observable[ByteString] = Observable.empty,
-    fn: ByteString => State
-  )
+
 
   def process(
     pub: Publisher[ByteString],
@@ -93,13 +90,7 @@ object JarTreeStandaloneClient {
         require(bs(0) == Management.Header)
         bs.tail
       })
-      .scan(
-        init
-      )({ (state, in) =>
-        state.fn(in)
-      })
-      .startWith(Seq(init))
-      .flatMap(_.out)
+      .transform(init.transformer)
       .map(bs => Header ++ bs)
       .dump("x")
       .subscribe(
@@ -123,6 +114,14 @@ object JarTreeStandaloneClient {
 
   }
 
+  type State = toolbox6.statemachine.State[ByteString, ByteString]
+  def State(
+    out: Observable[ByteString] = Observable.empty,
+    fn: ByteString => State
+  ) = {
+    toolbox6.statemachine.State[ByteString, ByteString](out, fn)
+  }
+
   def start(
     runHierarchy: RunHierarchy,
     target: NamedModule
@@ -137,7 +136,7 @@ object JarTreeStandaloneClient {
           )
         )
 
-    val jars = JarTreeClient.resolverJarsFile(rmh)
+    val jars = JarTreePackaging.resolverJarsFile(rmh)
 
     val first =
       Observable(
@@ -212,10 +211,9 @@ object JarTreeStandaloneClient {
     end(out)
   }
 
-  def end(out: Observable[ByteString]) : State = State(
-    out = out,
-    fn = _ => end(Observable.empty)
-  )
+  def end(out: Observable[ByteString]) : State = {
+    toolbox6.statemachine.State.end(out)
+  }
 
 
 

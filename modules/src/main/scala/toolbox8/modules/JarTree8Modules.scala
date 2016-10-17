@@ -32,7 +32,16 @@ object JarTree8Modules {
     JarTreeModules.Impl,
     StandaloneApi,
     mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`,
-    Protocol
+    Protocol,
+    Util,
+    Toolbox6Modules.StateMachine
+  )
+
+  object Util extends ScalaModule(
+    "util",
+    StandaloneApi,
+    mvn.`io.monix:monix-reactive_2.11:jar:2.0.4`,
+    Toolbox6Modules.JavaImpl
   )
 
   object Echo extends ScalaModule(
@@ -48,7 +57,8 @@ object JarTree8Modules {
     JarTreeModules.Client,
     JarTreeModules.Packaging,
     Protocol,
-    mvn.`me.chrons:boopickle_2.11:jar:1.2.4`
+    mvn.`me.chrons:boopickle_2.11:jar:1.2.4`,
+    Toolbox6Modules.StateMachine
   )
 
   object Installer extends ScalaModule(
