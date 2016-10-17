@@ -14,12 +14,14 @@ object Akka8Modules {
   object StateMachine extends ScalaModule(
     "statemachine",
     Toolbox6Modules.StateMachine,
-    mvn.`com.typesafe.akka:akka-actor_2.11:jar:2.4.11`
+    mvn.`com.typesafe.akka:akka-actor_2.11:jar:2.4.11`,
+    Toolbox6Modules.Logging
+
   )
 
   object Stream extends ScalaModule(
     "stream",
-    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.9`
+    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`
   )
 
 }

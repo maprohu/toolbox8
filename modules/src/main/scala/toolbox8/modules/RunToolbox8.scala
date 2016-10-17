@@ -28,13 +28,13 @@ object RunToolbox8 {
     JarTree8Modules.Installer,
     JarTree8Modules.Packaging,
     JarTree8Modules.Testing,
-    Akka8Modules.StateMachine
+    Akka8Modules.StateMachine,
 //    Toolbox8Modules.JarTree,
 //    Servlet31Modules.SingleApi,
 //    Servlet31Modules.RunApi,
 //    Servlet31Modules.SampleRunner,
 //    Servlet31Modules.Webapp,
-//    Akka8Modules.Stream,
+    Akka8Modules.Stream
 //    Common8Modules.Tools
   )
 
