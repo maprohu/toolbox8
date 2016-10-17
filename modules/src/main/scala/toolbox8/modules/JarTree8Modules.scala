@@ -34,7 +34,8 @@ object JarTree8Modules {
     mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`,
     Protocol,
     Util,
-    Toolbox6Modules.StateMachine
+    Toolbox6Modules.StateMachine,
+    Akka8Modules.StateMachine
   )
 
   object Util extends ScalaModule(

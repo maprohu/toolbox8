@@ -9,10 +9,11 @@ import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source, Tcp}
 import akka.util.ByteString
 import com.typesafe.scalalogging.LazyLogging
+import monix.eval.Task
 import monix.execution.Cancelable
 import monix.reactive.Observable
 import monix.reactive.observers.Subscriber
-import toolbox6.jartree.impl.{JarCache, JarTreeBootstrap}
+import toolbox6.jartree.impl.{JarCache, JarTree, JarTreeBootstrap}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.{Management, Multiplex}
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Message, PeerInfo, Service}
@@ -21,7 +22,7 @@ import org.reactivestreams.Processor
 import toolbox6.jartree.api.ClassRequest
 import toolbox6.jartree.impl.JarTreeBootstrap.Config
 import toolbox6.jartree.util.CaseJarKey
-import toolbox6.jartree.wiring.PlugRequestImpl
+import toolbox6.jartree.wiring.{PlugRequestImpl, SimpleJarSocket}
 import toolbox6.javaapi.{AsyncCallback, AsyncValue}
 import toolbox6.javaimpl.JavaImpl
 import toolbox6.statemachine.State
@@ -189,16 +190,14 @@ object JarTreeStandalone extends LazyLogging {
   }
 
   def createManagement(
-    jarCache: JarCache
-
+    jarTree: JarTree,
+    socket: SimpleJarSocket[Service, JarTreeStandaloneContext]
   ) = {
+    val jarCache = jarTree.cache
     import boopickle.Default._
-    def state(
-      out: Observable[ByteString] = Observable.empty,
-      fn: ByteString => State[ByteString, ByteString]
-    ) = State(out, fn)
+    import toolbox8.akka.statemachine.ByteStringState._
 
-    val init = state(
+    val init = stateAsync(
       fn = { bs =>
         val vq = Unpickle[VerifyRequest].fromBytes(bs.asByteBuffer)
 
@@ -214,7 +213,7 @@ object JarTreeStandalone extends LazyLogging {
             })
             .unzip
 
-        state(
+        val vro =
           Observable(
             ByteString.fromByteBuffer(
               Pickle.intoBytes(
@@ -223,18 +222,36 @@ object JarTreeStandalone extends LazyLogging {
                 )
               )
             )
-          ),
-          { bs =>
-            val ph = Unpickle[PutHeader].fromBytes(bs.asByteBuffer)
-            missingId
-              .zip(ph.sizes)
+          )
+
+        def plug = Task {
+
+        }
+
+        if (missingId.isEmpty) {
+          // plug now
+          ???
+
+        } else {
+          Task.now(
+            stateAsync(
+              vro,
+              { bs =>
+                val ph = Unpickle[PutHeader].fromBytes(bs.asByteBuffer)
+                missingId
+                  .zip(ph.sizes)
+                  .foldRight(ByteStringState)
 
 
 
-            ???
-          }
+                ???
+              }
 
-        )
+            )
+
+          )
+        }
+
       }
     )
 

@@ -81,4 +81,6 @@ object ByteStringState {
     inner(n, andThen)
   }
 
+  val End = StateAsync.end[ByteString, ByteString]()
+
 }
