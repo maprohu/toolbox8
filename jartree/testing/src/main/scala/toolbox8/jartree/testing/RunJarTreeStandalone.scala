@@ -2,6 +2,7 @@ package toolbox8.jartree.testing
 
 import java.io.FileInputStream
 
+import com.typesafe.scalalogging.LazyLogging
 import toolbox6.jartree.packaging.JarTreePackaging
 import toolbox6.jartree.packaging.JarTreePackaging.RunHierarchy
 import toolbox6.jartree.util.{CaseJarKey, ClassRequestImpl}
@@ -16,7 +17,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 /**
   * Created by martonpapp on 15/10/16.
   */
-object RunJarTreeStandalone {
+object RunJarTreeStandalone extends LazyLogging {
 
   def main(args: Array[String]): Unit = {
     val runHierarchy = RunHierarchy(
@@ -41,8 +42,8 @@ object RunJarTreeStandalone {
             (CaseJarKey(id), () => new FileInputStream(file))
         })
 
-    JarTreeStandalone.run(
-      name = "jtstesting",
+    val (bind, handle) = JarTreeStandalone.run(
+      name = "jtsttesting",
       port = 9978,
       embeddedJars = jars,
       initialStartup = PlugRequestImpl[Service, JarTreeStandaloneContext](
@@ -52,7 +53,10 @@ object RunJarTreeStandalone {
         ),
         Array.emptyByteArray
       )
-    ).onComplete(println)
+    )
+
+    bind.onComplete(o => logger.info(o.toString))
+
 
 
   }

@@ -66,7 +66,8 @@ object JarTree8Modules {
     Standalone,
     Toolbox8Modules,
     Echo,
-    JarTreeModules.Packaging
+    JarTreeModules.Packaging,
+    mvn.`org.slf4j:slf4j-simple:jar:1.7.21`
   )
 
 

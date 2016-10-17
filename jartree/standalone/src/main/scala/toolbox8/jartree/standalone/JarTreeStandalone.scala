@@ -81,95 +81,99 @@ object JarTreeStandalone {
             (incoming.flow, p)
           })
       })
-      .runForeach({
-        case (peerFlow, dataProc) =>
+      .toMat(
+        Sink.foreach({
+          case (peerFlow, dataProc) =>
 
-        val management =
-          Management
-            .layer { o =>
-              o
-            }
-
-        val data = Multiplex.Layer(
-          headerCount = 0,
-          flow = { o =>
-            val out =
-              Observable
-                .fromReactivePublisher(
-                  dataProc
-                )
-                .map({ m =>
-                  Multiplex.Message(
-                    header = m.header(),
-                    data =
-                      m
-                        .data()
-                        .foldLeft(
-                          ByteString.empty
-                        )({ (bs, bb) =>
-                          bs ++ ByteString.fromByteBuffer(bb)
-                        })
-                  )
-                })
-
-            o
-              .map({ m =>
-                new Message {
-                  override def data(): util.Enumeration[ByteBuffer] = {
-                    m
-                      .data
-                      .asByteBuffers
-                      .iterator
-                  }
-                  override def header(): Header = m.header.toByte
+            val management =
+              Management
+                .layer { o =>
+                  o
                 }
-              })
-              .subscribe(
-                Subscriber
-                  .fromReactiveSubscriber(
-                    dataProc,
-                    Cancelable.empty
+
+            val data = Multiplex.Layer(
+              headerCount = 0,
+              flow = { o =>
+                val out =
+                  Observable
+                    .fromReactivePublisher(
+                      dataProc
+                    )
+                    .map({ m =>
+                      Multiplex.Message(
+                        header = m.header(),
+                        data =
+                          m
+                            .data()
+                            .foldLeft(
+                              ByteString.empty
+                            )({ (bs, bb) =>
+                              bs ++ ByteString.fromByteBuffer(bb)
+                            })
+                      )
+                    })
+
+                o
+                  .map({ m =>
+                    new Message {
+                      override def data(): util.Enumeration[ByteBuffer] = {
+                        m
+                          .data
+                          .asByteBuffers
+                          .iterator
+                      }
+                      override def header(): Header = m.header.toByte
+                    }
+                  })
+                  .subscribe(
+                    Subscriber
+                      .fromReactiveSubscriber(
+                        dataProc,
+                        Cancelable.empty
+                      )
+                  )
+
+                out
+              }
+            )
+
+
+            val (pub, sub) =
+              peerFlow
+                .join(
+                  JarTreeStandaloneProtocol.Framing.Akka
+                )
+                .joinMat(
+                  Flow
+                    .fromSinkAndSourceMat(
+                      Sink.asPublisher[ByteString](false),
+                      Source.asSubscriber[ByteString]
+                    )(Keep.both)
+                )(Keep.right)
+                .run()
+
+            Observable
+              .fromReactivePublisher(pub)
+              .transform(
+                JarTreeStandaloneProtocol
+                  .Multiplex
+                  .connect(
+                    Seq(
+                      management,
+                      data
+                    )
                   )
               )
-
-            out
-          }
-        )
-
-
-        val (pub, sub) =
-          peerFlow
-            .join(
-              JarTreeStandaloneProtocol.Framing.Akka
-            )
-            .joinMat(
-              Flow
-                .fromSinkAndSourceMat(
-                  Sink.asPublisher[ByteString](false),
-                  Source.asSubscriber[ByteString]
-                )(Keep.both)
-            )(Keep.right)
-            .run()
-
-        Observable
-          .fromReactivePublisher(pub)
-          .transform(
-            JarTreeStandaloneProtocol
-              .Multiplex
-              .connect(
-                Seq(
-                  management,
-                  data
+              .subscribe(
+                Subscriber.fromReactiveSubscriber(
+                  sub,
+                  Cancelable.empty
                 )
               )
-          )
-          .subscribe(
-            Subscriber.fromReactiveSubscriber(
-              sub,
-              Cancelable.empty
-            )
-          )
-      })
+
+        })
+      )(Keep.both)
+      .run()
 
 
   }
