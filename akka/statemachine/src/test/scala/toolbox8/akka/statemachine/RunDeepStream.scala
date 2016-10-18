@@ -8,6 +8,7 @@ import monix.reactive.subjects.PublishToOneSubject
 import monix.reactive.{Consumer, Observable, Observer}
 import toolbox8.akka.statemachine.DeepStream.State
 
+import scala.concurrent.Future
 import scala.io.StdIn
 /**
   * Created by martonpapp on 17/10/16.
@@ -16,23 +17,26 @@ object RunDeepStream {
   implicit val order = ByteOrder.BIG_ENDIAN
 
   def main(args: Array[String]): Unit = {
-
-    Observable
-      .range(1, 5)
-      .flatMap({ i =>
+    state
+      .foreach({ s =>
         Observable
-          .range(0, i * 3)
-          .map(j => ByteString(Array.fill[Byte](i.toInt * 10)(j.toByte)))
-          .transform(DeepStream.chunks)
+          .range(1, 5)
+          .flatMap({ i =>
+            Observable
+              .range(0, i * 3)
+              .map(j => ByteString(Array.fill[Byte](i.toInt * 10)(j.toByte)))
+              .transform(DeepStream.chunks)
+          })
+          .transform(
+            DeepStream.stateMachine(
+              Observable.empty,
+              s
+            )
+          )
+          .dump("x")
+          .subscribe()
       })
-      .transform(
-        DeepStream.stateMachine(
-          Observable.empty,
-          state
-        )
-      )
-      .dump("x")
-      .subscribe()
+
 
     StdIn.readLine()
 
@@ -40,33 +44,34 @@ object RunDeepStream {
   }
 
   import ByteStrings._
-  def state : DeepStream.State = {
+  def state : Future[DeepStream.State] = {
     val subject = PublishToOneSubject[ByteString]()
 
-
-    State(
+    val s = State(
       subject,
       subject
-        .map({ bs =>
-          println(bs)
-          bs.size
-        })
-        .consume(
-          Consumer.foldLeft[Int, Int](0)(_ + _)
-        )
-        .map({ sum =>
-          (
-            Observable(
-              ByteString
-                .newBuilder
-                .putInt(sum)
-                .result()
-            ),
-            state
-          )
+        .dump("s")
+        .map(_.size)
+        .sumL
+        .runAsync
+        .flatMap(i => state.map(s => (i, s)))
+        .map({
+          case (sum, st) =>
+            (
+              Observable(
+                ByteString
+                  .newBuilder
+                  .putInt(sum)
+                  .result()
+              ),
+              st
+            )
         })
     )
 
+    subject
+      .subscription
+      .map(_ => s)
   }
 
 }

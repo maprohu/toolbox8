@@ -18,90 +18,44 @@ object RunSubject {
 
   def main(args: Array[String]): Unit = {
 
-    val subject = PublishSubject[Int]()
+    val subject = PublishToOneSubject[Int]()
 
-    val c = Consumer.foldLeft[Int, Int](0)(_ + _)
-//    subject
-//      .map(_ * 2)
-//      .dump("x")
-//      .sumL
-//      .runAsync
-//      .foreach(println)
+
+
+//    val c = Consumer.foldLeft[Int, Int](0)(_ + _)
+//
+//    val p = Promise[Int]()
+//    val (s, cc) =
+//      c.createSubscriber(
+//        Callback.fromPromise(p),
+//        global
+//      )
 //
 //    subject
-//      .runWith(c)
-//      .runAsync
-//      .foreach(println)
-
-//    Observable
-//      .range(0, 100)
-//      .map(_.toInt)
-//      .runWith(c)
-//      .runAsync
-//      .foreach(println)
-
-//    Observable.concat(
-//      subject
-//    )
-//      .dump("x")
-//        .countL
-//        .runAsync
-//        .foreach(println)
-
-//    val t = Task.create[Int]( { (sch, cb) =>
-//      val s = new Subscriber[Int] {
-//        override implicit def scheduler: Scheduler = global
-//        var x = 0
-//        override def onNext(elem: Int): Future[Ack] = {
-//          x += elem
-//          Continue
-//        }
-//        override def onError(ex: Throwable): Unit = ()
-//        override def onComplete(): Unit = {
-//          cb.onSuccess(x)
-//        }
-//      }
-//      subject
-//        .subscribe(
-//          s
-//        )
-//
-//
-//      Cancelable.empty
-//    })
-//
-//    val f = t.runAsync
-//
-//    Thread.sleep(500)
-//      .dump("x")
-//      .runWith(c)
-//      .runAsync
-//      .foreach(println)
-
-//      .runAsync
-//      .subscribe()
-
-    val p = Promise[Int]()
-    val (s, cc) =
-      c.createSubscriber(
-        Callback.fromPromise(p),
-        global
-      )
+//      .subscribe(
+//        s
+//      )
+//    CancelableFuture.apply(p.future, cc)
 
     subject
-      .subscribe(
-        s
-      )
-    CancelableFuture.apply(p.future, cc)
+      .dump("x")
+      .map(_ + 1)
+      .flatMap(i => Observable(i))
+      .sumL
+      .runAsync
+      .foreach(println)
 
+    subject
+      .subscription
+      .foreach({ _ =>
+        subject.onNext(1)
+        subject.onComplete()
+      })
 
 //    Thread.sleep(500)
 
-    subject.onNext(1)
-    subject.onComplete()
 
 
-//    f.foreach(println)
 
     StdIn.readLine()
 

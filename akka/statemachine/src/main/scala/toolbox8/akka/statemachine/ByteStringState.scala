@@ -8,7 +8,7 @@ import monix.reactive.{Consumer, Observable, Observer}
 import toolbox6.logging.LogTools
 import toolbox6.statemachine.{State, StateAsync}
 
-import scala.concurrent.{ExecutionContext, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
 /**
   * Created by pappmar on 17/10/2016.
@@ -147,7 +147,7 @@ object DeepStream extends LazyLogging with LogTools {
 
   case class State(
     observer: Observer[ByteString],
-    next: Task[(Observable[ByteString], State)]
+    next: Future[(Observable[ByteString], State)]
   ) {
     lazy val empty = FlatState(
       this,
@@ -198,9 +198,8 @@ object DeepStream extends LazyLogging with LogTools {
             head match {
               case Last =>
                 Observable
-                  .fromTask(
-                    Task
-                      .fromFuture(send)
+                  .fromFuture(
+                    send
                       .flatMap({ _ =>
                         obs.onComplete()
                         fstate.state.next
