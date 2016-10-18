@@ -157,20 +157,20 @@ object DeepStream extends LazyLogging with LogTools {
   val Last : Byte = 1
   val Error : Byte = 2
 
-  case class State(
-    observer: Observer[ByteString],
-    next: Future[FlatState]
-  ) {
-    lazy val empty = FlatState(
-      this,
-      Observable.empty
-    )
-  }
-
-  case class FlatState(
-    state: State,
-    out: Observable[ByteString] = Observable.empty
-  )
+//  case class State(
+//    observer: Observer[ByteString],
+//    next: Future[FlatState]
+//  ) {
+//    lazy val empty = FlatState(
+//      this,
+//      Observable.empty
+//    )
+//  }
+//
+//  case class FlatState(
+//    state: State,
+//    out: Observable[ByteString] = Observable.empty
+//  )
 
 //  def stateMachine(
 //    init: FlatState
@@ -412,5 +412,16 @@ object DeepStream extends LazyLogging with LogTools {
       })
   }
 
+  case class State(
+    task: Observable[ByteString]
+
+  )
+
+//  def stateMachine(
+//    state: Init
+//
+//  ) : Observable[Observable[ByteString]] => Observable[ByteString] = { o =>
+//
+//  }
 
 }

@@ -15,9 +15,10 @@ import org.reactivestreams.{Processor, Publisher, Subscriber, Subscription}
 import toolbox6.jartree.client.JarTreeClient
 import toolbox6.jartree.packaging.JarTreePackaging
 import toolbox6.jartree.packaging.JarTreePackaging.{RunHierarchy, RunMavenHierarchy}
+import toolbox8.akka.statemachine.DeepStream
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.{Framing, Management}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{PlugRequest, PutHeader, VerifyRequest, VerifyResponse}
-import toolbox8.jartree.protocol.{JarTreeStandaloneProtocol}
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -90,6 +91,7 @@ object JarTreeStandaloneClient {
         require(bs(0) == Management.Header)
         bs.tail
       })
+      .transform(DeepStream.decoder)
       .transform(init.transformer)
       .map(bs => Header ++ bs)
       .dump("x")

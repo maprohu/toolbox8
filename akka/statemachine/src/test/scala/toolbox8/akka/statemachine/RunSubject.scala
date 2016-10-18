@@ -27,17 +27,17 @@ object RunSubject {
 
     Observable
       .fromIterable(
-        (1 to 200).flatMap({ i =>
+        (1 to 2000).flatMap({ i =>
           Iterable(
             ByteString(0, i),
-            ByteString(1, i+1)
+            ByteString(1, i)
           )
         })
       )
-//        .dump("in")
+        .dump("in")
 //      .asyncBoundary(OverflowStrategy.BackPressure(2))
       .transform(DeepStream.decoder)
-//        .dump("trf")
+        .dump("trf")
 //        .asyncBoundary(OverflowStrategy.BackPressure(2))
       .flatMap({ s =>
         Observable
