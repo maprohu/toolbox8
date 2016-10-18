@@ -4,7 +4,10 @@ import akka.util.ByteString
 import com.typesafe.scalalogging.LazyLogging
 import monix.eval.{Callback, Task}
 import monix.execution.{CancelableFuture, Scheduler}
-import monix.reactive.{Consumer, Observable, Observer}
+import monix.reactive.observables.ConnectableObservable
+import monix.reactive.observers.{BufferedSubscriber, CacheUntilConnectSubscriber, ConnectableSubscriber, Subscriber}
+import monix.reactive.subjects.PublishToOneSubject
+import monix.reactive.{Consumer, Observable, Observer, OverflowStrategy}
 import toolbox6.logging.LogTools
 import toolbox6.statemachine.{State, StateAsync}
 
@@ -91,6 +94,15 @@ object ByteStringState {
 }
 
 object ByteStrings {
+  def mapPrefix[T](bs: ByteString)(n: Int)(fn: ByteString => T) : (T, ByteString) = {
+    (fn(bs), bs.drop(n))
+  }
+
+  def getByteHeader(bs: ByteString) : (Byte, ByteString) =
+    mapPrefix(bs)(1)({ h =>
+      h(0)
+    })
+
   implicit class ByteStringOps(bs: ByteString) {
     def mapPrefix[T](n: Int)(fn: ByteString => T) : (T, ByteString) = {
       (fn(bs), bs.drop(n))
@@ -147,7 +159,7 @@ object DeepStream extends LazyLogging with LogTools {
 
   case class State(
     observer: Observer[ByteString],
-    next: Future[(Observable[ByteString], State)]
+    next: Future[FlatState]
   ) {
     lazy val empty = FlatState(
       this,
@@ -157,86 +169,82 @@ object DeepStream extends LazyLogging with LogTools {
 
   case class FlatState(
     state: State,
-    out: Observable[ByteString]
+    out: Observable[ByteString] = Observable.empty
   )
 
-  def stateMachine(
-    start: Observable[ByteString],
-    init: State
-  )(implicit
-    executionContext: ExecutionContext
-  ) : Observable[ByteString] => Observable[ByteString] = { o =>
-    import ByteStrings._
-
-    Observable
-      .concat(
-        start,
-        o
-          .onErrorHandle({ ex =>
-            logger.error(ex.getMessage, ex)
-            ByteString(Error)
-          })
-          .flatScan(
-            FlatState(
-              init,
-              Observable.empty
-            )
-          )({ (fstate, elem) =>
-            val (head, data) = elem.getByteHeader
-
-            val obs =
-              fstate
-                .state
-                .observer
-
-            def send =
-              obs
-                .onNext(
-                  data
-                )
-
-            head match {
-              case Last =>
-                Observable
-                  .fromFuture(
-                    send
-                      .flatMap({ _ =>
-                        obs.onComplete()
-                        fstate.state.next
-                      })
-                      .map({
-                        case (out, newState) =>
-                          FlatState(
-                            out = out,
-                            state = newState
-                          )
-                      })
-
-                  )
-              case NonLast =>
-                Observable
-                  .fromFuture(
-                    send
-                      .map({ _ =>
-                        fstate.state.empty
-                      })
-                  )
-              case Error =>
-                val ex = new RuntimeException("upstream error")
-                obs.onError(ex)
-                throw ex
-              case _ => ???
-
-            }
-
-          })
-          .flatMap({ o =>
-            o
-              .out
-              .transform(chunks)
-          })
-      )
-  }
+//  def stateMachine(
+//    init: FlatState
+//  )(implicit
+//    executionContext: ExecutionContext
+//  ) : Observable[ByteString] => Observable[ByteString] = { o =>
+//    import ByteStrings._
+//
+//    Observable
+//      .concat(
+//        init.out,
+//        o
+//          .onErrorHandle({ ex =>
+//            logger.error(ex.getMessage, ex)
+//            ByteString(Error)
+//          })
+//          .flatScan(
+//            init.state.empty
+//          )({ (fstate, elem) =>
+//            val (head, data) = elem.getByteHeader
+//
+//            val obs =
+//              fstate
+//                .state
+//                .observer
+//
+//            def send =
+//              obs
+//                .onNext(
+//                  data
+//                )
+//
+//            head match {
+//              case Last =>
+//                Observable
+//                  .fromFuture(
+//                    send
+//                      .flatMap({ _ =>
+//                        obs.onComplete()
+//                        fstate.state.next
+//                      })
+//                      .map({
+//                        case (out, newState) =>
+//                          FlatState(
+//                            out = out,
+//                            state = newState
+//                          )
+//                      })
+//
+//                  )
+//              case NonLast =>
+//                Observable
+//                  .fromFuture(
+//                    send
+//                      .map({ _ =>
+//                        fstate.state.empty
+//                      })
+//                  )
+//              case Error =>
+//                val ex = new RuntimeException("upstream error")
+//                obs.onError(ex)
+//                throw ex
+//              case _ => ???
+//
+//            }
+//
+//          })
+//          .flatMap({ o =>
+//            o
+//              .out
+//              .transform(chunks)
+//          })
+//      )
+//  }
 
   val chunks : Observable[ByteString] => Observable[ByteString] = { o =>
     Observable
@@ -248,5 +256,161 @@ object DeepStream extends LazyLogging with LogTools {
         )
       )
   }
+
+//  def strict(
+//    next: ByteString => Future[FlatState]
+//  ) : Future[State] = {
+//    val subject = PublishToOneSubject[ByteString]()
+//
+//
+//    val connectable =
+//      ConnectableObservable(subject)
+//
+//    val s = State(
+//      subject,
+//      subject
+//        .foldLeftL(ByteString.empty)(_ ++ _)
+//        .runAsync
+//        .flatMap(next)
+//    )
+//
+//    subject
+//      .subscription
+//      .map(_ => s)
+//  }
+
+  def encode(bs: ByteString) : Observable[ByteString] = {
+    Observable.fromIterator {
+      val ci = bs
+        .grouped(MaxChunkSize)
+
+      new Iterator[ByteString] {
+        override def hasNext: Boolean = ci.hasNext
+        override def next(): ByteString = {
+          val c = ci.next()
+          if (ci.hasNext) {
+            ByteString(NonLast)
+          } else {
+            ByteString(Last)
+          } ++ c
+        }
+      }
+    }
+  }
+
+  def encode(bso: Observable[ByteString]) : Observable[ByteString] = {
+    bso
+      .flatMap({ bs =>
+        Observable
+          .fromIterator(bs.grouped(MaxChunkSize))
+          .map(c => ByteString(NonLast) ++ c)
+      }) ++ Observable(ByteString(Last))
+  }
+
+
+  case class FState(
+    observer: Observer[ByteString],
+    out: Option[Observable[ByteString]] = None
+  ) {
+    lazy val empty = out.map(_ => copy(out = None)).getOrElse(this)
+  }
+
+  def newFState(implicit
+    scheduler: Scheduler
+  ) = {
+    val subject = PublishToOneSubject[ByteString]()
+    val subscriber = Subscriber(subject, scheduler)
+    val buffered = CacheUntilConnectSubscriber(subscriber)
+    subject
+      .subscription
+      .foreach({ _ =>
+        buffered.connect()
+      })
+
+    FState(
+      buffered,
+      Some(subject)
+    )
+  }
+
+  def decoder(implicit
+    scheduler: Scheduler
+  ) : Observable[ByteString] => Observable[Observable[ByteString]] = { o =>
+
+    val start = newFState
+
+    import ByteStrings._
+
+    Observable
+      .concat(
+        Observable(start),
+        o
+          .onErrorHandle({ ex =>
+            logger.error(ex.getMessage, ex)
+            ByteString(Error)
+          })
+          .flatScan(
+            start.empty
+          )({ (fstate, elem) =>
+            val (head, data) = getByteHeader(elem)
+
+            val obs =
+              fstate
+                .observer
+
+            def send = {
+              obs
+                .onNext(
+                  data
+                )
+            }
+
+            head match {
+              case Last =>
+                Observable
+                  .fromFuture(
+                    send
+                      .map({ _ =>
+                        obs.onComplete()
+                        newFState
+                      })
+                  )
+              case NonLast =>
+                Observable
+                  .fromFuture(
+                    send
+                      .map({ _ =>
+                        fstate.empty
+                      })
+                  )
+              case Error =>
+                val ex = new RuntimeException("upstream error")
+                obs.onError(ex)
+                throw ex
+              case _ => ???
+
+            }
+
+          })
+      )
+      .asyncBoundary(OverflowStrategy.BackPressure(2))
+      .flatMap(o => Observable.fromIterable(o.out.toIterable))
+      .asyncBoundary(OverflowStrategy.BackPressure(2))
+
+  }
+
+  val concat : Consumer[ByteString, ByteString] = Consumer.foldLeft(ByteString.empty)(_ ++ _)
+
+
+  val strict : Observable[Observable[ByteString]] => Observable[ByteString] = { o =>
+    o
+      .flatMap({ bso =>
+        Observable
+          .fromTask(
+            bso.runWith(concat)
+          )
+      })
+  }
+
 
 }

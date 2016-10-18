@@ -59,7 +59,8 @@ object JarTree8Modules {
     JarTreeModules.Packaging,
     Protocol,
     mvn.`me.chrons:boopickle_2.11:jar:1.2.4`,
-    Toolbox6Modules.StateMachine
+    Toolbox6Modules.StateMachine,
+    Akka8Modules.StateMachine
   )
 
   object Installer extends ScalaModule(
