@@ -15,10 +15,10 @@ import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine
 import toolbox8.akka.statemachine.{AkkaStreamCoding, DeepStream}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
-import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{PlugRequest,  VerifyRequest, VerifyResponse}
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{PlugRequest, VerifyRequest, VerifyResponse}
 
 import scala.collection.immutable
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 //import monix.execution.Scheduler.Implicits.global
 
@@ -150,7 +150,7 @@ object JarTreeStandaloneClient {
     data: AkkaStreamCoding.Data
   )(implicit
     materializer: Materializer
-  ) : State = {
+  ) : Future[State] = {
     import materializer.executionContext
 
     val mfilesF =
@@ -191,13 +191,13 @@ object JarTreeStandaloneClient {
             )
         })
 
-    end(out)
+    Future.successful(end(out))
   }
 
   def end(out: Source[AkkaStreamCoding.Data, Any]) : State = {
     AkkaStreamCoding.StateMachine.State(
       out,
-      _ => StateMachine.End
+      _ => Future.successful(StateMachine.End)
     )
   }
 

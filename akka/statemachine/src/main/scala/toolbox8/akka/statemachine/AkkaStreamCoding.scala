@@ -229,7 +229,7 @@ object AkkaStreamCoding {
   object StateMachine {
 
     type StateOut = Source[Data, Any]
-    type Transition = Data => State
+    type Transition = Data => Future[State]
     case class State(
       out: StateOut = Source.empty,
       next: Transition
@@ -238,17 +238,18 @@ object AkkaStreamCoding {
     def flow(
       init: State
     ) : Flow[Data, Data, NotUsed] = {
-      Source
-        .un
+      import akka.stream.impl.fusing.Hacking._
+//      Source
+//        .un
 
       Flow[Data]
-        .scan(init)({ case (state, data) => state.next(data) })
+        .scanAsync(init)({ case (state, data) => state.next(data) })
         .flatMapConcat(_.out)
     }
 
     lazy val End : State = State(
       out = Source.maybe[Data],
-      next = _ => End
+      next = _ => Future.successful(End)
     )
 
 
@@ -259,14 +260,15 @@ object AkkaStreamCoding {
       steps match {
         case head +: tail =>
           { data =>
-            State(
-              head(data),
-              sequence(
-                tail,
-                andThen
+            Future.successful(
+              State(
+                head(data),
+                sequence(
+                  tail,
+                  andThen
+                )
               )
             )
-
           }
         case _ => // no more steps
           andThen

@@ -28,7 +28,7 @@ import toolbox8.akka.statemachine.AkkaStreamCoding
 import toolbox8.akka.statemachine.AkkaStreamCoding.Data
 import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine.StateOut
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
-import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{PutHeader, VerifyRequest, VerifyResponse}
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{VerifyRequest, VerifyResponse}
 import toolbox8.jartree.standaloneapi.Message.Header
 import toolbox8.jartree.util.VoidService
 
@@ -187,32 +187,33 @@ object JarTreeStandalone extends LazyLogging {
 
   def verifyRespone(
     out: StateOut,
-    ids: Future[Seq[String]]
+    idsF: Future[Seq[String]]
   )(implicit
     materializer: Materializer
-  ) : State = {
-    St
-    AkkaStreamCoding
-      .unpickle()
-
+  ) : Future[State] = {
+    import materializer.executionContext
     val promise = Promise[Management.Done.type]()
 
-    State(
-      out =
-        Source
-          .fromFuture(promise.future)
-          .map({ done =>
-            AkkaStreamCoding.pickle(done)
-          }),
-      next =
-        AkkaStreamCoding
-          .StateMachine
-          .sequence(
-            steps =
+    idsF
+      .map({ ids =>
+        State(
+          out =
+            Source
+              .fromFuture(promise.future)
+              .map({ done =>
+                AkkaStreamCoding.pickle(done)
+              }),
+          next =
+            AkkaStreamCoding
+              .StateMachine
+              .sequence(
+                steps =
+                  ids
 
 
-          )
-    )
+              )
+        )
+      })
 
 
   }
