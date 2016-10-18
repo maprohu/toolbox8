@@ -15,7 +15,7 @@ import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine
 import toolbox8.akka.statemachine.{AkkaStreamCoding, DeepStream}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
-import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{PlugRequest, PutHeader, VerifyRequest, VerifyResponse}
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{PlugRequest,  VerifyRequest, VerifyResponse}
 
 import scala.collection.immutable
 import scala.concurrent.Await
@@ -102,15 +102,9 @@ object JarTreeStandaloneClient {
 
   import boopickle.Default._
 
+  import AkkaStreamCoding.Implicits._
 
-  implicit class ByteBuffersOps(bbs: Iterable[ByteBuffer]) {
-    def asByteString : ByteString = {
-      bbs
-        .map(ByteString.apply)
-        .foldLeft(ByteString.empty)(_ ++ _)
-    }
 
-  }
 
   import AkkaStreamCoding.StateMachine.State
 
@@ -174,33 +168,27 @@ object JarTreeStandaloneClient {
           mfilesF
         )
         .mapConcat({ mfiles =>
-          immutable.Iterable(
-            Source.single(
-              Pickle
-                .intoByteBuffers(
-                  PutHeader(
-                    mfiles.map(_.length())
-                  )
-                )
-                .asByteString
+//          immutable.Iterable(
+//            Source.single(
+//              Pickle
+//                .intoByteBuffers(
+//                  PutHeader(
+//                    mfiles.map(_.length())
+//                  )
+//                )
+//                .asByteString
+//            )
+//          ) ++
+          mfiles
+            .map({ elem =>
+              FileIO.fromPath(elem.toPath)
+            }) :+
+            AkkaStreamCoding.pickle(
+              PlugRequest(
+                rmh.request[Management.Plugger],
+                Array.emptyByteArray
+              )
             )
-          ) ++
-            mfiles
-              .map({ elem =>
-                FileIO.fromPath(elem.toPath)
-              }) ++
-          immutable.Iterable(
-            Source.single(
-              Pickle
-                .intoByteBuffers(
-                  PlugRequest(
-                    rmh.request[Management.Plugger],
-                    Array.emptyByteArray
-                  )
-                )
-                .asByteString
-            )
-          )
         })
 
     end(out)

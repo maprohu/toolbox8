@@ -1,12 +1,12 @@
 package toolbox8.akka.statemachine
 
-import java.nio.ByteOrder
+import java.nio.{ByteBuffer, ByteOrder}
 
 import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.{BidiFlow, Flow, Framing, Source}
 import akka.util.ByteString
-import boopickle.Pickler
+import boopickle.{PickleState, Pickler}
 
 import scala.collection.immutable._
 import scala.concurrent.Future
@@ -74,6 +74,22 @@ object AkkaStreamCoding {
       .map({ bs =>
         Unpickle[T].fromBytes(bs.asByteBuffer)
       })
+  }
+
+  def pickle[T](
+    value: T
+  )(implicit
+    state: PickleState,
+    p: Pickler[T]
+  ) : Data = {
+    import boopickle.Default._
+    import Implicits._
+    Source.single(
+      asByteString(
+        Pickle(value)
+          .toByteBuffers
+      )
+    )
   }
 
   val framing = Framing.simpleFramingProtocol(Terminal.MaxChunkSize * 2)
@@ -181,7 +197,7 @@ object AkkaStreamCoding {
   object Multiplex {
 
     def flow(
-      flows: Flow[ByteString, ByteString, NotUsed]*
+      flows: Flow[ByteString, ByteString, Any]*
     ) : Flow[ByteString, ByteString, NotUsed] = {
       Flow[ByteString]
         .prepend(
@@ -212,14 +228,19 @@ object AkkaStreamCoding {
 
   object StateMachine {
 
+    type StateOut = Source[Data, Any]
+    type Transition = Data => State
     case class State(
-      out: Source[Data, Any],
-      next: Data => State
+      out: StateOut = Source.empty,
+      next: Transition
     )
 
     def flow(
       init: State
     ) : Flow[Data, Data, NotUsed] = {
+      Source
+        .un
+
       Flow[Data]
         .scan(init)({ case (state, data) => state.next(data) })
         .flatMapConcat(_.out)
@@ -231,6 +252,43 @@ object AkkaStreamCoding {
     )
 
 
+    def sequence(
+      steps: Seq[Data => StateOut],
+      andThen: Transition
+    ) : Transition = {
+      steps match {
+        case head +: tail =>
+          { data =>
+            State(
+              head(data),
+              sequence(
+                tail,
+                andThen
+              )
+            )
+
+          }
+        case _ => // no more steps
+          andThen
+      }
+
+    }
+
+
+
+  }
+
+  object Implicits {
+    def asByteString(bbs: collection.Iterable[ByteBuffer]) : ByteString = {
+      bbs
+        .map(ByteString.apply)
+        .foldLeft(ByteString.empty)(_ ++ _)
+    }
+    implicit class ByteBuffersOps(bbs: collection.Iterable[ByteBuffer]) {
+      def asByteString : ByteString = {
+        Implicits.asByteString(bbs)
+      }
+    }
   }
 
 }

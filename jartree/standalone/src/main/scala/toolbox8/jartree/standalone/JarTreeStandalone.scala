@@ -5,7 +5,7 @@ import java.nio.ByteBuffer
 import java.util
 
 import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Supervision}
+import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer, Supervision}
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source, Tcp}
 import akka.util.ByteString
 import com.typesafe.scalalogging.LazyLogging
@@ -16,7 +16,6 @@ import monix.reactive.observers.Subscriber
 import toolbox6.jartree.impl.{JarCache, JarTree, JarTreeBootstrap}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Message, PeerInfo, Service}
-import monix.execution.Scheduler.Implicits.global
 import org.reactivestreams.Processor
 import toolbox6.jartree.api.ClassRequest
 import toolbox6.jartree.impl.JarTreeBootstrap.Config
@@ -25,12 +24,17 @@ import toolbox6.jartree.wiring.{PlugRequestImpl, SimpleJarSocket}
 import toolbox6.javaapi.{AsyncCallback, AsyncValue}
 import toolbox6.javaimpl.JavaImpl
 import toolbox6.statemachine.State
+import toolbox8.akka.statemachine.AkkaStreamCoding
+import toolbox8.akka.statemachine.AkkaStreamCoding.Data
+import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine.StateOut
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{PutHeader, VerifyRequest, VerifyResponse}
 import toolbox8.jartree.standaloneapi.Message.Header
 import toolbox8.jartree.util.VoidService
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
+import scala.concurrent.{Future, Promise}
 
 /**
   * Created by martonpapp on 15/10/16.
@@ -46,19 +50,19 @@ object JarTreeStandalone extends LazyLogging {
   ) = {
     val rt = JarTreeBootstrap
       .init[Service, JarTreeStandaloneContext](
-        Config(
-          contextProvider = jarTree => new JarTreeStandaloneContext {
-            override def resolve[T](request: ClassRequest[T]): T = jarTree.resolve(request)
-          }:JarTreeStandaloneContext,
-          voidProcessor = VoidService,
-          name = name,
-          dataPath = s"/opt/${name}/data",
-          version = version,
-          embeddedJars = embeddedJars,
-          initialStartup = initialStartup,
-          runtimeVersion = JarTreeStandalone.getClass.getPackage.getImplementationVersion
-        )
+      Config(
+        contextProvider = jarTree => new JarTreeStandaloneContext {
+          override def resolve[T](request: ClassRequest[T]): T = jarTree.resolve(request)
+        }: JarTreeStandaloneContext,
+        voidProcessor = VoidService,
+        name = name,
+        dataPath = s"/opt/${name}/data",
+        version = version,
+        embeddedJars = embeddedJars,
+        initialStartup = initialStartup,
+        runtimeVersion = JarTreeStandalone.getClass.getPackage.getImplementationVersion
       )
+    )
 
 
     implicit val actorSystem = ActorSystem()
@@ -94,7 +98,126 @@ object JarTreeStandalone extends LazyLogging {
           })
       })
       .toMat(
-        ???
+        Sink.foreach({
+          case (peerFlow, dataProc) =>
+            val management = createManagement(
+              rt.jarTree
+            )
+            val data : Flow[ByteString, ByteString, Any] = Flow[ByteString]
+
+            peerFlow
+              .join(AkkaStreamCoding.framing.reversed)
+              .join(
+                AkkaStreamCoding
+                  .Multiplex
+                  .flow(
+                    management,
+                    data
+                  )
+              )
+              .run()
+        })
+      )(Keep.left)
+      .run()
+      .onComplete(println)
+  }
+
+  import AkkaStreamCoding.StateMachine.State
+  import boopickle.Default._
+  import AkkaStreamCoding.Implicits._
+
+  def createManagement(
+    jarTree: JarTree
+  ) : Flow[ByteString, ByteString, Any] = {
+    AkkaStreamCoding
+      .Terminal
+      .bidi
+      .join(
+        AkkaStreamCoding
+          .StateMachine
+          .flow(
+            start(
+              jarTree
+            )
+          )
+      )
+
+  }
+
+  def start(
+    jarTree: JarTree
+  )(implicit
+    materializer: Materializer
+  ) : State = {
+    import materializer.executionContext
+    State(
+      next = { data =>
+        val missingf = AkkaStreamCoding
+           .unpickle[VerifyRequest](data)
+            .map({ vq =>
+              vq
+                .ids
+                .zipWithIndex
+                .filter({
+                  case (id, idx) if !jarTree.cache.contains(id) => true
+                  case _ => false
+                })
+                .unzip
+            })
+
+        val out =
+          Source
+            .fromFuture(missingf)
+            .map({
+              case (ids, idxs) =>
+                AkkaStreamCoding.pickle(
+                  VerifyResponse(
+                    missing = idxs
+                  )
+                )
+            })
+
+        verifyRespone(
+          out,
+          missingf.map({ case (ids, idxs) => ids })
+        )
+      }
+    )
+  }
+
+  def verifyRespone(
+    out: StateOut,
+    ids: Future[Seq[String]]
+  )(implicit
+    materializer: Materializer
+  ) : State = {
+    St
+    AkkaStreamCoding
+      .unpickle()
+
+    val promise = Promise[Management.Done.type]()
+
+    State(
+      out =
+        Source
+          .fromFuture(promise.future)
+          .map({ done =>
+            AkkaStreamCoding.pickle(done)
+          }),
+      next =
+        AkkaStreamCoding
+          .StateMachine
+          .sequence(
+            steps =
+
+
+          )
+    )
+
+
+  }
+
+
 //        Sink.foreach({
 //          case (peerFlow, dataProc) =>
 //            val management = createManagement(
@@ -183,11 +306,6 @@ object JarTreeStandalone extends LazyLogging {
 //              )
 //
 //        })
-      )(Keep.both)
-      .run()
-
-
-  }
 
 //  def createManagement(
 //    jarTree: JarTree,

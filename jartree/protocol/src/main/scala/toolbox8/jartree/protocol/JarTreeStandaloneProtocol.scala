@@ -4,6 +4,7 @@ import akka.stream.scaladsl.Framing
 import toolbox6.jartree.api.JarPlugger
 import toolbox6.jartree.util.ClassRequestImpl
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Service}
+import scala.collection.immutable._
 
 
 object JarTreeStandaloneProtocol {
@@ -21,9 +22,9 @@ object JarTreeStandaloneProtocol {
       missing: Seq[Int]
     )
 
-    final case class PutHeader(
-      sizes: Seq[Long]
-    )
+//    final case class PutHeader(
+//      sizes: Seq[Long]
+//    )
 
     final case class PlugRequest(
       classRequest: ClassRequestImpl[Plugger],
