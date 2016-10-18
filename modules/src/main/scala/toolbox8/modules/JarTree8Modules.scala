@@ -16,7 +16,8 @@ object JarTree8Modules {
     mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`,
     mvn.`io.monix:monix_2.11:jar:2.0.4`,
     StandaloneApi,
-    JarTreeModules.Util
+    JarTreeModules.Util,
+    Akka8Modules.StateMachine
   )
 
   object StandaloneApi extends ScalaModule(

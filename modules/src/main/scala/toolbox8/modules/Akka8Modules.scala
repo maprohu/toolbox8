@@ -15,7 +15,9 @@ object Akka8Modules {
     "statemachine",
     Toolbox6Modules.StateMachine,
     mvn.`com.typesafe.akka:akka-actor_2.11:jar:2.4.11`,
-    Toolbox6Modules.Logging
+    Toolbox6Modules.Logging,
+    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`,
+    mvn.`me.chrons:boopickle_2.11:jar:1.2.4`
 
   )
 

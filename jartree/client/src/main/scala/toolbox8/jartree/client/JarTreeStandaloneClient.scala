@@ -3,23 +3,21 @@ package toolbox8.jartree.client
 import java.io.File
 import java.nio.ByteBuffer
 
+import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.stream.scaladsl.{FileIO, Flow, Keep, Sink, Source, Tcp}
 import akka.util.ByteString
 import maven.modules.builder.NamedModule
-import monix.execution.Cancelable
-import monix.reactive.Observable
-import monix.reactive.subjects.PublishToOneSubject
-import org.reactivestreams.{Processor, Publisher, Subscriber, Subscription}
-import toolbox6.jartree.client.JarTreeClient
 import toolbox6.jartree.packaging.JarTreePackaging
 import toolbox6.jartree.packaging.JarTreePackaging.{RunHierarchy, RunMavenHierarchy}
-import toolbox8.akka.statemachine.DeepStream
-import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.{Framing, Management}
-import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{PlugRequest, PutHeader, VerifyRequest, VerifyResponse}
+import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine
+import toolbox8.akka.statemachine.{AkkaStreamCoding, DeepStream}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{PlugRequest, PutHeader, VerifyRequest, VerifyResponse}
 
+import scala.collection.immutable
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 //import monix.execution.Scheduler.Implicits.global
@@ -28,6 +26,8 @@ import scala.concurrent.duration.Duration
   * Created by martonpapp on 16/10/16.
   */
 object JarTreeStandaloneClient {
+
+  type ByteFlow = Flow[ByteString, ByteString, NotUsed]
 
   def run(
     host: String,
@@ -38,6 +38,7 @@ object JarTreeStandaloneClient {
 
     implicit val actorSystem = ActorSystem()
     implicit val materializer = ActorMaterializer()
+    import actorSystem.dispatcher
 
     val peer =
       Tcp()
@@ -46,66 +47,61 @@ object JarTreeStandaloneClient {
           port
         )
 
-    val flow =
-      Flow
-        .fromSinkAndSourceMat(
-          Sink.asPublisher[ByteString](false),
-          Source.asSubscriber[ByteString]
-        )(Keep.both)
+//    val flow =
+//      Flow
+//        .fromSinkAndSourceMat(
+//          Sink.asPublisher[ByteString](false),
+//          Source.asSubscriber[ByteString]
+//        )(Keep.both)
 
-    val (pub, sub) =
+
+    val management : ByteFlow = managementFlow(
+      runHierarchy,
+      target
+    )
+    val data : ByteFlow =
+      Flow.fromSinkAndSource(
+        Sink.ignore,
+        Source.maybe
+      )
+
       peer
         .join(
-          Framing.Akka.reversed
+          AkkaStreamCoding.framing.reversed
         )
-        .joinMat(
-          flow
-        )(Keep.right)
+        .join(
+          AkkaStreamCoding.Multiplex.flow(
+            management,
+            data
+          )
+        )
         .run()
+        .onComplete(println)
 
-    process(pub, sub, runHierarchy, target)
   }
 
-
-
-  def process(
-    pub: Publisher[ByteString],
-    sub: Subscriber[ByteString],
+  def managementFlow(
     runHierarchy: RunHierarchy,
     target: NamedModule
   )(implicit
     materializer: Materializer
-  ) = {
-    import monix.execution.Scheduler.Implicits.global
+  )  : ByteFlow = {
 
-
-
-    val Header = ByteString(Management.Header.toByte)
-
-    val init =
-      start(runHierarchy, target)
-
-    Observable
-      .fromReactivePublisher(pub)
-      .map({ bs =>
-        require(bs(0) == Management.Header)
-        bs.tail
-      })
-      .transform(DeepStream.decoder)
-      .transform(init.transformer)
-      .map(bs => Header ++ bs)
-      .dump("x")
-      .subscribe(
-        monix.reactive.observers.Subscriber.fromReactiveSubscriber(
-          sub,
-          Cancelable.empty
-        )
+    AkkaStreamCoding
+      .Terminal
+      .bidi
+      .join(
+        AkkaStreamCoding
+          .StateMachine
+          .flow(
+            start(runHierarchy, target)
+          )
       )
-
 
   }
 
   import boopickle.Default._
+
 
   implicit class ByteBuffersOps(bbs: Iterable[ByteBuffer]) {
     def asByteString : ByteString = {
@@ -116,13 +112,7 @@ object JarTreeStandaloneClient {
 
   }
 
-  type State = toolbox6.statemachine.State[ByteString, ByteString]
-  def State(
-    out: Observable[ByteString] = Observable.empty,
-    fn: ByteString => State
-  ) = {
-    toolbox6.statemachine.State[ByteString, ByteString](out, fn)
-  }
+  import AkkaStreamCoding.StateMachine.State
 
   def start(
     runHierarchy: RunHierarchy,
@@ -141,19 +131,21 @@ object JarTreeStandaloneClient {
     val jars = JarTreePackaging.resolverJarsFile(rmh)
 
     val first =
-      Observable(
-        Pickle
-          .intoByteBuffers(
-            VerifyRequest(
-              ids = jars.map(_._1)
+      Source.single(
+        Source.single(
+          Pickle
+            .intoByteBuffers(
+              VerifyRequest(
+                ids = jars.map(_._1)
+              )
             )
-          )
-          .asByteString
+            .asByteString
+        )
       )
 
     State(
       out = first,
-      fn = verifying(rmh, jars.map(_._2))
+      next = verifying(rmh, jars.map(_._2))
     )
   }
 
@@ -161,60 +153,64 @@ object JarTreeStandaloneClient {
     rmh: RunMavenHierarchy,
     files: IndexedSeq[File]
   )(
-    bs: ByteString
+    data: AkkaStreamCoding.Data
   )(implicit
     materializer: Materializer
   ) : State = {
-    val res = Unpickle[VerifyResponse].fromBytes(bs.asByteBuffer)
+    import materializer.executionContext
 
-    val mfiles =
-      res
-        .missing
-        .map(files)
+    val mfilesF =
+      AkkaStreamCoding
+        .unpickle[VerifyResponse](data)
+        .map({ res =>
+            res
+              .missing
+              .map(files)
+        })
 
-    val out = Observable.concat(
-      Observable(
-        Pickle
-          .intoByteBuffers(
-            PutHeader(
-              mfiles
-                .map(_.length())
+    val out =
+      Source
+        .fromFuture(
+          mfilesF
+        )
+        .mapConcat({ mfiles =>
+          immutable.Iterable(
+            Source.single(
+              Pickle
+                .intoByteBuffers(
+                  PutHeader(
+                    mfiles.map(_.length())
+                  )
+                )
+                .asByteString
+            )
+          ) ++
+            mfiles
+              .map({ elem =>
+                FileIO.fromPath(elem.toPath)
+              }) ++
+          immutable.Iterable(
+            Source.single(
+              Pickle
+                .intoByteBuffers(
+                  PlugRequest(
+                    rmh.request[Management.Plugger],
+                    Array.emptyByteArray
+                  )
+                )
+                .asByteString
             )
           )
-          .asByteString
-      ),
-      Observable
-        .fromIterable(mfiles)
-        .concatMap({ f =>
-          Observable
-            .fromReactivePublisher(
-              FileIO
-                .fromPath(
-                  f.toPath,
-                  JarTreeStandaloneProtocol.Framing.MaxSize - 100
-                )
-                .runWith(
-                  Sink.asPublisher(false)
-                )
-            )
-        }),
-      Observable(
-        Pickle
-          .intoByteBuffers(
-            PlugRequest(
-              rmh.request[Management.Plugger],
-              Array.emptyByteArray
-            )
-          )
-          .asByteString
-      )
-    )
+        })
 
     end(out)
   }
 
-  def end(out: Observable[ByteString]) : State = {
-    toolbox6.statemachine.State.end(out)
+  def end(out: Source[AkkaStreamCoding.Data, Any]) : State = {
+    AkkaStreamCoding.StateMachine.State(
+      out,
+      _ => StateMachine.End
+    )
   }
 
 

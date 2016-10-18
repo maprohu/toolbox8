@@ -15,7 +15,6 @@ import monix.reactive.Observable
 import monix.reactive.observers.Subscriber
 import toolbox6.jartree.impl.{JarCache, JarTree, JarTreeBootstrap}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
-import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.{Management, Multiplex}
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Message, PeerInfo, Service}
 import monix.execution.Scheduler.Implicits.global
 import org.reactivestreams.Processor
@@ -95,174 +94,175 @@ object JarTreeStandalone extends LazyLogging {
           })
       })
       .toMat(
-        Sink.foreach({
-          case (peerFlow, dataProc) =>
-            val management = createManagement(
-              rt.jarTree.cache
-            )
-
-
-            val data = Multiplex.Layer(
-              headerCount = 0,
-              flow = { o =>
-                val out =
-                  Observable
-                    .fromReactivePublisher(
-                      dataProc
-                    )
-                    .map({ m =>
-                      Multiplex.Message(
-                        header = m.header(),
-                        data =
-                          m
-                            .data()
-                            .foldLeft(
-                              ByteString.empty
-                            )({ (bs, bb) =>
-                              bs ++ ByteString.fromByteBuffer(bb)
-                            })
-                      )
-                    })
-
-                o
-                  .map({ m =>
-                    new Message {
-                      override def data(): util.Enumeration[ByteBuffer] = {
-                        m
-                          .data
-                          .asByteBuffers
-                          .iterator
-                      }
-                      override def header(): Header = m.header.toByte
-                    }
-                  })
-                  .subscribe(
-                    Subscriber
-                      .fromReactiveSubscriber(
-                        dataProc,
-                        Cancelable.empty
-                      )
-                  )
-
-                out
-              }
-            )
-
-
-            val (pub, sub) =
-              peerFlow
-                .join(
-                  JarTreeStandaloneProtocol.Framing.Akka.reversed
-                )
-                .joinMat(
-                  Flow
-                    .fromSinkAndSourceMat(
-                      Sink.asPublisher[ByteString](false),
-                      Source.asSubscriber[ByteString]
-                    )(Keep.both)
-                )(Keep.right)
-                .run()
-
-            Observable
-              .fromReactivePublisher(pub)
-              .transform(
-                JarTreeStandaloneProtocol
-                  .Multiplex
-                  .connect(
-                    Seq(
-                      management,
-                      data
-                    )
-                  )
-              )
-              .subscribe(
-                Subscriber.fromReactiveSubscriber(
-                  sub,
-                  Cancelable.empty
-                )
-              )
-
-        })
+        ???
+//        Sink.foreach({
+//          case (peerFlow, dataProc) =>
+//            val management = createManagement(
+//              rt.jarTree.cache
+//            )
+//
+//
+//            val data = Multiplex.Layer(
+//              headerCount = 0,
+//              flow = { o =>
+//                val out =
+//                  Observable
+//                    .fromReactivePublisher(
+//                      dataProc
+//                    )
+//                    .map({ m =>
+//                      Multiplex.Message(
+//                        header = m.header(),
+//                        data =
+//                          m
+//                            .data()
+//                            .foldLeft(
+//                              ByteString.empty
+//                            )({ (bs, bb) =>
+//                              bs ++ ByteString.fromByteBuffer(bb)
+//                            })
+//                      )
+//                    })
+//
+//                o
+//                  .map({ m =>
+//                    new Message {
+//                      override def data(): util.Enumeration[ByteBuffer] = {
+//                        m
+//                          .data
+//                          .asByteBuffers
+//                          .iterator
+//                      }
+//                      override def header(): Header = m.header.toByte
+//                    }
+//                  })
+//                  .subscribe(
+//                    Subscriber
+//                      .fromReactiveSubscriber(
+//                        dataProc,
+//                        Cancelable.empty
+//                      )
+//                  )
+//
+//                out
+//              }
+//            )
+//
+//
+//            val (pub, sub) =
+//              peerFlow
+//                .join(
+//                  JarTreeStandaloneProtocol.Framing.Akka.reversed
+//                )
+//                .joinMat(
+//                  Flow
+//                    .fromSinkAndSourceMat(
+//                      Sink.asPublisher[ByteString](false),
+//                      Source.asSubscriber[ByteString]
+//                    )(Keep.both)
+//                )(Keep.right)
+//                .run()
+//
+//            Observable
+//              .fromReactivePublisher(pub)
+//              .transform(
+//                JarTreeStandaloneProtocol
+//                  .Multiplex
+//                  .connect(
+//                    Seq(
+//                      management,
+//                      data
+//                    )
+//                  )
+//              )
+//              .subscribe(
+//                Subscriber.fromReactiveSubscriber(
+//                  sub,
+//                  Cancelable.empty
+//                )
+//              )
+//
+//        })
       )(Keep.both)
       .run()
 
 
   }
 
-  def createManagement(
-    jarTree: JarTree,
-    socket: SimpleJarSocket[Service, JarTreeStandaloneContext]
-  ) = {
-    val jarCache = jarTree.cache
-    import boopickle.Default._
-    import toolbox8.akka.statemachine.ByteStringState._
-
-    val init = stateAsync(
-      fn = { bs =>
-        val vq = Unpickle[VerifyRequest].fromBytes(bs.asByteBuffer)
-
-        logger.info(s"verifying: ${vq.ids.mkString(", ")}")
-
-        val (missingId, missingIdx) =
-          vq
-            .ids
-            .zipWithIndex
-            .filter({
-              case (id, idx) if !jarCache.contains(id) => true
-              case _ => false
-            })
-            .unzip
-
-        val vro =
-          Observable(
-            ByteString.fromByteBuffer(
-              Pickle.intoBytes(
-                VerifyResponse(
-                  missingIdx
-                )
-              )
-            )
-          )
-
-        def plug = Task {
-
-        }
-
-        if (missingId.isEmpty) {
-          // plug now
-          ???
-
-        } else {
-          Task.now(
-            stateAsync(
-              vro,
-              { bs =>
-                val ph = Unpickle[PutHeader].fromBytes(bs.asByteBuffer)
-                missingId
-                  .zip(ph.sizes)
-                  .foldRight(ByteStringState)
-
-
-
-                ???
-              }
-
-            )
-
-          )
-        }
-
-      }
-    )
-
-    Management
-      .layer { o =>
-        o
-          .dump("mgmt")
-          .transform(init.transformer)
-      }
-
-  }
+//  def createManagement(
+//    jarTree: JarTree,
+//    socket: SimpleJarSocket[Service, JarTreeStandaloneContext]
+//  ) = {
+//    val jarCache = jarTree.cache
+//    import boopickle.Default._
+//    import toolbox8.akka.statemachine.ByteStringState._
+//
+//    val init = stateAsync(
+//      fn = { bs =>
+//        val vq = Unpickle[VerifyRequest].fromBytes(bs.asByteBuffer)
+//
+//        logger.info(s"verifying: ${vq.ids.mkString(", ")}")
+//
+//        val (missingId, missingIdx) =
+//          vq
+//            .ids
+//            .zipWithIndex
+//            .filter({
+//              case (id, idx) if !jarCache.contains(id) => true
+//              case _ => false
+//            })
+//            .unzip
+//
+//        val vro =
+//          Observable(
+//            ByteString.fromByteBuffer(
+//              Pickle.intoBytes(
+//                VerifyResponse(
+//                  missingIdx
+//                )
+//              )
+//            )
+//          )
+//
+//        def plug = Task {
+//
+//        }
+//
+//        if (missingId.isEmpty) {
+//          // plug now
+//          ???
+//
+//        } else {
+//          Task.now(
+//            stateAsync(
+//              vro,
+//              { bs =>
+//                val ph = Unpickle[PutHeader].fromBytes(bs.asByteBuffer)
+//                missingId
+//                  .zip(ph.sizes)
+//                  .foldRight(ByteStringState)
+//
+//
+//
+//                ???
+//              }
+//
+//            )
+//
+//          )
+//        }
+//
+//      }
+//    )
+//
+//    Management
+//      .layer { o =>
+//        o
+//          .dump("mgmt")
+//          .transform(init.transformer)
+//      }
+//
+//  }
 
 
 
