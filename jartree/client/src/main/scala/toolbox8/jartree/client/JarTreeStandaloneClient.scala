@@ -204,15 +204,4 @@ object JarTreeStandaloneClient extends LazyLogging {
     )
   }
 
-//  def end(out: Source[AkkaStreamCoding.Data, Any]) : State = {
-//    AkkaStreamCoding.StateMachine.State(
-//      out,
-//      _ => Future.successful(StateMachine.End)
-//    )
-//  }
-
-
-
-
-
 }
