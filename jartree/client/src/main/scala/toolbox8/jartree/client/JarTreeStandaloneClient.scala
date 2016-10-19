@@ -1,7 +1,6 @@
 package toolbox8.jartree.client
 
 import java.io.File
-import java.nio.ByteBuffer
 
 import akka.NotUsed
 import akka.actor.ActorSystem
@@ -14,14 +13,10 @@ import toolbox6.jartree.packaging.JarTreePackaging
 import toolbox6.jartree.packaging.JarTreePackaging.{RunHierarchy, RunMavenHierarchy}
 import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine
 import toolbox8.akka.statemachine.{AkkaStreamCoding, DeepStream}
-import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{Plug, VerifyRequest, VerifyResponse}
 
-import scala.collection.immutable
 import scala.concurrent.{Await, Future}
-import scala.concurrent.duration.Duration
-//import monix.execution.Scheduler.Implicits.global
 
 /**
   * Created by martonpapp on 16/10/16.
