@@ -254,22 +254,45 @@ object AkkaStreamCoding {
 
 
     def sequence(
-      steps: Seq[Data => StateOut],
-      andThen: Transition
-    ) : Transition = {
+      data: Data,
+      steps: Seq[Data => Future[StateOut]],
+      andThen: Data => Future[State]
+    ) : Future[State] = {
       steps match {
         case head +: tail =>
-          { data =>
-            Future.successful(
-              State(
-                head(data),
+          head(data).map( d =>
+            State(
+              d,
+              { d2 =>
                 sequence(
+                  d2,
                   tail,
                   andThen
                 )
-              )
+              }
             )
-          }
+          )
+        case _ => // no more steps
+          andThen(data)
+      }
+    }
+
+    def sequenceIn(
+      steps: Seq[Data => Future[Unit]],
+      andThen: => Future[State]
+    ) : Future[State] = {
+      steps match {
+        case head +: tail =>
+          Future.successful(
+            State(
+              next = { data =>
+                head(data)
+                  .flatMap({ _ =>
+                    sequenceIn(tail, andThen)
+                  })
+              }
+            )
+          )
         case _ => // no more steps
           andThen
       }

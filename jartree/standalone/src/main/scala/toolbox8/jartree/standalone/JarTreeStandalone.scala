@@ -2,11 +2,12 @@ package toolbox8.jartree.standalone
 
 import java.io.InputStream
 import java.nio.ByteBuffer
+import java.nio.file.Path
 import java.util
 
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer, Supervision}
-import akka.stream.scaladsl.{Flow, Keep, Sink, Source, Tcp}
+import akka.stream.scaladsl.{FileIO, Flow, Keep, Sink, Source, Tcp}
 import akka.util.ByteString
 import com.typesafe.scalalogging.LazyLogging
 import monix.eval.Task
@@ -17,7 +18,7 @@ import toolbox6.jartree.impl.{JarCache, JarTree, JarTreeBootstrap}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Message, PeerInfo, Service}
 import org.reactivestreams.Processor
-import toolbox6.jartree.api.ClassRequest
+import toolbox6.jartree.api.{ClassRequest, JarPlugger}
 import toolbox6.jartree.impl.JarTreeBootstrap.Config
 import toolbox6.jartree.util.CaseJarKey
 import toolbox6.jartree.wiring.{PlugRequestImpl, SimpleJarSocket}
@@ -28,13 +29,14 @@ import toolbox8.akka.statemachine.AkkaStreamCoding
 import toolbox8.akka.statemachine.AkkaStreamCoding.Data
 import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine.StateOut
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
-import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{VerifyRequest, VerifyResponse}
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{Plug, VerifyRequest, VerifyResponse}
 import toolbox8.jartree.standaloneapi.Message.Header
 import toolbox8.jartree.util.VoidService
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.concurrent.{Future, Promise}
+import scala.collection.immutable._
 
 /**
   * Created by martonpapp on 15/10/16.
@@ -52,7 +54,7 @@ object JarTreeStandalone extends LazyLogging {
       .init[Service, JarTreeStandaloneContext](
       Config(
         contextProvider = jarTree => new JarTreeStandaloneContext {
-          override def resolve[T](request: ClassRequest[T]): T = jarTree.resolve(request)
+          override def resolveAsync[T](request: ClassRequest[T]): AsyncValue[T] = jarTree.resolveAsync(request)
         }: JarTreeStandaloneContext,
         voidProcessor = VoidService,
         name = name,
@@ -84,7 +86,7 @@ object JarTreeStandalone extends LazyLogging {
       .mapAsync(1)({ incoming =>
         logger.info("incoming: {}", incoming.remoteAddress)
         JavaImpl
-          .wrap(
+          .unwrapFunction(
             rt
               .processorSocket
               .get()
@@ -179,7 +181,8 @@ object JarTreeStandalone extends LazyLogging {
 
         verifyRespone(
           out,
-          missingf.map({ case (ids, idxs) => ids })
+          missingf.map({ case (ids, idxs) => ids }),
+          jarTree
         )
       }
     )
@@ -187,34 +190,77 @@ object JarTreeStandalone extends LazyLogging {
 
   def verifyRespone(
     out: StateOut,
-    idsF: Future[Seq[String]]
+    missingIdsF: Future[Seq[String]],
+    jarTree: JarTree,
+    socket: SimpleJarSocket[Service, JarTreeStandaloneContext]
   )(implicit
     materializer: Materializer
   ) : Future[State] = {
     import materializer.executionContext
-    val promise = Promise[Management.Done.type]()
 
-    idsF
-      .map({ ids =>
-        State(
-          out =
-            Source
-              .fromFuture(promise.future)
-              .map({ done =>
-                AkkaStreamCoding.pickle(done)
-              }),
-          next =
-            AkkaStreamCoding
-              .StateMachine
-              .sequence(
-                steps =
-                  ids
-
-
+    missingIdsF
+      .flatMap({ ids =>
+        AkkaStreamCoding
+          .StateMachine
+          .sequenceIn(
+            steps =
+              ids
+                .map({ id =>
+                  { data:Data =>
+                    for {
+                      file <- jarTree.cache.getAsync(id)
+                      _ <- {
+                        data
+                          .runWith(
+                            FileIO
+                              .toPath(file.toPath)
+                          )
+                      }
+                    } yield {
+                      ()
+                    }
+                  }
+                }),
+            andThen = {
+              Future.successful(
+                waitPlug
               )
-        )
+            }
+          )
       })
 
+
+  }
+
+  def waitPlug(
+    jarTree: JarTree,
+    socket: SimpleJarSocket[Service, JarTreeStandaloneContext]
+  ) : State = {
+    State(
+      next = { data =>
+        for {
+          plug <-
+            AkkaStreamCoding
+              .unpickle[Plug](data)
+          inst <- {
+            jarTree.resolve(
+              plug.classRequest
+            )
+          }
+        } yield {
+          socket.plug(
+            PlugRequestImpl(
+
+            )
+
+          )
+
+        }
+          .flatMap({ p =>
+
+          })
+      }
+    )
 
   }
 

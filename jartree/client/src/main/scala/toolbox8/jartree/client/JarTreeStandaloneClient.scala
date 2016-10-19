@@ -15,7 +15,7 @@ import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine
 import toolbox8.akka.statemachine.{AkkaStreamCoding, DeepStream}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
-import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{PlugRequest, VerifyRequest, VerifyResponse}
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{Plug, VerifyRequest, VerifyResponse}
 
 import scala.collection.immutable
 import scala.concurrent.{Await, Future}
@@ -184,7 +184,7 @@ object JarTreeStandaloneClient {
               FileIO.fromPath(elem.toPath)
             }) :+
             AkkaStreamCoding.pickle(
-              PlugRequest(
+              Plug(
                 rmh.request[Management.Plugger],
                 Array.emptyByteArray
               )
