@@ -14,7 +14,7 @@ import monix.execution.Scheduler.Implicits.global
 
 object VoidService extends VoidService
 class VoidService extends Service {
-  override def update(param: Array[Header]): Unit = ()
+//  override def update(param: Array[Header]): Unit = ()
   override def apply(input: PeerInfo): AsyncValue[Processor[Message, Message]] = {
     JavaImpl
       .asyncSuccess(
@@ -33,4 +33,6 @@ class VoidService extends Service {
   }
 
   override def close(): Unit = ()
+
+  override def updateAsync(param: Array[Header]): AsyncValue[Unit] = JavaImpl.asyncSuccess()
 }

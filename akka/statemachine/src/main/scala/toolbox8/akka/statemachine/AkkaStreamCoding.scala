@@ -9,7 +9,7 @@ import akka.util.ByteString
 import boopickle.{PickleState, Pickler}
 
 import scala.collection.immutable._
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Created by pappmar on 18/10/2016.
@@ -257,6 +257,8 @@ object AkkaStreamCoding {
       data: Data,
       steps: Seq[Data => Future[StateOut]],
       andThen: Data => Future[State]
+    )(implicit
+      executionContext: ExecutionContext
     ) : Future[State] = {
       steps match {
         case head +: tail =>
@@ -280,6 +282,8 @@ object AkkaStreamCoding {
     def sequenceIn(
       steps: Seq[Data => Future[Unit]],
       andThen: => Future[State]
+    )(implicit
+      executionContext: ExecutionContext
     ) : Future[State] = {
       steps match {
         case head +: tail =>

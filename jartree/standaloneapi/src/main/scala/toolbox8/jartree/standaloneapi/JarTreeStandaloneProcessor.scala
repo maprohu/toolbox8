@@ -4,7 +4,7 @@ import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 
 import org.reactivestreams.{Processor, Subscriber}
-import toolbox6.jartree.api.{Closable, InstanceResolver, JarUpdatable}
+import toolbox6.jartree.api.{InstanceResolver, JarUpdatable}
 import toolbox6.javaapi.AsyncFunction
 
 object Message {
@@ -20,8 +20,9 @@ trait Message {
 
 trait Service
   extends JarUpdatable
-  with Closable
-  with AsyncFunction[PeerInfo, Processor[Message, Message]]
+  with AsyncFunction[PeerInfo, Processor[Message, Message]] {
+  def close() : Unit
+}
 
 
 trait PeerInfo {
