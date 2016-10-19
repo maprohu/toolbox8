@@ -23,9 +23,9 @@ class EchoPlugger
 //  }
   override def pullAsync(previous: Service, param: Array[Byte], context: JarTreeStandaloneContext): AsyncValue[JarPlugResponse[Service]] = {
     JavaImpl.asyncSuccess(
-      JarTreeTools.closableResponse[EchoService](
+      JarTreeTools.andThenResponse(
         new EchoService,
-        previous
+        () => previous.close()
       )
     )
   }
