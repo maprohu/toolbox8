@@ -14,8 +14,9 @@
         </plugins>
     </build>
     <modules>
+        <module>rpi</module>
         <module>jartree</module>
         <module>akka</module>
-        <module>rpi</module>
+        <module>dummy</module>
     </modules>
 </project>

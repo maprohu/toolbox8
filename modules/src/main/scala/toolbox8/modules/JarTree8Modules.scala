@@ -67,11 +67,14 @@ object JarTree8Modules {
 
   object Installer extends ScalaModule(
     "installer",
-    mvn.`com.lihaoyi:ammonite-ops_2.11:jar:0.7.7`
+    mvn.`com.lihaoyi:ammonite-ops_2.11:jar:0.7.7`,
+    Toolbox8Modules,
+    Packaging
   )
 
   object Packaging extends ScalaModule(
-    "packaging"
+    "packaging",
+    JarTreeModules.Packaging
   )
 
 

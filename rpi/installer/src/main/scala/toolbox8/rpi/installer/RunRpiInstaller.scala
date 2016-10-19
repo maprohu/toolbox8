@@ -1,6 +1,6 @@
-package toolbox8.rpi
+package toolbox8.rpi.installer
 
-import toolbox8.rpi.RpiInstaller.Config
+import toolbox8.rpi.installer.RpiInstaller.Config
 
 /**
   * Created by martonpapp on 15/10/16.
