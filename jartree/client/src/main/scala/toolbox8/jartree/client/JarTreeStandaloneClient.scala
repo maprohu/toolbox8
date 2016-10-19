@@ -8,6 +8,7 @@ import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.stream.scaladsl.{FileIO, Flow, Keep, Sink, Source, Tcp}
 import akka.util.ByteString
+import com.typesafe.scalalogging.LazyLogging
 import maven.modules.builder.NamedModule
 import toolbox6.jartree.packaging.JarTreePackaging
 import toolbox6.jartree.packaging.JarTreePackaging.{RunHierarchy, RunMavenHierarchy}
@@ -25,7 +26,7 @@ import scala.concurrent.duration.Duration
 /**
   * Created by martonpapp on 16/10/16.
   */
-object JarTreeStandaloneClient {
+object JarTreeStandaloneClient extends LazyLogging {
 
   type ByteFlow = Flow[ByteString, ByteString, NotUsed]
 
@@ -122,7 +123,9 @@ object JarTreeStandaloneClient {
           )
         )
 
+    logger.info(s"updating to: ${rmh.toString}")
     val jars = JarTreePackaging.resolverJarsFile(rmh)
+    logger.info(s"required jars: ${jars.map(_._1).mkString(", ")}")
 
     val first =
       Source.single(
@@ -139,13 +142,13 @@ object JarTreeStandaloneClient {
 
     State(
       out = first,
-      next = verifying(rmh, jars.map(_._2))
+      next = verifying(rmh, jars)
     )
   }
 
   def verifying(
     rmh: RunMavenHierarchy,
-    files: IndexedSeq[File]
+    files: IndexedSeq[(String, File)]
   )(
     data: AkkaStreamCoding.Data
   )(implicit
@@ -157,9 +160,14 @@ object JarTreeStandaloneClient {
       AkkaStreamCoding
         .unpickle[VerifyResponse](data)
         .map({ res =>
-            res
-              .missing
-              .map(files)
+            val (ids, fs) =
+              res
+                .missing
+                .map(files)
+                .unzip
+
+          logger.info(s"missing jars: ${ids.mkString(", ")}")
+          fs
         })
 
     val out =
@@ -168,17 +176,7 @@ object JarTreeStandaloneClient {
           mfilesF
         )
         .mapConcat({ mfiles =>
-//          immutable.Iterable(
-//            Source.single(
-//              Pickle
-//                .intoByteBuffers(
-//                  PutHeader(
-//                    mfiles.map(_.length())
-//                  )
-//                )
-//                .asByteString
-//            )
-//          ) ++
+          logger.info(s"uploading files: ${mfiles.mkString(", ")}")
           mfiles
             .map({ elem =>
               FileIO.fromPath(elem.toPath)
@@ -191,15 +189,27 @@ object JarTreeStandaloneClient {
             )
         })
 
-    Future.successful(end(out))
-  }
-
-  def end(out: Source[AkkaStreamCoding.Data, Any]) : State = {
-    AkkaStreamCoding.StateMachine.State(
-      out,
-      _ => Future.successful(StateMachine.End)
+    Future.successful(
+      State(
+        out,
+        { data =>
+          AkkaStreamCoding
+            .unpickle[Management.Done.type ](data)
+            .map({ done =>
+              logger.info(s"done: ${done}")
+              StateMachine.End
+            })
+        }
+      )
     )
   }
+
+//  def end(out: Source[AkkaStreamCoding.Data, Any]) : State = {
+//    AkkaStreamCoding.StateMachine.State(
+//      out,
+//      _ => Future.successful(StateMachine.End)
+//    )
+//  }
 
 
 

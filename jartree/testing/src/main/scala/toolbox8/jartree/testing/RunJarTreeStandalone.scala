@@ -12,14 +12,19 @@ import toolbox8.jartree.standalone.JarTreeStandalone
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Service}
 import toolbox8.modules.{JarTree8Modules, Toolbox8Modules}
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import monix.execution.Scheduler.Implicits.global
+import ammonite.ops._
 
 /**
   * Created by martonpapp on 15/10/16.
   */
 object RunJarTreeStandalone extends LazyLogging {
 
+  val Name = "jtsttesting"
+
   def main(args: Array[String]): Unit = {
+    rm(root / 'opt / Name)
+
     val runHierarchy = RunHierarchy(
       JarTree8Modules.Echo,
       runClassName = classOf[EchoPlugger].getName
@@ -42,11 +47,11 @@ object RunJarTreeStandalone extends LazyLogging {
             (CaseJarKey(id), () => new FileInputStream(file))
         })
 
-    val (bind, handle) = JarTreeStandalone.run(
-      name = "jtsttesting",
+    JarTreeStandalone.run(
+      name = Name,
       port = 9978,
       embeddedJars = jars,
-      initialStartup = PlugRequestImpl[Service, JarTreeStandaloneContext](
+      initialStartup = PlugRequestImpl[Service, JarTreeStandalone.CTX](
         ClassRequestImpl(
           rmh.classLoader,
           rmh.runClassName
@@ -55,7 +60,7 @@ object RunJarTreeStandalone extends LazyLogging {
       )
     )
 
-    bind.onComplete(o => logger.info(o.toString))
+//    bind.onComplete(o => logger.info(o.toString))
 
 
 

@@ -11,7 +11,7 @@ import akka.stream.scaladsl.{FileIO, Flow, Keep, Sink, Source, Tcp}
 import akka.util.ByteString
 import com.typesafe.scalalogging.LazyLogging
 import monix.eval.Task
-import monix.execution.Cancelable
+import monix.execution.{Cancelable, Scheduler}
 import monix.reactive.Observable
 import monix.reactive.observers.Subscriber
 import toolbox6.jartree.impl.{JarCache, JarTree, JarTreeBootstrap}
@@ -20,63 +20,62 @@ import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Message, PeerIn
 import org.reactivestreams.Processor
 import toolbox6.jartree.api.{ClassRequest, JarPlugger}
 import toolbox6.jartree.impl.JarTreeBootstrap.Config
-import toolbox6.jartree.util.CaseJarKey
+import toolbox6.jartree.util.{CaseJarKey, ScalaInstanceResolver}
 import toolbox6.jartree.wiring.{PlugRequestImpl, SimpleJarSocket}
 import toolbox6.javaapi.{AsyncCallback, AsyncValue}
 import toolbox6.javaimpl.JavaImpl
 import toolbox6.statemachine.State
 import toolbox8.akka.statemachine.AkkaStreamCoding
-import toolbox8.akka.statemachine.AkkaStreamCoding.Data
-import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine.StateOut
+import toolbox8.akka.statemachine.AkkaStreamCoding.{Data, StateMachine}
+import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine.{StateOut, Transition}
+import toolbox8.akka.stream.AkkaStreamTools
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
-import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{Plug, VerifyRequest, VerifyResponse}
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{Done, Plug, VerifyRequest, VerifyResponse}
 import toolbox8.jartree.standaloneapi.Message.Header
 import toolbox8.jartree.util.VoidService
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.collection.immutable._
 
 /**
   * Created by martonpapp on 15/10/16.
   */
+
 object JarTreeStandalone extends LazyLogging {
+
+  trait CTX extends JarTreeStandaloneContext with ScalaInstanceResolver
 
   def run(
     name: String,
     port: Int,
     version: Int = -1,
     embeddedJars: Seq[(CaseJarKey, () => InputStream)],
-    initialStartup: PlugRequestImpl[Service, JarTreeStandaloneContext]
+    initialStartup: PlugRequestImpl[Service, CTX]
+  )(implicit
+    scheduler: Scheduler
   ) = {
     val rt = JarTreeBootstrap
-      .init[Service, JarTreeStandaloneContext](
-      Config(
-        contextProvider = jarTree => new JarTreeStandaloneContext {
-          override def resolveAsync[T](request: ClassRequest[T]): AsyncValue[T] = jarTree.resolveAsync(request)
-        }: JarTreeStandaloneContext,
+      .init[Service, CTX](
+      Config[Service, CTX](
+        jarTree => new CTX {
+          override def resolve[T](request: ClassRequest[T]): Future[T] = jarTree.resolve(request)
+          override implicit def executionContext: ExecutionContext = scheduler
+        }: CTX,
         voidProcessor = VoidService,
         name = name,
         dataPath = s"/opt/${name}/data",
         version = version,
         embeddedJars = embeddedJars,
         initialStartup = initialStartup,
-        runtimeVersion = JarTreeStandalone.getClass.getPackage.getImplementationVersion
+        runtimeVersion = JarTreeStandalone.getClass.getPackage.getImplementationVersion,
+        closer = _.close()
       )
     )
 
-
-    implicit val actorSystem = ActorSystem()
-    implicit val materializer = ActorMaterializer(
-      Some(
-        ActorMaterializerSettings(actorSystem)
-          .withSupervisionStrategy({ ex =>
-            logger.error(ex.getMessage, ex)
-            Supervision.Stop
-          })
-      )
-    )
+    val cmps = AkkaStreamTools.bootstrap()
+    import cmps._
 
     Tcp()
       .bind(
@@ -103,7 +102,8 @@ object JarTreeStandalone extends LazyLogging {
         Sink.foreach({
           case (peerFlow, dataProc) =>
             val management = createManagement(
-              rt.jarTree
+              rt.jarTree,
+              rt.processorSocket
             )
             val data : Flow[ByteString, ByteString, Any] = Flow[ByteString]
 
@@ -121,7 +121,9 @@ object JarTreeStandalone extends LazyLogging {
         })
       )(Keep.left)
       .run()
-      .onComplete(println)
+      .onComplete({ res =>
+        logger.info(s"binding complete: ${res}")
+      })
   }
 
   import AkkaStreamCoding.StateMachine.State
@@ -129,7 +131,10 @@ object JarTreeStandalone extends LazyLogging {
   import AkkaStreamCoding.Implicits._
 
   def createManagement(
-    jarTree: JarTree
+    jarTree: JarTree,
+    socket: SimpleJarSocket[Service, CTX]
+  )(implicit
+    materializer: Materializer
   ) : Flow[ByteString, ByteString, Any] = {
     AkkaStreamCoding
       .Terminal
@@ -139,7 +144,8 @@ object JarTreeStandalone extends LazyLogging {
           .StateMachine
           .flow(
             start(
-              jarTree
+              jarTree,
+              socket
             )
           )
       )
@@ -147,17 +153,19 @@ object JarTreeStandalone extends LazyLogging {
   }
 
   def start(
-    jarTree: JarTree
+    jarTree: JarTree,
+    socket: SimpleJarSocket[Service, CTX]
   )(implicit
     materializer: Materializer
   ) : State = {
     import materializer.executionContext
     State(
       next = { data =>
-        val missingf = AkkaStreamCoding
+        AkkaStreamCoding
            .unpickle[VerifyRequest](data)
             .map({ vq =>
-              vq
+              logger.info(s"verifying jars: ${vq.ids.mkString(", ")}")
+              val (ids, idxs) = vq
                 .ids
                 .zipWithIndex
                 .filter({
@@ -165,102 +173,123 @@ object JarTreeStandalone extends LazyLogging {
                   case _ => false
                 })
                 .unzip
-            })
 
-        val out =
-          Source
-            .fromFuture(missingf)
-            .map({
-              case (ids, idxs) =>
-                AkkaStreamCoding.pickle(
-                  VerifyResponse(
-                    missing = idxs
+              logger.info(s"missing jars: ${ids.mkString(", ")}")
+
+              State(
+                out = Source.single(
+                  AkkaStreamCoding.pickle(
+                    VerifyResponse(
+                      missing = idxs
+                    )
                   )
+                ),
+                next = verifyRespone(
+                  ids,
+                  jarTree,
+                  socket
                 )
+              )
             })
-
-        verifyRespone(
-          out,
-          missingf.map({ case (ids, idxs) => ids }),
-          jarTree
-        )
       }
     )
   }
 
   def verifyRespone(
-    out: StateOut,
-    missingIdsF: Future[Seq[String]],
+    ids: Seq[String],
     jarTree: JarTree,
-    socket: SimpleJarSocket[Service, JarTreeStandaloneContext]
+    socket: SimpleJarSocket[Service, CTX]
   )(implicit
     materializer: Materializer
-  ) : Future[State] = {
+  ) : Transition = {
     import materializer.executionContext
 
-    missingIdsF
-      .flatMap({ ids =>
-        AkkaStreamCoding
-          .StateMachine
-          .sequenceIn(
-            steps =
-              ids
-                .map({ id =>
-                  { data:Data =>
-                    for {
-                      file <- jarTree.cache.getAsync(id)
-                      _ <- {
-                        data
-                          .runWith(
-                            FileIO
-                              .toPath(file.toPath)
-                          )
-                      }
-                    } yield {
-                      ()
-                    }
-                  }
-                }),
-            andThen = {
-              Future.successful(
-                waitPlug
-              )
-            }
+    AkkaStreamCoding
+      .StateMachine
+      .sequenceIn2(
+        steps =
+          ids
+            .map({ id =>
+              { data:Data =>
+                logger.info(s"receiving: ${id}")
+                val putOpt = jarTree.cache.putAsync(id)
+
+                putOpt
+                  .map({
+                    case (target, promise) =>
+                      data
+                        .runWith(
+                          FileIO
+                            .toPath(target.toPath)
+                        )
+                        .map({ result =>
+                          logger.info(s"received: ${id} - ${result}")
+                          promise.success()
+                          ()
+                        })
+                  })
+                  .getOrElse({
+                    logger.info(s"already cached, ignoring: ${id}")
+                    data
+                      .runWith(Sink.ignore)
+                      .map({ _ =>
+                        logger.info(s"ignored: ${id}")
+                        ()
+                      })
+                  })
+              }
+            }),
+        andThen = {
+          waitPlug(
+            jarTree,
+            socket
           )
-      })
+        }
+      )
 
 
   }
 
   def waitPlug(
     jarTree: JarTree,
-    socket: SimpleJarSocket[Service, JarTreeStandaloneContext]
-  ) : State = {
-    State(
-      next = { data =>
-        for {
-          plug <-
-            AkkaStreamCoding
-              .unpickle[Plug](data)
-          inst <- {
-            jarTree.resolve(
-              plug.classRequest
-            )
-          }
-        } yield {
-          socket.plug(
-            PlugRequestImpl(
+    socket: SimpleJarSocket[Service, CTX]
+  )(implicit
+    materializer: Materializer
+  ) : Transition = { data =>
+    import materializer.executionContext
 
-            )
-
-          )
-
-        }
-          .flatMap({ p =>
-
-          })
+    for {
+      plug <-
+        AkkaStreamCoding
+          .unpickle[Plug](data)
+      _ = logger.info(s"plugging: ${plug}")
+      inst <- {
+        jarTree.resolve(
+          plug.classRequest
+        )
       }
-    )
+      _ = logger.info(s"plugger resolved: ${inst}")
+      _ <- {
+        socket.plug(
+          PlugRequestImpl(
+            plug.classRequest,
+            plug.param
+          )
+        )
+      }
+    } yield {
+      logger.info(s"plugged: ${plug}")
+      State(
+        out = {
+          Source.single(
+            AkkaStreamCoding.pickle(Done)
+          )
+        },
+        next = _ => {
+          Future.successful(StateMachine.End)
+        }
+      )
+    }
 
   }
 

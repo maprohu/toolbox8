@@ -23,7 +23,8 @@ object Akka8Modules {
 
   object Stream extends ScalaModule(
     "stream",
-    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`
+    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`,
+    Toolbox6Modules.Logging
   )
 
 }

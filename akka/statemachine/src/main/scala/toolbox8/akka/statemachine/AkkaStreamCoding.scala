@@ -303,6 +303,28 @@ object AkkaStreamCoding {
 
     }
 
+    def sequenceIn2(
+      steps: Seq[Data => Future[Unit]],
+      andThen: Transition
+    )(implicit
+      executionContext: ExecutionContext
+    ) : Transition = {
+      steps match {
+        case head +: tail =>
+          { data =>
+            head(data)
+              .map({ _ =>
+                State(
+                  next = sequenceIn2(tail, andThen)
+                )
+              })
+          }
+        case _ => // no more steps
+          andThen
+      }
+
+    }
+
 
 
   }
