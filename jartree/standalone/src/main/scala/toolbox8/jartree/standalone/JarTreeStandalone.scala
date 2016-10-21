@@ -271,8 +271,8 @@ object JarTreeStandalone extends LazyLogging {
       _ <- {
         socket.plug(
           PlugRequestImpl(
-            plug.classRequest,
-            plug.param
+            plug.classRequest
+//            plug.param
           )
         )
       }

@@ -19,8 +19,8 @@ trait Message {
 
 
 trait Service
-  extends JarUpdatable
-  with AsyncFunction[PeerInfo, Processor[Message, Message]] {
+//  extends JarUpdatable
+  extends AsyncFunction[PeerInfo, Processor[Message, Message]] {
   def close() : Unit
 }
 

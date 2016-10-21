@@ -27,8 +27,8 @@ object JarTreeStandaloneProtocol {
 //    )
 
     final case class Plug(
-      classRequest: ClassRequestImpl[Plugger],
-      param: Array[Byte]
+      classRequest: ClassRequestImpl[Plugger]
+//      param: Array[Byte]
     )
 
     case object Done

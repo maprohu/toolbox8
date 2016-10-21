@@ -36,12 +36,12 @@ class VoidService extends Service {
 
   override def close(): Unit = ()
 
-  override def updateAsync(param: Array[Header]): AsyncValue[Unit] = JavaImpl.asyncSuccess()
+//  override def updateAsync(param: Array[Header]): AsyncValue[Unit] = JavaImpl.asyncSuccess()
 }
 
 class VoidServicePlugger
   extends JarPlugger[Service, JarTreeStandaloneContext] {
-  override def pullAsync(previous: Service, param: Array[Header], context: JarTreeStandaloneContext): AsyncValue[JarPlugResponse[Service]] = {
+  override def pullAsync(previous: Service, context: JarTreeStandaloneContext): AsyncValue[JarPlugResponse[Service]] = {
     JavaImpl.asyncSuccess(
       new JarPlugResponse[Service] {
         override def instance(): Service = VoidService
