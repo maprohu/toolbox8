@@ -117,11 +117,13 @@ object RpiInstaller {
         print(cmd)
         out.write(cmd.getBytes)
         out.flush()
+        check
         val fis = new FileInputStream(from)
         copy(fis, out)
         fis.close()
         out.write(0)
         out.flush()
+        check
         out.close()
 
         in.close()

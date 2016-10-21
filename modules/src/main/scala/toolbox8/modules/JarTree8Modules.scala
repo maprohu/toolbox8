@@ -1,6 +1,7 @@
 package toolbox8.modules
 
 import maven.modules.builder.{ScalaModule, SubModuleContainer}
+import toolbox6.modules.Toolbox6Modules.Logging
 import toolbox6.modules.{JarTreeModules, Toolbox6Modules}
 
 /**
@@ -75,6 +76,12 @@ object JarTree8Modules {
   object Packaging extends ScalaModule(
     "packaging",
     JarTreeModules.Packaging
+  )
+
+  object App extends ScalaModule(
+    "app",
+    Standalone,
+    mvn.`ch.qos.logback:logback-classic:jar:1.1.7`
   )
 
 

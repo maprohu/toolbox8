@@ -19,7 +19,7 @@ import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Message, PeerInfo, Service}
 import org.reactivestreams.Processor
 import toolbox6.jartree.api.{ClassRequest, JarPlugger}
-import toolbox6.jartree.impl.JarTreeBootstrap.Config
+import toolbox6.jartree.impl.JarTreeBootstrap.{Config, Initial}
 import toolbox6.jartree.util.{CaseJarKey, ScalaInstanceResolver}
 import toolbox6.jartree.wiring.{PlugRequestImpl, SimpleJarSocket}
 import toolbox6.javaapi.{AsyncCallback, AsyncValue}
@@ -43,33 +43,32 @@ import scala.collection.immutable._
   * Created by martonpapp on 15/10/16.
   */
 
+trait ScalaJarTreeStandaloneContext extends JarTreeStandaloneContext with ScalaInstanceResolver
+
 object JarTreeStandalone extends LazyLogging {
 
-  trait CTX extends JarTreeStandaloneContext with ScalaInstanceResolver
 
   def run(
     name: String,
-    port: Int,
+    port: Int = 9721,
     version: Int = -1,
-    embeddedJars: Seq[(CaseJarKey, () => InputStream)],
-    initialStartup: PlugRequestImpl[Service, CTX]
+    initial: Option[Initial[Service, JarTreeStandaloneContext]] = None
   )(implicit
     scheduler: Scheduler
   ) = {
     val rt = JarTreeBootstrap
-      .init[Service, CTX](
-      Config[Service, CTX](
-        jarTree => new CTX {
+      .init[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext](
+      Config[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext](
+        jarTree => new ScalaJarTreeStandaloneContext {
           override def resolve[T](request: ClassRequest[T]): Future[T] = jarTree.resolve(request)
           override implicit def executionContext: ExecutionContext = scheduler
-        }: CTX,
+        },
         voidProcessor = VoidService,
         name = name,
         dataPath = s"/opt/${name}/data",
         version = version,
-        embeddedJars = embeddedJars,
-        initialStartup = initialStartup,
-        runtimeVersion = JarTreeStandalone.getClass.getPackage.getImplementationVersion,
+        initial = initial,
+//        runtimeVersion = JarTreeStandalone.getClass.getPackage.getImplementationVersion,
         closer = _.close()
       )
     )
@@ -132,7 +131,7 @@ object JarTreeStandalone extends LazyLogging {
 
   def createManagement(
     jarTree: JarTree,
-    socket: SimpleJarSocket[Service, CTX]
+    socket: SimpleJarSocket[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext]
   )(implicit
     materializer: Materializer
   ) : Flow[ByteString, ByteString, Any] = {
@@ -154,7 +153,7 @@ object JarTreeStandalone extends LazyLogging {
 
   def start(
     jarTree: JarTree,
-    socket: SimpleJarSocket[Service, CTX]
+    socket: SimpleJarSocket[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext]
   )(implicit
     materializer: Materializer
   ) : State = {
@@ -198,7 +197,7 @@ object JarTreeStandalone extends LazyLogging {
   def verifyRespone(
     ids: Seq[String],
     jarTree: JarTree,
-    socket: SimpleJarSocket[Service, CTX]
+    socket: SimpleJarSocket[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext]
   )(implicit
     materializer: Materializer
   ) : Transition = {
@@ -252,7 +251,7 @@ object JarTreeStandalone extends LazyLogging {
 
   def waitPlug(
     jarTree: JarTree,
-    socket: SimpleJarSocket[Service, CTX]
+    socket: SimpleJarSocket[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext]
   )(implicit
     materializer: Materializer
   ) : Transition = { data =>

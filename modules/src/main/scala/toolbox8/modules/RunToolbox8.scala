@@ -29,6 +29,7 @@ object RunToolbox8 {
     JarTree8Modules.Client,
     JarTree8Modules.Installer,
     JarTree8Modules.Packaging,
+    JarTree8Modules.App,
     JarTree8Modules.Testing,
     Akka8Modules.StateMachine,
 //    Toolbox8Modules.JarTree,
