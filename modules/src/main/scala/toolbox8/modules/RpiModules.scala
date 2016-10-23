@@ -23,4 +23,9 @@ object RpiModules {
     "remote"
   )
 
+
+//  object DBus extends ScalaModule(
+//    "dbus"
+//  )
+
 }
