@@ -20,6 +20,7 @@ object RunToolbox8 {
   val Modules = Seq[ConfiguredModule](
     RpiModules.Remote,
     RpiModules.Installer,
+    RpiModules.DBus,
     Toolbox8Modules.Dummy,
     JarTree8Modules.StandaloneApi,
     JarTree8Modules.Protocol,

@@ -24,8 +24,18 @@ object RpiModules {
   )
 
 
-//  object DBus extends ScalaModule(
-//    "dbus"
-//  )
 
+  object DBus extends ScalaModule(
+    "dbus",
+    mvn.`libdbus-java:dbus:jar:2.8`,
+    mvn.`libunix-java:unix:jar:0.5`,
+    mvn.`libmatthew-debug-java:hexdump:jar:0.2`,
+    mvn.`libmatthew-debug-java:debug-enable:jar:1.1`,
+    mvn.`org.scala-lang.modules:scala-xml_2.11:jar:1.0.6`,
+    Toolbox6Modules.Macros
+
+    //    VoiceModules,
+    //    JarTree8Modules.Standalone
+
+  )
 }
