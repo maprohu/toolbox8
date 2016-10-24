@@ -23,6 +23,12 @@ object RpiModules {
     "remote"
   )
 
+  object  Bluetooth extends ScalaModule(
+    "bluetooth",
+    mvn.`net.sf.bluecove:bluecove:jar:2.1.0`,
+    mvn.`net.sf.bluecove:bluecove-gpl:jar:2.1.0`
+  )
+
 
 
   object DBus extends ScalaModule(
