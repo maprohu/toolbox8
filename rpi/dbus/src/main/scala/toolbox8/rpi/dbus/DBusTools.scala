@@ -1,7 +1,12 @@
 package toolbox8.rpi.dbus
 
+import java.io.{File, FileOutputStream, PrintStream, StringReader}
+import javax.xml.parsers.DocumentBuilderFactory
+
 import org.freedesktop.DBus
 import org.freedesktop.DBus.Introspectable
+import org.freedesktop.dbus.bin.CreateInterface
+import org.freedesktop.dbus.bin.CreateInterface.PrintStreamFactory
 import org.freedesktop.dbus.{DBusConnection, DBusInterface}
 
 import scala.reflect.ClassTag
@@ -12,6 +17,11 @@ import scala.xml.XML
   * Created by maprohu on 23-10-2016.
   */
 object DBusTools {
+
+  System.setProperty(
+    classOf[DocumentBuilderFactory].getName,
+    classOf[DBF].getName
+  )
 
   val `org.freedesktop.DBus` = valName
   val `org.bluez` = valName
@@ -33,10 +43,11 @@ object DBusTools {
     class Bus(
       val busname: String
     ) { bself =>
+      def untypedRoot = untyped("/")
       def root[T <: DBusInterface : ClassTag] = get[T]("/")
 
       import Introspection._
-      def introspectable(path: String) = get[Introspectable](path)
+      def introspectable(path: String) = untyped(path).asIntrospectable
 
       def introspect(root: xml.Node, path: String, name: Option[String] = None) : Introspection.Node = {
         def child(n: xml.Node) : Node = {
@@ -66,37 +77,84 @@ object DBusTools {
         )
       }
 
-      def get[T <: DBusInterface : ClassTag](path: String) = {
+      def untyped(path: String) = {
+        new UntypedRemoteObject(
+          path
+        )
+      }
+
+      def typedInstance[T <: DBusInterface : ClassTag](path: String) : T = {
         val cl : Class[T] = implicitly[ClassTag[T]].runtimeClass.asInstanceOf[Class[T]]
+        conn.getRemoteObject(
+          busname,
+          path,
+          cl
+        )
+      }
+
+      def get[T <: DBusInterface : ClassTag](path: String) = {
         new RemoteObject[T](
           path,
-          conn.getRemoteObject(
-            busname,
-            path,
-            cl
-          )
+          typedInstance[T](path)
+        )
+      }
 
+      class UntypedRemoteObject(
+        val objectpath: String
+      ) {
+        def as[T <: DBusInterface : ClassTag] = get[T](objectpath)
+        def asIntrospectable = new IntrospectableRemoteObject(
+          objectpath,
+          typedInstance[Introspectable](objectpath)
         )
       }
 
       class RemoteObject[T](
-        val objectpath: String,
+        objectpath: String,
         val instance: T
-      ) {
-        def as[T <: DBusInterface : ClassTag] = get[T](objectpath)
+      ) extends UntypedRemoteObject(objectpath) {
 
-        def introspect(name: Option[String] = None)(implicit ev: T => Introspectable): Node = {
-          val xml = ev(instance).Introspect()
+      }
+
+      class IntrospectableRemoteObject(
+        objectpath: String,
+        instance: Introspectable
+      ) extends RemoteObject[Introspectable](
+        objectpath,
+        instance
+      ) {
+        def introspect(name: Option[String] = None): Node = {
+          val xml = instance.Introspect()
           println(xml)
           bself
             .introspect(
               XML
                 .withSAXParser(Factory.newSAXParser())
-                .loadString(ev(instance).Introspect()),
-                objectpath,
+                .loadString(instance.Introspect()),
+              objectpath,
               name
             )
         }
+
+        def generateJava(
+          where: File
+        ) = {
+          val xml = instance.Introspect()
+          val psf = new PrintStreamFactory {
+            def asFile(path: String) = {
+              new File(where, path)
+            }
+            override def init(file: String, path: String): Unit = asFile(file).getParentFile.mkdirs()
+            override def createPrintStream(file: String): PrintStream = new PrintStream(new FileOutputStream(asFile(file)))
+          }
+
+          val ci = new CreateInterface(
+            psf,
+            false
+          )
+          ci.createInterface(new StringReader(xml))
+        }
+
       }
 
     }
@@ -127,7 +185,11 @@ object Introspection {
     path: String,
     interfaces: Seq[Interface],
     children: Seq[Node]
-  )
+  ) {
+    def flatten : Seq[Node] = {
+      this +: children.flatMap(_.flatten)
+    }
+  }
 
   case class Interface(
     name: String,
@@ -163,5 +225,17 @@ object Introspection {
     typeSpec: TypeSpec,
     direction: Direction
   )
+
+}
+
+class DBF extends com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl { factory =>
+
+  // disable DTD validation
+  factory.setValidating(false)
+  factory.setFeature("http://xml.org/sax/features/validation", false)
+  factory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false)
+  factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
+  factory.setFeature("http://xml.org/sax/features/external-general-entities", false)
+  factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
 
 }

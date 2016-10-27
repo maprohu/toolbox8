@@ -113,6 +113,11 @@
             <version>2.8</version>
         </dependency>
         <dependency>
+            <groupId>libdbus-java</groupId>
+            <artifactId>dbus-bin</artifactId>
+            <version>2.8</version>
+        </dependency>
+        <dependency>
             <groupId>libunix-java</groupId>
             <artifactId>unix</artifactId>
             <version>0.5</version>
@@ -138,9 +143,15 @@
             <version>2-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>com.eed3si9n</groupId>
+            <artifactId>treehugger_2.11</artifactId>
+            <version>0.4.1</version>
+        </dependency>
+        <dependency>
             <groupId>org.scala-lang</groupId>
             <artifactId>scala-library</artifactId>
             <version>2.11.8</version>
         </dependency>
     </dependencies>
+    <repositories> </repositories>
 </project>
