@@ -58,7 +58,8 @@ object RunJarTreeStandalone extends LazyLogging {
               rmh.runClassName
             )
           )
-        )
+        ),
+      runtimeVersion = "testing"
     )
 
 

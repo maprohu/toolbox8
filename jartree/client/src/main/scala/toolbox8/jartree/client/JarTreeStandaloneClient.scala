@@ -15,6 +15,7 @@ import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine
 import toolbox8.akka.statemachine.{AkkaStreamCoding, DeepStream}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management._
+import toolbox8.jartree.standaloneapi.Protocol
 
 import scala.concurrent.{Await, Future}
 
@@ -23,7 +24,13 @@ import scala.concurrent.{Await, Future}
   */
 object JarTreeStandaloneClient extends LazyLogging {
 
-  type ByteFlow = Flow[ByteString, ByteString, NotUsed]
+  type ByteFlow = Flow[ByteString, ByteString, _]
+
+  val EmptyFlow : ByteFlow =
+    Flow.fromSinkAndSource(
+      Sink.ignore,
+      Source.maybe
+    )
 
   case class Flows(
     management: ByteFlow,
@@ -67,7 +74,7 @@ object JarTreeStandaloneClient extends LazyLogging {
 
   def runPlug(
     host: String,
-    port: Int,
+    port: Int = Protocol.DefaultPort,
     runHierarchy: RunHierarchy,
     target: NamedModule
   ) = {
@@ -108,24 +115,61 @@ object JarTreeStandaloneClient extends LazyLogging {
   import AkkaStreamCoding.Implicits._
   import AkkaStreamCoding.StateMachine.State
 
+  def runCat(
+    host: String,
+    port: Int = Protocol.DefaultPort,
+    sink: Materializer => Sink[ByteString, _]
+  ) = {
+    runData(
+      host,
+      port,
+      mat => Flow.fromSinkAndSource(
+        sink(mat),
+        Source.maybe
+      )
+    )
+
+  }
+  def runData(
+    host: String,
+    port: Int = Protocol.DefaultPort,
+    flow: Materializer => ByteFlow
+  ) = {
+    run(
+      host,
+      port,
+      mat => Flows(
+        management = EmptyFlow,
+        data = flow(mat)
+      )
+    )
+  }
+
+
   def runQuery(
     host: String,
-    port: Int
+    port: Int = Protocol.DefaultPort
   ) = {
     runManagement(
       host,
       port,
       { implicit mat =>
         import mat.executionContext
+
+        val bytes =
+          Pickle
+            .intoBytes[Starter](
+              Query
+            )
+            .asByteString
+
+        logger.info("sending query: {}", bytes)
+
         State(
           out =
             Source.single(
               Source.single(
-                Pickle
-                  .intoByteBuffers(
-                    Query
-                  )
-                  .asByteString
+                bytes
               )
             ),
           next = { d =>
@@ -200,7 +244,7 @@ object JarTreeStandaloneClient extends LazyLogging {
       Source.single(
         Source.single(
           Pickle
-            .intoByteBuffers(
+            .intoBytes[Starter](
               VerifyRequest(
                 ids = jars.map(_._1)
               )

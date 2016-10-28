@@ -7,6 +7,7 @@ import toolbox8.rpi.installer.RpiInstaller.Config
   */
 object Rpis {
 
+
   implicit val Home = Config(
     host = "192.168.1.36"
   )

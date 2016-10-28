@@ -85,9 +85,9 @@ object AkkaStreamCoding {
     import boopickle.Default._
     import Implicits._
     Source.single(
-      asByteString(
+      ByteString(
         Pickle(value)
-          .toByteBuffers
+          .toByteBuffer
       )
     )
   }
@@ -330,14 +330,19 @@ object AkkaStreamCoding {
   }
 
   object Implicits {
-    def asByteString(bbs: collection.Iterable[ByteBuffer]) : ByteString = {
-      bbs
-        .map(ByteString.apply)
-        .foldLeft(ByteString.empty)(_ ++ _)
-    }
-    implicit class ByteBuffersOps(bbs: collection.Iterable[ByteBuffer]) {
+//    def asByteString(bbs: collection.Iterable[ByteBuffer]) : ByteString = {
+//      bbs
+//        .map(ByteString.apply)
+//        .foldLeft(ByteString.empty)(_ ++ _)
+//    }
+    //    implicit class ByteBuffersOps(bbs: collection.Iterable[ByteBuffer]) {
+    //      def asByteString : ByteString = {
+    //        Implicits.asByteString(bbs)
+    //      }
+    //    }
+    implicit class ByteBuffersOps(bbs: ByteBuffer) {
       def asByteString : ByteString = {
-        Implicits.asByteString(bbs)
+        ByteString(bbs)
       }
     }
   }

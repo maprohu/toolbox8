@@ -91,6 +91,7 @@ object JarTree8Modules {
     Echo,
     JarTreeModules.Packaging,
     Client,
+    RpiModules.Installer,
     mvn.`org.slf4j:slf4j-simple:jar:1.7.21`
   )
 

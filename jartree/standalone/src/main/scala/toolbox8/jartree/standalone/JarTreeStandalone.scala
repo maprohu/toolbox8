@@ -16,7 +16,7 @@ import monix.reactive.Observable
 import monix.reactive.observers.Subscriber
 import toolbox6.jartree.impl.{JarCache, JarTree, JarTreeBootstrap}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
-import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, PeerInfo, Service}
+import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, PeerInfo, Protocol, Service}
 import org.reactivestreams.Processor
 import toolbox6.jartree.api.{ClassRequest, JarPlugger}
 import toolbox6.jartree.impl.JarTreeBootstrap.Config
@@ -47,10 +47,11 @@ object JarTreeStandalone extends LazyLogging {
 
   def run(
     name: String,
-    port: Int = 9721,
+    port: Int = Protocol.DefaultPort,
     version: Int = -1,
     embeddedJars: Seq[(CaseJarKey, () => InputStream)],
-    initialStartup: Option[PlugRequestImpl[Service, JarTreeStandaloneContext]]
+    initialStartup: Option[PlugRequestImpl[Service, JarTreeStandaloneContext]],
+    runtimeVersion: String
   )(implicit
     scheduler: Scheduler
   ) = {
@@ -98,7 +99,8 @@ object JarTreeStandalone extends LazyLogging {
           case (peerFlow, dataProc) =>
             val management = createManagement(
               rt.jarTree,
-              rt.processorSocket
+              rt.processorSocket,
+              runtimeVersion
             )
 
             peerFlow
@@ -126,7 +128,8 @@ object JarTreeStandalone extends LazyLogging {
 
   def createManagement(
     jarTree: JarTree,
-    socket: SimpleJarSocket[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext]
+    socket: SimpleJarSocket[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext],
+    runtimeVersion: String
   )(implicit
     materializer: Materializer
   ) : Flow[ByteString, ByteString, Any] = {
@@ -139,7 +142,8 @@ object JarTreeStandalone extends LazyLogging {
           .flow(
             start(
               jarTree,
-              socket
+              socket,
+              runtimeVersion
             )
           )
       )
@@ -148,7 +152,8 @@ object JarTreeStandalone extends LazyLogging {
 
   def start(
     jarTree: JarTree,
-    socket: SimpleJarSocket[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext]
+    socket: SimpleJarSocket[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext],
+    runtimeVersion: String
   )(implicit
     materializer: Materializer
   ) : State = {
@@ -195,7 +200,7 @@ object JarTreeStandalone extends LazyLogging {
                         .map({ p =>
                             p.request
                         }),
-                      ""
+                      runtimeVersion
                     )
                   )
                 ),

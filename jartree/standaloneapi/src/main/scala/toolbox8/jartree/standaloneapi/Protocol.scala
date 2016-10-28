@@ -5,6 +5,8 @@ package toolbox8.jartree.standaloneapi
   */
 object Protocol {
 
+  val DefaultPort = 9721
+
   object Target {
     val Manager = 0
     val Processor = 1
