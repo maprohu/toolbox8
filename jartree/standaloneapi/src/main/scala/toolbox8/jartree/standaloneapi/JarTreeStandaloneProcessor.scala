@@ -3,31 +3,38 @@ package toolbox8.jartree.standaloneapi
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 
-import org.reactivestreams.{Processor, Subscriber}
-import toolbox6.jartree.api.{InstanceResolver, JarUpdatable}
-import toolbox6.javaapi.AsyncFunction
+import akka.stream.scaladsl.Flow
+import akka.util.ByteString
+import toolbox6.jartree.api.InstanceResolver
 
-object Message {
-  type Header = Byte
-}
+import scala.concurrent.Future
 
-trait Message {
-  def header() : Message.Header
-  def data() : java.util.Enumeration[ByteBuffer]
-}
+//object Message {
+//  type Header = Byte
+//}
+
+//trait Message {
+//  def header() : Message.Header
+//  def data() : java.util.Enumeration[ByteBuffer]
+//}
+
+//case class Message(
+//  header: Message.Header,
+//  data: ByteString
+//)
 
 
 
-trait Service
-//  extends JarUpdatable
-  extends AsyncFunction[PeerInfo, Processor[Message, Message]] {
+trait Service {
+  def apply(info: PeerInfo) : Future[Flow[ByteString, ByteString, _]]
   def close() : Unit
 }
 
 
-trait PeerInfo {
-  def address() : InetSocketAddress
-}
+case class PeerInfo(
+  address: InetSocketAddress,
+  id: Option[String] = None
+)
 
 //trait ByteArray {
 //  def bytes() : Array[Byte]

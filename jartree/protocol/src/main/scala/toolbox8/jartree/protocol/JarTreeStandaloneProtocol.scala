@@ -14,9 +14,18 @@ object JarTreeStandaloneProtocol {
 
     type Plugger = JarPlugger[Service, JarTreeStandaloneContext]
 
+    sealed trait Starter
+
+    case object Query extends Starter
+
+    final case class QueryResponse(
+      plugged: Option[ClassRequestImpl[Plugger]],
+      version: String
+    )
+
     final case class VerifyRequest(
       ids: Seq[String]
-    )
+    ) extends Starter
 
     final case class VerifyResponse(
       missing: Seq[Int]

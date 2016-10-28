@@ -16,22 +16,19 @@ import monix.reactive.Observable
 import monix.reactive.observers.Subscriber
 import toolbox6.jartree.impl.{JarCache, JarTree, JarTreeBootstrap}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
-import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Message, PeerInfo, Service}
+import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, PeerInfo, Service}
 import org.reactivestreams.Processor
 import toolbox6.jartree.api.{ClassRequest, JarPlugger}
-import toolbox6.jartree.impl.JarTreeBootstrap.{Config, Initial}
+import toolbox6.jartree.impl.JarTreeBootstrap.Config
 import toolbox6.jartree.util.{CaseJarKey, ScalaInstanceResolver}
 import toolbox6.jartree.wiring.{PlugRequestImpl, SimpleJarSocket}
-import toolbox6.javaapi.{AsyncCallback, AsyncValue}
-import toolbox6.javaimpl.JavaImpl
 import toolbox6.statemachine.State
 import toolbox8.akka.statemachine.AkkaStreamCoding
 import toolbox8.akka.statemachine.AkkaStreamCoding.{Data, StateMachine}
 import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine.{StateOut, Transition}
 import toolbox8.akka.stream.AkkaStreamTools
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
-import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{Done, Plug, VerifyRequest, VerifyResponse}
-import toolbox8.jartree.standaloneapi.Message.Header
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management._
 import toolbox8.jartree.util.VoidService
 
 import scala.collection.JavaConversions._
@@ -52,7 +49,8 @@ object JarTreeStandalone extends LazyLogging {
     name: String,
     port: Int = 9721,
     version: Int = -1,
-    initial: Option[Initial[Service, JarTreeStandaloneContext]] = None
+    embeddedJars: Seq[(CaseJarKey, () => InputStream)],
+    initialStartup: Option[PlugRequestImpl[Service, JarTreeStandaloneContext]]
   )(implicit
     scheduler: Scheduler
   ) = {
@@ -67,8 +65,8 @@ object JarTreeStandalone extends LazyLogging {
         name = name,
         dataPath = s"/opt/${name}/data",
         version = version,
-        initial = initial,
-//        runtimeVersion = JarTreeStandalone.getClass.getPackage.getImplementationVersion,
+        embeddedJars,
+        initialStartup,
         closer = _.close()
       )
     )
@@ -83,15 +81,13 @@ object JarTreeStandalone extends LazyLogging {
       )
       .mapAsync(1)({ incoming =>
         logger.info("incoming: {}", incoming.remoteAddress)
-        JavaImpl
-          .unwrapFunction(
-            rt
-              .processorSocket
-              .get()
-          )(
-            new PeerInfo {
-              override def address() = incoming.remoteAddress
-            }
+        rt
+          .processorSocket
+          .get()
+          .apply(
+            PeerInfo(
+              incoming.remoteAddress
+            )
           )
           .map({ p =>
             (incoming.flow, p)
@@ -104,7 +100,6 @@ object JarTreeStandalone extends LazyLogging {
               rt.jarTree,
               rt.processorSocket
             )
-            val data : Flow[ByteString, ByteString, Any] = Flow[ByteString]
 
             peerFlow
               .join(AkkaStreamCoding.framing.reversed)
@@ -113,7 +108,7 @@ object JarTreeStandalone extends LazyLogging {
                   .Multiplex
                   .flow(
                     management,
-                    data
+                    dataProc
                   )
               )
               .run()
@@ -161,8 +156,9 @@ object JarTreeStandalone extends LazyLogging {
     State(
       next = { data =>
         AkkaStreamCoding
-           .unpickle[VerifyRequest](data)
-            .map({ vq =>
+          .unpickle[Starter](data)
+          .map({
+            case vq : VerifyRequest =>
               logger.info(s"verifying jars: ${vq.ids.mkString(", ")}")
               val (ids, idxs) = vq
                 .ids
@@ -188,6 +184,24 @@ object JarTreeStandalone extends LazyLogging {
                   jarTree,
                   socket
                 )
+              )
+            case Query =>
+              State(
+                out = Source.single(
+                  AkkaStreamCoding.pickle(
+                    QueryResponse(
+                      socket
+                        .query()
+                        .map({ p =>
+                            p.request
+                        }),
+                      ""
+                    )
+                  )
+                ),
+                next = _ => {
+                  Future.successful(StateMachine.End)
+                }
               )
             })
       }

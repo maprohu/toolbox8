@@ -14,7 +14,7 @@ import toolbox6.jartree.packaging.JarTreePackaging.{RunHierarchy, RunMavenHierar
 import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine
 import toolbox8.akka.statemachine.{AkkaStreamCoding, DeepStream}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
-import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management.{Plug, VerifyRequest, VerifyResponse}
+import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management._
 
 import scala.concurrent.{Await, Future}
 
@@ -25,11 +25,15 @@ object JarTreeStandaloneClient extends LazyLogging {
 
   type ByteFlow = Flow[ByteString, ByteString, NotUsed]
 
+  case class Flows(
+    management: ByteFlow,
+    data: ByteFlow
+  )
+
   def run(
     host: String,
     port: Int,
-    runHierarchy: RunHierarchy,
-    target: NamedModule
+    flows: Materializer => Flows
   ) = {
 
     implicit val actorSystem = ActorSystem()
@@ -43,38 +47,42 @@ object JarTreeStandaloneClient extends LazyLogging {
           port
         )
 
-//    val flow =
-//      Flow
-//        .fromSinkAndSourceMat(
-//          Sink.asPublisher[ByteString](false),
-//          Source.asSubscriber[ByteString]
-//        )(Keep.both)
+    val f = flows(materializer)
+    import f._
 
-
-    val management : ByteFlow = managementFlow(
-      runHierarchy,
-      target
-    )
-    val data : ByteFlow =
-      Flow.fromSinkAndSource(
-        Sink.ignore,
-        Source.maybe
+    peer
+      .join(
+        AkkaStreamCoding.framing.reversed
       )
-
-      peer
-        .join(
-          AkkaStreamCoding.framing.reversed
+      .join(
+        AkkaStreamCoding.Multiplex.flow(
+          management,
+          data
         )
-        .join(
-          AkkaStreamCoding.Multiplex.flow(
-            management,
-            data
-          )
-        )
-        .run()
-        .onComplete(println)
+      )
+      .run()
+      .onComplete(println)
 
   }
+
+  def runPlug(
+    host: String,
+    port: Int,
+    runHierarchy: RunHierarchy,
+    target: NamedModule
+  ) = {
+    runManagement(
+      host,
+      port,
+      { implicit mat =>
+        start(runHierarchy, target)
+      }
+    )
+  }
+
+
+
+
 
   def managementFlow(
     runHierarchy: RunHierarchy,
@@ -97,12 +105,78 @@ object JarTreeStandaloneClient extends LazyLogging {
   }
 
   import boopickle.Default._
-
   import AkkaStreamCoding.Implicits._
-
-
-
   import AkkaStreamCoding.StateMachine.State
+
+  def runQuery(
+    host: String,
+    port: Int
+  ) = {
+    runManagement(
+      host,
+      port,
+      { implicit mat =>
+        import mat.executionContext
+        State(
+          out =
+            Source.single(
+              Source.single(
+                Pickle
+                  .intoByteBuffers(
+                    Query
+                  )
+                  .asByteString
+              )
+            ),
+          next = { d =>
+            AkkaStreamCoding
+              .unpickle[QueryResponse](d)
+              .map({ r =>
+                println(r)
+                StateMachine.End
+              })
+          }
+        )
+      }
+    )
+  }
+
+  def managementFlow(
+    state: State
+  ) : ByteFlow = {
+    AkkaStreamCoding
+      .Terminal
+      .bidi
+      .join(
+        AkkaStreamCoding
+          .StateMachine
+          .flow(
+            state
+          )
+      )
+  }
+
+  def runManagement(
+    host: String,
+    port: Int,
+    state: Materializer => State
+  ) = {
+    run(
+      host,
+      port,
+      { mat =>
+        val management : ByteFlow = managementFlow(
+          state(mat)
+        )
+        val data : ByteFlow =
+          Flow.fromSinkAndSource(
+            Sink.ignore,
+            Source.maybe
+          )
+        Flows(management, data)
+      }
+    )
+  }
 
   def start(
     runHierarchy: RunHierarchy,
@@ -178,8 +252,7 @@ object JarTreeStandaloneClient extends LazyLogging {
             }) :+
             AkkaStreamCoding.pickle(
               Plug(
-                rmh.request[Management.Plugger],
-                Array.emptyByteArray
+                rmh.request[Management.Plugger]
               )
             )
         })

@@ -1,14 +1,11 @@
 package toolbox8.jartree.util
 
-import monix.reactive.Observable
-import org.reactivestreams.Processor
-import toolbox6.javaapi.AsyncValue
-import toolbox6.javaimpl.JavaImpl
-import toolbox8.jartree.standaloneapi.Message._
-import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Message, PeerInfo, Service}
-import monix.execution.Scheduler.Implicits.global
-import monix.reactive.MulticastStrategy.Async
+import akka.stream.scaladsl.Flow
+import akka.util.ByteString
 import toolbox6.jartree.api.{JarPlugResponse, JarPlugger}
+import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, PeerInfo, Service}
+
+import scala.concurrent.Future
 
 /**
   * Created by pappmar on 17/10/2016.
@@ -17,21 +14,8 @@ import toolbox6.jartree.api.{JarPlugResponse, JarPlugger}
 object VoidService extends VoidService
 class VoidService extends Service {
 //  override def update(param: Array[Header]): Unit = ()
-  override def apply(input: PeerInfo): AsyncValue[Processor[Message, Message]] = {
-    JavaImpl
-      .asyncSuccess(
-        JavaImpl
-          .processor(
-            monix.reactive.observers.Subscriber
-              .toReactiveSubscriber(
-                monix.reactive.observers.Subscriber.empty[Message]
-              ),
-            Observable
-              .empty[Message]
-              .toReactivePublisher
-          )
-
-      )
+  override def apply(input: PeerInfo) = {
+    Future.successful(Flow[ByteString])
   }
 
   override def close(): Unit = ()
@@ -41,8 +25,8 @@ class VoidService extends Service {
 
 class VoidServicePlugger
   extends JarPlugger[Service, JarTreeStandaloneContext] {
-  override def pullAsync(previous: Service, context: JarTreeStandaloneContext): AsyncValue[JarPlugResponse[Service]] = {
-    JavaImpl.asyncSuccess(
+  override def pullAsync(previous: Service, context: JarTreeStandaloneContext): Future[JarPlugResponse[Service]] = {
+    Future.successful(
       new JarPlugResponse[Service] {
         override def instance(): Service = VoidService
         override def andThen(): Unit = previous.close()

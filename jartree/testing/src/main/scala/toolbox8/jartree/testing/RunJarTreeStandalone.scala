@@ -8,10 +8,9 @@ import toolbox6.jartree.packaging.JarTreePackaging.RunHierarchy
 import toolbox6.jartree.util.{CaseJarKey, ClassRequestImpl}
 import toolbox6.jartree.wiring.PlugRequestImpl
 import toolbox8.jartree.echo.EchoPlugger
-import toolbox8.jartree.standalone.JarTreeStandalone
+import toolbox8.jartree.standalone.{JarTreeStandalone, ScalaJarTreeStandaloneContext}
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Service}
 import toolbox8.modules.{JarTree8Modules, Toolbox8Modules}
-
 import monix.execution.Scheduler.Implicits.global
 import ammonite.ops._
 
@@ -51,14 +50,17 @@ object RunJarTreeStandalone extends LazyLogging {
       name = Name,
       port = 9978,
       embeddedJars = jars,
-      initialStartup = PlugRequestImpl[Service, JarTreeStandalone.CTX](
-        ClassRequestImpl(
-          rmh.classLoader,
-          rmh.runClassName
-        ),
-        Array.emptyByteArray
-      )
+      initialStartup =
+        Some(
+          PlugRequestImpl[Service, JarTreeStandaloneContext](
+            ClassRequestImpl(
+              rmh.classLoader,
+              rmh.runClassName
+            )
+          )
+        )
     )
+
 
 //    bind.onComplete(o => logger.info(o.toString))
 

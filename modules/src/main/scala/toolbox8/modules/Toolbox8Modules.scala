@@ -9,7 +9,7 @@ import maven.modules.utils.MavenCentralModule
 object Toolbox8Modules extends MavenCentralModule(
   "toolbox8-modules",
   "toolbox8-modules",
-  "1.0.0-SNAPSHOT"
+  "1.0.0"
 ) {
 
   implicit val Root = RootModuleContainer("toolbox8")
