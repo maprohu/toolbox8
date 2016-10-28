@@ -2,6 +2,7 @@ package toolbox8.akka.stream
 
 import akka.actor.ActorSystem
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer, Supervision}
+import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 
 /**
@@ -15,7 +16,20 @@ object AkkaStreamTools extends LazyLogging {
   }
 
   def bootstrap() : Components = {
-    implicit val _actorSystem = ActorSystem()
+    implicit val _actorSystem = ActorSystem(
+      "stremtools",
+      ConfigFactory.parseString(
+        """
+          |akka {
+          |  loggers = ["akka.event.slf4j.Slf4jLogger"]
+          |  loglevel = "DEBUG"
+          |  logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
+          |  jvm-exit-on-fatal-error = false
+          |}
+        """.stripMargin
+      ).withFallback(ConfigFactory.load()),
+      AkkaStreamTools.getClass.getClassLoader
+    )
 
     implicit val _materializer =
       ActorMaterializer(
