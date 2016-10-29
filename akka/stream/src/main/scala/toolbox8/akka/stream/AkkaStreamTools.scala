@@ -13,16 +13,17 @@ object AkkaStreamTools extends LazyLogging {
   trait Components {
     implicit val actorSystem: ActorSystem
     implicit val materializer: Materializer
+    implicit def dispatcher = actorSystem.dispatcher
   }
 
-  def bootstrap() : Components = {
+  def bootstrap(debug: Boolean = false) : Components = {
     implicit val _actorSystem = ActorSystem(
       "stremtools",
       ConfigFactory.parseString(
-        """
+        s"""
           |akka {
           |  loggers = ["akka.event.slf4j.Slf4jLogger"]
-          |  loglevel = "INFO"
+          |  loglevel = "${if (debug) "DEBUG" else "INFO"}"
           |  logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
           |  jvm-exit-on-fatal-error = false
           |}
@@ -48,5 +49,8 @@ object AkkaStreamTools extends LazyLogging {
       override implicit val materializer: Materializer = _materializer
     }
   }
+
+  lazy val Info = bootstrap(false)
+  lazy val Debug = bootstrap(true)
 
 }

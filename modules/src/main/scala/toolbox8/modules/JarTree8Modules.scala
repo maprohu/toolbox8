@@ -24,7 +24,7 @@ object JarTree8Modules {
   object StandaloneApi extends ScalaModule(
     "standaloneapi",
     JarTreeModules.Api,
-    mvn.`com.typesafe.akka:akka-stream_2.11:jar:2.4.11`
+    mvn.`com.typesafe.akka:akka-stream_2.11:jar:2.4.12`
   )
 
   object Standalone extends ScalaModule(
@@ -62,7 +62,8 @@ object JarTree8Modules {
     Protocol,
     mvn.`me.chrons:boopickle_2.11:jar:1.2.4`,
     Toolbox6Modules.StateMachine,
-    Akka8Modules.StateMachine
+    Akka8Modules.StateMachine,
+    Akka8Modules.Stream
   )
 
   object Installer extends ScalaModule(

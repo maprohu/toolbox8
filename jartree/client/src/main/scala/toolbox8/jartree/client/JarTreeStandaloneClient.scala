@@ -13,6 +13,7 @@ import toolbox6.jartree.packaging.JarTreePackaging
 import toolbox6.jartree.packaging.JarTreePackaging.{RunHierarchy, RunMavenHierarchy}
 import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine
 import toolbox8.akka.statemachine.{AkkaStreamCoding, DeepStream}
+import toolbox8.akka.stream.AkkaStreamTools
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management._
 import toolbox8.jartree.standaloneapi.Protocol
@@ -43,9 +44,7 @@ object JarTreeStandaloneClient extends LazyLogging {
     flows: Materializer => Flows
   ) = {
 
-    implicit val actorSystem = ActorSystem()
-    implicit val materializer = ActorMaterializer()
-    import actorSystem.dispatcher
+    import AkkaStreamTools.Info._
 
     val peer =
       Tcp()
