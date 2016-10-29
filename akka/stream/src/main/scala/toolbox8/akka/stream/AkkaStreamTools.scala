@@ -22,7 +22,7 @@ object AkkaStreamTools extends LazyLogging {
         """
           |akka {
           |  loggers = ["akka.event.slf4j.Slf4jLogger"]
-          |  loglevel = "DEBUG"
+          |  loglevel = "INFO"
           |  logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
           |  jvm-exit-on-fatal-error = false
           |}
