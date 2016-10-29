@@ -14,6 +14,7 @@ import toolbox6.jartree.packaging.JarTreePackaging.{RunHierarchy, RunMavenHierar
 import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine
 import toolbox8.akka.statemachine.{AkkaStreamCoding, DeepStream}
 import toolbox8.akka.stream.AkkaStreamTools
+import toolbox8.akka.stream.AkkaStreamTools.Components
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management._
 import toolbox8.jartree.standaloneapi.Protocol
@@ -41,10 +42,11 @@ object JarTreeStandaloneClient extends LazyLogging {
   def run(
     host: String,
     port: Int,
-    flows: Materializer => Flows
+    flows: Components => Flows
   ) = {
 
-    import AkkaStreamTools.Info._
+    val cmp = AkkaStreamTools.Info
+    import cmp._
 
     val peer =
       Tcp()
@@ -53,7 +55,7 @@ object JarTreeStandaloneClient extends LazyLogging {
           port
         )
 
-    val f = flows(materializer)
+    val f = flows(cmp)
     import f._
 
     peer
@@ -81,6 +83,7 @@ object JarTreeStandaloneClient extends LazyLogging {
       host,
       port,
       { implicit mat =>
+        import mat._
         start(runHierarchy, target)
       }
     )
@@ -117,7 +120,7 @@ object JarTreeStandaloneClient extends LazyLogging {
   def runCat(
     host: String,
     port: Int = Protocol.DefaultPort,
-    sink: Materializer => Sink[ByteString, _]
+    sink: Components => Sink[ByteString, _]
   ) = {
     runData(
       host,
@@ -132,7 +135,7 @@ object JarTreeStandaloneClient extends LazyLogging {
   def runData(
     host: String,
     port: Int = Protocol.DefaultPort,
-    flow: Materializer => ByteFlow
+    flow: Components => ByteFlow
   ) = {
     run(
       host,
@@ -153,7 +156,8 @@ object JarTreeStandaloneClient extends LazyLogging {
       host,
       port,
       { implicit mat =>
-        import mat.executionContext
+        import mat._
+        import actorSystem.dispatcher
 
         val bytes =
           Pickle
@@ -202,7 +206,7 @@ object JarTreeStandaloneClient extends LazyLogging {
   def runManagement(
     host: String,
     port: Int,
-    state: Materializer => State
+    state: Components => State
   ) = {
     run(
       host,

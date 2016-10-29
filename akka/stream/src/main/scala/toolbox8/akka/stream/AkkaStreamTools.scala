@@ -18,13 +18,23 @@ object AkkaStreamTools extends LazyLogging {
 
   def bootstrap(debug: Boolean = false) : Components = {
     implicit val _actorSystem = ActorSystem(
-      "stremtools",
+      "streamtools",
       ConfigFactory.parseString(
         s"""
           |akka {
-          |  loggers = ["akka.event.slf4j.Slf4jLogger"]
-          |  loglevel = "${if (debug) "DEBUG" else "INFO"}"
-          |  logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
+          |  ${
+                if (!debug) {
+                  """
+                    |  loggers = ["akka.event.slf4j.Slf4jLogger"]
+                    |  loglevel = "INFO"
+                    |  logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
+                  """.stripMargin
+                } else {
+                  """
+                    |  loglevel = "DEBUG"
+                  """.stripMargin
+                }
+             }
           |  jvm-exit-on-fatal-error = false
           |}
         """.stripMargin
