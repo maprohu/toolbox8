@@ -11,8 +11,11 @@ object Rpis {
   implicit val Home = Config(
     host = "192.168.1.36"
   )
-  implicit val Tina = Config(
-    host = "192.168.2.6"
+  implicit val MobileCable = Config(
+    host = "10.1.1.49"
+  )
+  implicit val MobileHomeWlan = Config(
+    host = "192.168.10.215"
   )
 
 }

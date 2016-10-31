@@ -3,6 +3,8 @@ package toolbox8.jartree.standaloneapi
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 
+import akka.actor.ActorSystem
+import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 import toolbox6.jartree.api.InstanceResolver
@@ -48,5 +50,8 @@ case class PeerInfo(
 //}
 
 trait JarTreeStandaloneContext extends InstanceResolver {
+
+  implicit def actorSystem : ActorSystem
+  implicit def materializer: Materializer
 
 }

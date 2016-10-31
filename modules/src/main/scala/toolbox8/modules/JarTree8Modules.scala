@@ -14,7 +14,7 @@ object JarTree8Modules {
 
   object Protocol extends ScalaModule(
     "protocol",
-    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`,
+    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.12`,
     mvn.`io.monix:monix_2.11:jar:2.0.4`,
     StandaloneApi,
     JarTreeModules.Util,
@@ -32,7 +32,7 @@ object JarTree8Modules {
 //    Toolbox6Modules.JavaImpl,
     JarTreeModules.Impl,
     StandaloneApi,
-    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.11`,
+    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.12`,
     Protocol,
     Util,
     Toolbox6Modules.StateMachine,
@@ -43,7 +43,7 @@ object JarTree8Modules {
   object Util extends ScalaModule(
     "util",
     StandaloneApi,
-    mvn.`io.monix:monix-reactive_2.11:jar:2.0.4`
+    mvn.`io.monix:monix-reactive_2.11:jar:2.0.5`
 //    Toolbox6Modules.JavaImpl
   )
 
@@ -51,7 +51,7 @@ object JarTree8Modules {
     "echo",
     StandaloneApi,
     JarTreeModules.Util,
-    mvn.`io.monix:monix-reactive_2.11:jar:2.0.4`
+    mvn.`io.monix:monix-reactive_2.11:jar:2.0.5`
 //    Toolbox6Modules.JavaImpl
   )
 
@@ -68,7 +68,7 @@ object JarTree8Modules {
 
   object Installer extends ScalaModule(
     "installer",
-    mvn.`com.lihaoyi:ammonite-ops_2.11:jar:0.7.7`,
+    mvn.`com.lihaoyi:ammonite-ops_2.11:jar:0.7.8`,
     Toolbox8Modules,
     Packaging
   )

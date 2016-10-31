@@ -55,12 +55,16 @@ object JarTreeStandalone extends LazyLogging {
   )(implicit
     scheduler: Scheduler
   ) = {
+    val cmps = AkkaStreamTools.bootstrap()
+
     val rt = JarTreeBootstrap
       .init[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext](
       Config[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext](
         jarTree => new ScalaJarTreeStandaloneContext {
           override def resolve[T](request: ClassRequest[T]): Future[T] = jarTree.resolve(request)
           override implicit def executionContext: ExecutionContext = scheduler
+          override implicit def actorSystem: ActorSystem = cmps.actorSystem
+          override implicit def materializer: Materializer = cmps.materializer
         },
         voidProcessor = VoidService,
         name = name,
@@ -72,8 +76,7 @@ object JarTreeStandalone extends LazyLogging {
       )
     )
 
-    val cmps = AkkaStreamTools.bootstrap()
-    import cmps._
+    import cmps.{dispatcher => _, _}
 
     Tcp()
       .bind(
