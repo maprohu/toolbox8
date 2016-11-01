@@ -16,7 +16,7 @@ object RpiService {
        |[Unit]
        |Description=${name}
        |[Service]
-       |ExecStart=/usr/bin/java -jar /opt/${name}/lib/${name}.jar ${name}
+       |ExecStart=/usr/bin/java -agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n -jar /opt/${name}/lib/${name}.jar ${name}
        |User=${user}
        |SuccessExitStatus=143
        |[Install]

@@ -8,8 +8,8 @@ import toolbox8.modules.{JarTree8Modules, RpiModules, Toolbox8Modules}
 object RunServiceInstaller {
 
   def main(args: Array[String]): Unit = {
-//    import Rpis.Home
-    import Rpis.MobileHomeWlan
+    import Rpis.Home
+//    import Rpis.MobileHomeWlan
 
     RpiService
       .upload(

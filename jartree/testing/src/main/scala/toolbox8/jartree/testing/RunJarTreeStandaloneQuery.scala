@@ -11,9 +11,9 @@ object RunJarTreeStandaloneQuery {
   def main(args: Array[String]): Unit = {
     JarTreeStandaloneClient
       .runQuery(
-//        Rpis.Home.host
+        Rpis.Home.host
 //        Rpis.MobileCable.host
-        Rpis.MobileHomeWlan.host
+//        Rpis.MobileHomeWlan.host
       )
 
 
