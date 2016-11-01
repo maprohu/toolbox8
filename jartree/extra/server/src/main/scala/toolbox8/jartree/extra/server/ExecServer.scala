@@ -11,7 +11,8 @@ import toolbox8.jartree.extra.shared.ExecProtocol.Executable
   */
 object ExecServer {
 
-  def flow(
+  def flow[Ctx](
+    ctx: Ctx,
     instanceResolver: InstanceResolver
   ) = {
     Flow[ByteString]
@@ -24,13 +25,13 @@ object ExecServer {
             .fromFuture(
               instanceResolver
                 .resolveAsync(
-                  Unpickle[ClassRequest[Executable]]
+                  Unpickle[ClassRequest[Executable[Ctx]]]
                     .fromBytes(head.asByteBuffer)
                 )
             )
             .flatMapConcat({ e =>
               tail
-                .via(e.flow)
+                .via(e.flow(ctx))
             })
       })
   }

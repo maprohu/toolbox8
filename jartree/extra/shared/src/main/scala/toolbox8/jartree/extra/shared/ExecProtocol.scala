@@ -8,13 +8,8 @@ import akka.util.ByteString
   */
 object ExecProtocol {
 
-  trait Executable {
-    def flow : Flow[ByteString, ByteString, _]
+  trait Executable[-Ctx] {
+    def flow(ctx: Ctx) : Flow[ByteString, ByteString, _]
   }
-
-  case class Start(
-
-
-  )
 
 }

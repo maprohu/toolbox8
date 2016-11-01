@@ -18,7 +18,7 @@ import toolbox6.jartree.impl.{JarCache, JarTree, JarTreeBootstrap}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, PeerInfo, Protocol, Service}
 import org.reactivestreams.Processor
-import toolbox6.jartree.api.{ClassRequest, JarKey, JarPlugger, PlugRequest}
+import toolbox6.jartree.api._
 import toolbox6.jartree.impl.JarTreeBootstrap.Config
 import toolbox6.jartree.util.{CaseJarKey, ScalaInstanceResolver}
 import toolbox6.jartree.wiring.SimpleJarSocket
@@ -63,8 +63,9 @@ object JarTreeStandalone extends LazyLogging {
         jarTree => new ScalaJarTreeStandaloneContext {
           override def resolve[T](request: ClassRequest[T]): Future[T] = jarTree.resolve(request)
           override implicit def executionContext: ExecutionContext = actorSystem.dispatcher
-          override implicit def actorSystem: ActorSystem = cmps.actorSystem
-          override implicit def materializer: Materializer = cmps.materializer
+          override implicit val actorSystem: ActorSystem = cmps.actorSystem
+          override implicit val materializer: Materializer = cmps.materializer
+          override def jarCache: JarCacheLike = jarTree.cache
         },
         voidProcessor = VoidService,
         name = name,
@@ -102,6 +103,7 @@ object JarTreeStandalone extends LazyLogging {
           case (peerFlow, dataProc) =>
             val management = new Running(
               rt.jarTree,
+              rt.jarCache,
               rt.processorSocket,
               runtimeVersion
             ).createManagement
@@ -127,6 +129,7 @@ object JarTreeStandalone extends LazyLogging {
 
   case class Running(
     jarTree: JarTree,
+    jarCache: JarCache,
     socket: SimpleJarSocket[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext],
     runtimeVersion: String
   )(implicit
@@ -163,7 +166,7 @@ object JarTreeStandalone extends LazyLogging {
                 .ids
                 .zipWithIndex
                 .filter({
-                  case (id, idx) if !jarTree.cache.contains(id) => true
+                  case (id, idx) if !jarCache.contains(id) => true
                   case _ => false
                 })
                 .unzip
@@ -222,7 +225,7 @@ object JarTreeStandalone extends LazyLogging {
             ids
               .map({ id => { data: Data =>
                 logger.info(s"receiving: ${id}")
-                val putOpt = jarTree.cache.putAsync(id)
+                val putOpt = jarCache.putAsync(id)
 
                 putOpt
                   .map({

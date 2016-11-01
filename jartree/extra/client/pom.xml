@@ -103,9 +103,6 @@
             </plugin>
         </plugins>
     </build>
-    <dependencyManagement>
-        <dependencies> </dependencies>
-    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>toolbox8</groupId>
@@ -120,6 +117,11 @@
         <dependency>
             <groupId>toolbox6</groupId>
             <artifactId>toolbox6-pickling</artifactId>
+            <version>2-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>mvnmod</groupId>
+            <artifactId>mvnmod-builder</artifactId>
             <version>2-SNAPSHOT</version>
         </dependency>
         <dependency>
