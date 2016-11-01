@@ -2,17 +2,27 @@ package toolbox8.modules
 
 import maven.modules.builder.{RootModuleContainer, ScalaModule}
 import maven.modules.utils.MavenCentralModule
+import mvnmod.modules.MvnmodModules
+import toolbox6.modules.Toolbox6Modules
 
 /**
   * Created by martonpapp on 29/08/16.
   */
-object Toolbox8Modules extends MavenCentralModule(
-  "toolbox8-modules",
-  "toolbox8-modules",
-  "1.0.0"
-) {
+object Toolbox8Modules {
 
   implicit val Root = RootModuleContainer("toolbox8")
+
+  object Modules extends ScalaModule(
+    "modules",
+    MvnmodModules.Builder,
+    Toolbox6Modules.Modules
+  )
+
+  object Common extends ScalaModule(
+    "common",
+    mvn.`io.monix:monix-eval_2.11:jar:2.0.5`,
+    Toolbox6Modules.Logging
+  )
 
   object JarTree extends ScalaModule(
     "jartree",

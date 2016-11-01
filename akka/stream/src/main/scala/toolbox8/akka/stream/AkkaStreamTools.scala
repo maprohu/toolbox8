@@ -1,9 +1,12 @@
 package toolbox8.akka.stream
 
 import akka.actor.ActorSystem
+import akka.stream.scaladsl.{Flow, Keep, Source}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer, Supervision}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
+import monix.execution.Cancelable
+import monix.execution.cancelables.AssignableCancelable
 
 /**
   * Created by pappmar on 19/10/2016.
@@ -63,4 +66,32 @@ object AkkaStreamTools extends LazyLogging {
   lazy val Info = bootstrap(false)
   lazy val Debug = bootstrap(true)
 
+
+
+  object Implicits {
+    implicit class FlowExt[In, Out, Mat](flow: Flow[In, Out, Mat]) {
+
+    }
+  }
+
+}
+
+object Flows {
+
+  def stopper[T] : Flow[T, T, Cancelable] = {
+    Flow[T]
+      .map(Some.apply)
+      .mergeMat(
+        Source
+          .maybe[Option[Nothing]]
+          .mapMaterializedValue({ p =>
+            Cancelable({ () =>
+              p.success(None)
+            })
+          }),
+        true
+      )(Keep.right)
+      .takeWhile(_.isDefined)
+      .map(_.get)
+  }
 }

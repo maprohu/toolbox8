@@ -18,6 +18,8 @@ object RunToolbox8 {
   )
 
   val Modules = Seq[ConfiguredModule](
+    Toolbox8Modules.Modules,
+    Toolbox8Modules.Common,
     RpiModules.Remote,
     RpiModules.Installer,
     RpiModules.DBus,

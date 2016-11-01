@@ -17,6 +17,8 @@
         <module>rpi</module>
         <module>jartree</module>
         <module>akka</module>
+        <module>modules</module>
+        <module>common</module>
         <module>dummy</module>
     </modules>
 </project>
