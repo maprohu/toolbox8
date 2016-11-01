@@ -2,8 +2,7 @@ package toolbox8.jartree.extra.server
 
 import akka.stream.scaladsl.{Flow, Source}
 import akka.util.ByteString
-import toolbox6.jartree.api.InstanceResolver
-import toolbox6.jartree.util.ClassRequestImpl
+import toolbox6.jartree.api.{ClassRequest, InstanceResolver}
 import toolbox8.akka.statemachine.AkkaStreamCoding
 import toolbox8.jartree.extra.shared.ExecProtocol.Executable
 
@@ -25,7 +24,7 @@ object ExecServer {
             .fromFuture(
               instanceResolver
                 .resolveAsync(
-                  Unpickle[ClassRequestImpl[Executable]]
+                  Unpickle[ClassRequest[Executable]]
                     .fromBytes(head.asByteBuffer)
                 )
             )

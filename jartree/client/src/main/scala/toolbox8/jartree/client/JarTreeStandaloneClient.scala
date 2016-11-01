@@ -8,18 +8,19 @@ import akka.stream.{ActorMaterializer, Materializer}
 import akka.stream.scaladsl.{FileIO, Flow, Keep, Sink, Source, Tcp}
 import akka.util.ByteString
 import com.typesafe.scalalogging.LazyLogging
-import maven.modules.builder.NamedModule
+import maven.modules.builder.{HasMavenCoordinates, ModulePath, NamedModule}
+import toolbox6.jartree.api.{ClassRequest, JarPlugger}
 import toolbox6.jartree.packaging.JarTreePackaging
-import toolbox6.jartree.packaging.JarTreePackaging.{RunHierarchy, RunMavenHierarchy}
 import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine
 import toolbox8.akka.statemachine.{AkkaStreamCoding, DeepStream}
 import toolbox8.akka.stream.AkkaStreamTools
 import toolbox8.akka.stream.AkkaStreamTools.Components
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management._
-import toolbox8.jartree.standaloneapi.Protocol
+import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Protocol, Service}
 
 import scala.concurrent.{Await, Future}
+import scala.collection.immutable._
 
 /**
   * Created by martonpapp on 16/10/16.
@@ -76,7 +77,8 @@ object JarTreeStandaloneClient extends LazyLogging {
   def runPlug(
     host: String,
     port: Int = Protocol.DefaultPort,
-    runHierarchy: RunHierarchy,
+    module: NamedModule,
+    runClassName: String,
     target: NamedModule
   ) = {
     runManagement(
@@ -84,7 +86,29 @@ object JarTreeStandaloneClient extends LazyLogging {
       port,
       { implicit mat =>
         import mat._
-        upload(runHierarchy, target)
+        val rmh =
+          module
+            .asModule
+            .forTarget(
+              ModulePath(
+                target,
+                None
+              )
+            )
+
+        upload(
+          rmh
+            .classPath,
+          plug(
+            ClassRequest[Plugger](
+              rmh
+                .classPath
+                .map(JarTreePackaging.getId),
+              runClassName
+            )
+          )
+
+        )
       }
     )
   }
@@ -93,25 +117,29 @@ object JarTreeStandaloneClient extends LazyLogging {
 
 
 
-  def managementFlow(
-    runHierarchy: RunHierarchy,
-    target: NamedModule
-  )(implicit
-    materializer: Materializer
-  )  : ByteFlow = {
-
-    AkkaStreamCoding
-      .Terminal
-      .bidi
-      .join(
-        AkkaStreamCoding
-          .StateMachine
-          .flow(
-            upload(runHierarchy, target)
-          )
-      )
-
-  }
+//  def managementFlow(
+//    runHierarchy: RunHierarchy,
+//    target: NamedModule
+//  )(implicit
+//    materializer: Materializer
+//  )  : ByteFlow = {
+//
+//    AkkaStreamCoding
+//      .Terminal
+//      .bidi
+//      .join(
+//        AkkaStreamCoding
+//          .StateMachine
+//          .flow(
+//            upload(
+//              runHierarchy,
+//              target,
+//              plug(runHierarchy)
+//            )
+//          )
+//      )
+//
+//  }
 
   import boopickle.Default._
   import AkkaStreamCoding.Implicits._
@@ -226,19 +254,19 @@ object JarTreeStandaloneClient extends LazyLogging {
   }
 
   def upload(
-    runHierarchy: RunHierarchy,
-    target: NamedModule,
+    rmh: Seq[HasMavenCoordinates],
+//    target: NamedModule,
     andThen: State
   )(implicit
     materializer: Materializer
   ) : State = {
-    val rmh =
-      runHierarchy
-        .forTarget(
-          JarTreePackaging.target(
-            target
-          )
-        )
+//    val rmh =
+//      runHierarchy
+//        .forTarget(
+//          JarTreePackaging.target(
+//            target
+//          )
+//        )
 
     logger.info(s"updating to: ${rmh.toString}")
     val jars = JarTreePackaging.resolverJarsFile(rmh)
@@ -259,12 +287,11 @@ object JarTreeStandaloneClient extends LazyLogging {
 
     State(
       out = first,
-      next = verifying(rmh, jars, andThen)
+      next = verifying(jars, andThen)
     )
   }
 
   def verifying(
-    rmh: RunMavenHierarchy,
     files: IndexedSeq[(String, File)],
     andThen: State
   )(
@@ -298,12 +325,7 @@ object JarTreeStandaloneClient extends LazyLogging {
           mfiles
             .map({ elem =>
               FileIO.fromPath(elem.toPath)
-            }) :+
-            AkkaStreamCoding.pickle(
-              Plug(
-                rmh.request[Management.Plugger]
-              )
-            )
+            })
         })
 
     Future.successful(
@@ -313,12 +335,40 @@ object JarTreeStandaloneClient extends LazyLogging {
           AkkaStreamCoding
             .unpickle[Management.Done.type ](data)
             .map({ done =>
-              logger.info(s"done: ${done}")
-              StateMachine.End
+              logger.info(s"upload done: ${done}")
+              andThen
             })
         }
       )
     )
+  }
+
+  def plug(
+    classRequest: ClassRequest[JarPlugger[Service, JarTreeStandaloneContext]]
+  )(implicit
+    materializer: Materializer
+  ) : State = {
+    import materializer.executionContext
+    State(
+      out =
+        Source.single(
+          AkkaStreamCoding.pickle[Starter](
+            Plug(
+              classRequest
+            )
+          )
+        ),
+      { data =>
+        AkkaStreamCoding
+          .unpickle[Management.Done.type ](data)
+          .map({ done =>
+            logger.info(s"plug done: ${done}")
+            StateMachine.End
+          })
+      }
+
+    )
+
   }
 
 }

@@ -1,6 +1,6 @@
 package toolbox8.modules
 
-import maven.modules.builder.{JavaModule, ScalaModule, SubModuleContainer}
+import maven.modules.builder.{ScalaModule, SubModuleContainer}
 
 /**
   * Created by pappmar on 30/08/2016.
@@ -14,7 +14,7 @@ object Servlet31Modules {
     mvn.`javax.servlet:javax.servlet-api:jar:3.1.0`
   )
 
-  object RunApi extends JavaModule(
+  object RunApi extends ScalaModule(
     "runapi",
     SingleApi
   )

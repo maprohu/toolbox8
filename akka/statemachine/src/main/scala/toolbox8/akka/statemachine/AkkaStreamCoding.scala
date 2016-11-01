@@ -259,9 +259,10 @@ object AkkaStreamCoding {
         .flatMapConcat(_.out)
     }
 
+    lazy val EndNext : Transition = _ => Future.successful(End)
     lazy val End : State = State(
       out = Source.maybe[Data],
-      next = _ => Future.successful(End)
+      next = EndNext
     )
 
 
@@ -323,16 +324,46 @@ object AkkaStreamCoding {
     ) : Transition = {
       steps match {
         case head +: tail =>
-          { data =>
-            head(data)
-              .map({ _ =>
-                State(
-                  next = sequenceIn2(tail, andThen)
-                )
-              })
-          }
+        { data =>
+          head(data)
+            .map({ _ =>
+              State(
+                next = sequenceIn2(tail, andThen)
+              )
+            })
+        }
         case _ => // no more steps
           andThen
+      }
+
+    }
+
+    def sequenceInAndState(
+      out: StateOut,
+      steps: Seq[Data => Future[Unit]],
+      andThen: State
+    )(implicit
+      executionContext: ExecutionContext
+    ) : State = {
+      steps match {
+        case head +: tail =>
+          State(
+            out = out,
+            next = { data =>
+              head(data)
+                .map({ _ =>
+                  sequenceInAndState(
+                    Source.empty,
+                    tail,
+                    andThen
+                  )
+                })
+            }
+          )
+        case _ => // no more steps
+          andThen.copy(
+            out = out.concat(andThen.out)
+          )
       }
 
     }

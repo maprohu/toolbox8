@@ -92,6 +92,7 @@ object RpiService {
         import RpiInstaller._
         implicit val session = connect
 
+
         val targetRoot = s"/opt/${name}"
         val targetLib = s"${targetRoot}/lib"
         command(s"sudo mkdir -p ${targetLib} && sudo chown -R ${user}: ${targetRoot}")

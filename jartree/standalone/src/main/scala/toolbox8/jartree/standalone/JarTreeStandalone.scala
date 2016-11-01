@@ -18,10 +18,10 @@ import toolbox6.jartree.impl.{JarCache, JarTree, JarTreeBootstrap}
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, PeerInfo, Protocol, Service}
 import org.reactivestreams.Processor
-import toolbox6.jartree.api.{ClassRequest, JarPlugger}
+import toolbox6.jartree.api.{ClassRequest, JarKey, JarPlugger, PlugRequest}
 import toolbox6.jartree.impl.JarTreeBootstrap.Config
 import toolbox6.jartree.util.{CaseJarKey, ScalaInstanceResolver}
-import toolbox6.jartree.wiring.{PlugRequestImpl, SimpleJarSocket}
+import toolbox6.jartree.wiring.SimpleJarSocket
 import toolbox6.statemachine.State
 import toolbox8.akka.statemachine.AkkaStreamCoding
 import toolbox8.akka.statemachine.AkkaStreamCoding.{Data, StateMachine}
@@ -49,8 +49,8 @@ object JarTreeStandalone extends LazyLogging {
     name: String,
     port: Int = Protocol.DefaultPort,
     version: Int = -1,
-    embeddedJars: Seq[(CaseJarKey, () => InputStream)],
-    initialStartup: Option[PlugRequestImpl[Service, JarTreeStandaloneContext]],
+    embeddedJars: Seq[(JarKey, () => InputStream)],
+    initialStartup: Option[PlugRequest[Service, JarTreeStandaloneContext]],
     runtimeVersion: String
   )(implicit
     scheduler: Scheduler
@@ -62,7 +62,7 @@ object JarTreeStandalone extends LazyLogging {
       Config[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext](
         jarTree => new ScalaJarTreeStandaloneContext {
           override def resolve[T](request: ClassRequest[T]): Future[T] = jarTree.resolve(request)
-          override implicit def executionContext: ExecutionContext = scheduler
+          override implicit def executionContext: ExecutionContext = actorSystem.dispatcher
           override implicit def actorSystem: ActorSystem = cmps.actorSystem
           override implicit def materializer: Materializer = cmps.materializer
         },
@@ -171,17 +171,9 @@ object JarTreeStandalone extends LazyLogging {
               logger.info(s"missing jars: ${ids.mkString(", ")}")
 
               Future.successful(
-                State(
-                  out = Source.single(
-                    AkkaStreamCoding.pickle(
-                      VerifyResponse(
-                        missing = idxs
-                      )
-                    )
-                  ),
-                  next = verifyRespone(
-                    ids
-                  )
+                verifyRespone(
+                  idxs,
+                  ids
                 )
               )
             case Query =>
@@ -211,13 +203,21 @@ object JarTreeStandalone extends LazyLogging {
     }
 
     def verifyRespone(
+      idxs: Seq[Int],
       ids: Seq[String]
-    ): Transition = {
+    ): State = {
       import materializer.executionContext
 
       AkkaStreamCoding
         .StateMachine
-        .sequenceIn2(
+        .sequenceInAndState(
+          out = Source.single(
+            AkkaStreamCoding.pickle(
+              VerifyResponse(
+                missing = idxs
+              )
+            )
+          ),
           steps =
             ids
               .map({ id => { data: Data =>
@@ -249,7 +249,12 @@ object JarTreeStandalone extends LazyLogging {
                   })
               }
               }),
-          andThen = Start
+          andThen = State(
+            out = Source.single(
+              AkkaStreamCoding.pickle(Done)
+            ),
+            next = Start
+          )
         )
 
     }
@@ -269,7 +274,7 @@ object JarTreeStandalone extends LazyLogging {
         _ = logger.info(s"plugger resolved: ${inst}")
         _ <- {
           socket.plug(
-            PlugRequestImpl(
+            PlugRequest(
               plug.classRequest
             )
           )

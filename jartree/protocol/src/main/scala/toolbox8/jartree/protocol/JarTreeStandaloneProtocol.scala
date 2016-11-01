@@ -1,9 +1,9 @@
 package toolbox8.jartree.protocol
 
 import akka.stream.scaladsl.Framing
-import toolbox6.jartree.api.JarPlugger
-import toolbox6.jartree.util.ClassRequestImpl
+import toolbox6.jartree.api.{ClassRequest, JarPlugger}
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Service}
+
 import scala.collection.immutable._
 
 
@@ -19,7 +19,7 @@ object JarTreeStandaloneProtocol {
     case object Query extends Starter
 
     final case class QueryResponse(
-      plugged: Option[ClassRequestImpl[Plugger]],
+      plugged: Option[ClassRequest[Plugger]],
       version: String
     )
 
@@ -31,13 +31,8 @@ object JarTreeStandaloneProtocol {
       missing: Seq[Int]
     )
 
-//    final case class PutHeader(
-//      sizes: Seq[Long]
-//    )
-
     final case class Plug(
-      classRequest: ClassRequestImpl[Plugger]
-//      param: Array[Byte]
+      classRequest: ClassRequest[Plugger]
     ) extends Starter
 
     case object Done
