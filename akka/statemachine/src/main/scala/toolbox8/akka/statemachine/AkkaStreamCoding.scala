@@ -200,44 +200,44 @@ object AkkaStreamCoding {
     }
   }
 
-  object DynamicMultiplex {
-
-    def client(
-      data: Source[Flow[ByteString, ByteString, _], _]
-    )(implicit
-      materializer: Materializer
-    ) : Flow[ByteString, ByteString, NotUsed] = {
-      Flow[ByteString]
-        .prefixAndTail(0)
-        .flatMapConcat({
-          case (_, source) =>
-            Source
-              .queue[ByteString](0, OverflowStrategy.backpressure)
-              .mapMaterializedValue({ outQueue =>
-                val streams =
-                  Atomic(
-                    Map.empty[Long, SourceQueueWithComplete[ByteString]]
-                  )
-
-                source
-                  .mapAsync(1)({ bs =>
-                    val (id, bs2) = getLongHeader(bs)
-                    val (header, payload) = getByteHeader(bs2)
-
-                    def send =
-
-                    header match {
-                      case Terminal.NonLast =>
-                      case Terminal.Error =>
-                      case Terminal.Last =>
-                    }
-                  })
-              })
-        })
-
-    }
-
-  }
+//  object DynamicMultiplex {
+//
+//    def client(
+//      data: Source[Flow[ByteString, ByteString, _], _]
+//    )(implicit
+//      materializer: Materializer
+//    ) : Flow[ByteString, ByteString, NotUsed] = {
+//      Flow[ByteString]
+//        .prefixAndTail(0)
+//        .flatMapConcat({
+//          case (_, source) =>
+//            Source
+//              .queue[ByteString](0, OverflowStrategy.backpressure)
+//              .mapMaterializedValue({ outQueue =>
+//                val streams =
+//                  Atomic(
+//                    Map.empty[Long, SourceQueueWithComplete[ByteString]]
+//                  )
+//
+//                source
+//                  .mapAsync(1)({ bs =>
+//                    val (id, bs2) = getLongHeader(bs)
+//                    val (header, payload) = getByteHeader(bs2)
+//
+//                    def send =
+//
+//                    header match {
+//                      case Terminal.NonLast =>
+//                      case Terminal.Error =>
+//                      case Terminal.Last =>
+//                    }
+//                  })
+//              })
+//        })
+//
+//    }
+//
+//  }
 
 
 

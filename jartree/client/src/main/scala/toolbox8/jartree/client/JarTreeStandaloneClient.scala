@@ -84,7 +84,7 @@ object JarTreeStandaloneClient extends LazyLogging {
       port,
       { implicit mat =>
         import mat._
-        start(runHierarchy, target)
+        upload(runHierarchy, target)
       }
     )
   }
@@ -107,7 +107,7 @@ object JarTreeStandaloneClient extends LazyLogging {
         AkkaStreamCoding
           .StateMachine
           .flow(
-            start(runHierarchy, target)
+            upload(runHierarchy, target)
           )
       )
 
@@ -225,9 +225,10 @@ object JarTreeStandaloneClient extends LazyLogging {
     )
   }
 
-  def start(
+  def upload(
     runHierarchy: RunHierarchy,
-    target: NamedModule
+    target: NamedModule,
+    andThen: State
   )(implicit
     materializer: Materializer
   ) : State = {
@@ -258,13 +259,14 @@ object JarTreeStandaloneClient extends LazyLogging {
 
     State(
       out = first,
-      next = verifying(rmh, jars)
+      next = verifying(rmh, jars, andThen)
     )
   }
 
   def verifying(
     rmh: RunMavenHierarchy,
-    files: IndexedSeq[(String, File)]
+    files: IndexedSeq[(String, File)],
+    andThen: State
   )(
     data: AkkaStreamCoding.Data
   )(implicit
