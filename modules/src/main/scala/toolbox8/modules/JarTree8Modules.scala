@@ -84,6 +84,11 @@ object JarTree8Modules {
     mvn.`ch.qos.logback:logback-classic:jar:1.1.7`
   )
 
+//  object Exec extends ScalaModule(
+//    "exec",
+//    Protocol
+//  )
+
 
   object Testing extends ScalaModule(
     "testing",

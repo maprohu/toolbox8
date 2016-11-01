@@ -3,13 +3,14 @@ package toolbox8.akka.statemachine
 import java.nio.{ByteBuffer, ByteOrder}
 
 import akka.NotUsed
-import akka.stream.Materializer
-import akka.stream.scaladsl.{BidiFlow, Flow, Framing, Source}
+import akka.stream.{Materializer, OverflowStrategy}
+import akka.stream.scaladsl.{BidiFlow, Flow, Framing, Source, SourceQueueWithComplete}
 import akka.util.ByteString
 import boopickle.{PickleState, Pickler}
+import monix.execution.atomic.Atomic
 
 import scala.collection.immutable._
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
 /**
   * Created by pappmar on 18/10/2016.
@@ -41,6 +42,18 @@ object AkkaStreamCoding {
         ((h(1) & 0xff) << 16) |
         ((h(2) & 0xff) << 8) |
         (h(3) & 0xff)
+    })
+
+  def getLongHeader(bs: ByteString) : (Int, ByteString) =
+    mapPrefix(bs)(8)({ h =>
+      (h(0) << 56) |
+        ((h(1) & 0xff) << 48) |
+        ((h(2) & 0xff) << 40) |
+        ((h(3) & 0xff) << 32) |
+        ((h(4) & 0xff) << 24) |
+        ((h(5) & 0xff) << 16) |
+        ((h(6) & 0xff) << 8) |
+        (h(7) & 0xff)
     })
 
   type Data = Source[ByteString, Any]
@@ -146,31 +159,6 @@ object AkkaStreamCoding {
       encoder
     )
 
-
-
-//    def process(
-//      flow: Flow[ByteString, ByteString, NotUsed]
-//    ) : Flow[ByteString, ByteString, NotUsed] =
-//      Flow[ByteString]
-//        .map(getByteHeader)
-//        .splitAfter({ elem =>
-//          val (header, _) = elem
-//
-//          header match {
-//            case Last =>
-//              true
-//            case Error =>
-//              throw new Exception("terminal coding error")
-//            case _ =>
-//              false
-//          }
-//        })
-//        .map({ case (header, data) => data })
-//        .via(flow)
-//        .map(bs => NonLastBS ++ bs)
-//        .concat(Source.single(LastBS))
-//        .concatSubstreams
-
     val concat : Flow[Data, ByteString, NotUsed] = {
       Flow[Data]
         .flatMapConcat({ data =>
@@ -178,19 +166,6 @@ object AkkaStreamCoding {
             .fold(ByteString.empty)(_ ++ _)
         })
     }
-
-
-//    def concat(implicit
-//      materializer: Materializer
-//    ) = {
-//      Flow[ByteString]
-//        .prefixAndTail(0)
-//        .flatMapConcat({
-//          case (_, source) =>
-//            source
-//              .fold(ByteString.empty)(_ ++ _)
-//        })
-//    }
 
   }
 
@@ -225,6 +200,46 @@ object AkkaStreamCoding {
     }
   }
 
+  object DynamicMultiplex {
+
+    def client(
+      data: Source[Flow[ByteString, ByteString, _], _]
+    )(implicit
+      materializer: Materializer
+    ) : Flow[ByteString, ByteString, NotUsed] = {
+      Flow[ByteString]
+        .prefixAndTail(0)
+        .flatMapConcat({
+          case (_, source) =>
+            Source
+              .queue[ByteString](0, OverflowStrategy.backpressure)
+              .mapMaterializedValue({ outQueue =>
+                val streams =
+                  Atomic(
+                    Map.empty[Long, SourceQueueWithComplete[ByteString]]
+                  )
+
+                source
+                  .mapAsync(1)({ bs =>
+                    val (id, bs2) = getLongHeader(bs)
+                    val (header, payload) = getByteHeader(bs2)
+
+                    def send =
+
+                    header match {
+                      case Terminal.NonLast =>
+                      case Terminal.Error =>
+                      case Terminal.Last =>
+                    }
+                  })
+              })
+        })
+
+    }
+
+  }
+
+
 
   object StateMachine {
 
@@ -238,9 +253,6 @@ object AkkaStreamCoding {
     def flow(
       init: State
     ) : Flow[Data, Data, NotUsed] = {
-//      import akka.stream.impl.fusing.Hacking._
-//      Source
-//        .un
 
       Flow[Data]
         .scanAsync(init)({ case (state, data) => state.next(data) })

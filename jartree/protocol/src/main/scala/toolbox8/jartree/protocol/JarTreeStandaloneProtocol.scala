@@ -38,7 +38,7 @@ object JarTreeStandaloneProtocol {
     final case class Plug(
       classRequest: ClassRequestImpl[Plugger]
 //      param: Array[Byte]
-    )
+    ) extends Starter
 
     case object Done
 

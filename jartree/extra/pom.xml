@@ -1,7 +1,7 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0">
     <modelVersion>4.0.0</modelVersion>
     <groupId>toolbox8</groupId>
-    <artifactId>toolbox8-jartree</artifactId>
+    <artifactId>toolbox8-jartree-extra</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
     <build>
@@ -14,16 +14,8 @@
         </plugins>
     </build>
     <modules>
-        <module>extra</module>
-        <module>standaloneapi</module>
-        <module>protocol</module>
-        <module>standalone</module>
-        <module>echo</module>
-        <module>util</module>
+        <module>shared</module>
         <module>client</module>
-        <module>installer</module>
-        <module>packaging</module>
-        <module>app</module>
-        <module>testing</module>
+        <module>server</module>
     </modules>
 </project>
