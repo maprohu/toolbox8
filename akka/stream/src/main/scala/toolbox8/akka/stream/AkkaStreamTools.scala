@@ -3,8 +3,10 @@ package toolbox8.akka.stream
 import java.io.OutputStream
 
 import akka.actor.ActorSystem
+import akka.event.Logging
 import akka.stream.scaladsl.{Flow, Keep, Source, StreamConverters}
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer, Supervision}
+import akka.stream._
+import akka.util.ByteString
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import monix.execution.Cancelable
@@ -96,6 +98,17 @@ object Flows {
       .takeWhile(_.isDefined)
       .map(_.get)
   }
+  val Dump =
+    Flow
+      .fromSinkAndSource(
+        Flow[ByteString]
+          .log("dump").withAttributes(Attributes.logLevels(onElement = Logging.InfoLevel))
+          .to(
+            Sinks.Dump
+          ),
+        Source.maybe
+      )
+
 }
 
 object Sinks {
@@ -117,7 +130,7 @@ object Sinks {
 
   val Dump =
     StreamConverters
-      .fromOutputStream(() => SystemOutUnclosed)
+      .fromOutputStream(() => SystemOutUnclosed, true)
 
 }
 

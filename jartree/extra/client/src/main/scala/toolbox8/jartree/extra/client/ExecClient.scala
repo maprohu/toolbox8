@@ -1,5 +1,7 @@
 package toolbox8.jartree.extra.client
 
+import akka.event.Logging
+import akka.stream.Attributes
 import akka.stream.scaladsl.{Flow, Keep, Source}
 import akka.util.ByteString
 import maven.modules.builder.{Module, ModulePath}
@@ -25,6 +27,7 @@ object ExecClient {
             .toByteBuffer
         )
       })
+      .log("exec-source").withAttributes(Attributes.logLevels(onElement = Logging.InfoLevel))
   }
 
   def flow[Ctx](
