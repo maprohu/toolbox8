@@ -2,7 +2,7 @@ package toolbox8.modules
 
 import maven.modules.builder.{ScalaModule, SubModuleContainer}
 import mvnmod.modules.MvnmodModules
-import toolbox6.modules.Toolbox6Modules
+import toolbox6.modules.{JarTreeModules, Toolbox6Modules}
 import toolbox6.modules.Toolbox6Modules.Pickling
 import toolbox8.modules.JarTree8Modules.Protocol
 
@@ -22,7 +22,8 @@ object Extra8Modules {
     "server",
     Shared,
     JarTree8Modules.Util,
-    Toolbox6Modules.Pickling
+    Toolbox6Modules.Pickling,
+    JarTreeModules.Impl
   )
   object Client extends ScalaModule(
     "client",

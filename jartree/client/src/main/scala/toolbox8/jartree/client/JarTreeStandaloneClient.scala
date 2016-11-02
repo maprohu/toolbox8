@@ -9,7 +9,7 @@ import akka.stream.scaladsl.{FileIO, Flow, Keep, Sink, Source, Tcp}
 import akka.util.ByteString
 import com.typesafe.scalalogging.LazyLogging
 import maven.modules.builder.{HasMavenCoordinates, ModulePath, NamedModule}
-import toolbox6.jartree.api.{ClassRequest, JarPlugger}
+import toolbox6.jartree.api.{ClassRequest, JarPlugger, JarSeq}
 import toolbox6.jartree.packaging.JarTreePackaging
 import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine
 import toolbox8.akka.statemachine.{AkkaStreamCoding, DeepStream}
@@ -125,6 +125,7 @@ object JarTreeStandaloneClient extends LazyLogging {
               upload(
                 classPath,
                 { () =>
+                  logger.info("signaling upload done")
                   promise.success(Some())
                   StateMachine.End
                 }
@@ -176,9 +177,11 @@ object JarTreeStandaloneClient extends LazyLogging {
               .classPath,
             () => plug(
               ClassRequest[Plugger](
-                rmh
-                  .classPath
-                  .map(JarTreePackaging.getId),
+                JarSeq(
+                  rmh
+                    .classPath
+                    .map(JarTreePackaging.getId)
+                ),
                 runClassName
               )
             )

@@ -5,13 +5,14 @@ import java.io.FileInputStream
 import com.typesafe.scalalogging.LazyLogging
 import toolbox6.jartree.packaging.JarTreePackaging
 import toolbox8.jartree.echo.EchoPlugger
-import toolbox8.jartree.standalone.{JarTreeStandalone, ScalaJarTreeStandaloneContext}
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Service}
-import toolbox8.modules.{JarTree8Modules, Toolbox8Modules}
+import toolbox8.modules.{Extra8Modules, JarTree8Modules, Toolbox8Modules}
 import monix.execution.Scheduler.Implicits.global
 import ammonite.ops._
 import maven.modules.builder.ModulePath
 import toolbox6.jartree.api.{ClassRequest, JarKey, PlugRequest}
+import toolbox8.jartree.extra.server.ExecPlugger
+import toolbox8.jartree.standalone.JarTreeStandalone
 
 /**
   * Created by martonpapp on 15/10/16.
@@ -23,8 +24,8 @@ object RunJarTreeStandalone extends LazyLogging {
   def main(args: Array[String]): Unit = {
     rm(root / 'opt / Name)
 
-    val module = JarTree8Modules.Echo
-    val runClassName = classOf[EchoPlugger].getName
+    val module = Extra8Modules.Server
+    val runClassName = classOf[ExecPlugger].getName
     val target = JarTree8Modules.Standalone
 
     val rmh =

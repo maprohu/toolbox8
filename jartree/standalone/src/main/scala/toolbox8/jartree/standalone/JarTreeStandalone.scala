@@ -20,7 +20,7 @@ import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, PeerInfo, Proto
 import org.reactivestreams.Processor
 import toolbox6.jartree.api._
 import toolbox6.jartree.impl.JarTreeBootstrap.Config
-import toolbox6.jartree.util.{CaseJarKey, ScalaInstanceResolver}
+import toolbox6.jartree.util.JarTreeTools
 import toolbox6.jartree.wiring.SimpleJarSocket
 import toolbox6.statemachine.State
 import toolbox8.akka.statemachine.AkkaStreamCoding
@@ -40,7 +40,6 @@ import scala.collection.immutable._
   * Created by martonpapp on 15/10/16.
   */
 
-trait ScalaJarTreeStandaloneContext extends JarTreeStandaloneContext with ScalaInstanceResolver
 
 object JarTreeStandalone extends LazyLogging {
 
@@ -57,15 +56,17 @@ object JarTreeStandalone extends LazyLogging {
   ) = {
     val cmps = AkkaStreamTools.bootstrap()
 
+
     val rt = JarTreeBootstrap
-      .init[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext](
-      Config[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext](
-        jarTree => new ScalaJarTreeStandaloneContext {
-          override def resolve[T](request: ClassRequest[T]): Future[T] = jarTree.resolve(request)
-          override implicit def executionContext: ExecutionContext = actorSystem.dispatcher
-          override implicit val actorSystem: ActorSystem = cmps.actorSystem
-          override implicit val materializer: Materializer = cmps.materializer
-          override def jarCache: JarCacheLike = jarTree.cache
+      .init[Service, JarTreeStandaloneContext](
+      Config[Service, JarTreeStandaloneContext](
+        { (jarTree, ctx) =>
+          new JarTreeStandaloneContext {
+            override def resolve(request: JarSeq) : Future[ClassLoader] = jarTree.resolve(request)
+            override implicit val actorSystem: ActorSystem = cmps.actorSystem
+            override implicit val materializer: Materializer = cmps.materializer
+            override def jarTreeContext: JarTreeContext = ctx
+          }
         },
         voidProcessor = VoidService,
         name = name,
@@ -130,7 +131,7 @@ object JarTreeStandalone extends LazyLogging {
   case class Running(
     jarTree: JarTree,
     jarCache: JarCache,
-    socket: SimpleJarSocket[Service, JarTreeStandaloneContext, ScalaJarTreeStandaloneContext],
+    socket: SimpleJarSocket[Service, JarTreeStandaloneContext],
     runtimeVersion: String
   )(implicit
     materializer: Materializer
@@ -252,12 +253,15 @@ object JarTreeStandalone extends LazyLogging {
                   })
               }
               }),
-          andThen = State(
-            out = Source.single(
-              AkkaStreamCoding.pickle(Done)
-            ),
-            next = Start
-          )
+          andThen = { () =>
+            logger.info("all files received")
+            State(
+              out = Source.single(
+                AkkaStreamCoding.pickle(Done)
+              ),
+              next = Start
+            )
+          }
         )
 
     }
@@ -270,9 +274,11 @@ object JarTreeStandalone extends LazyLogging {
 
       for {
         inst <- {
-          jarTree.resolve(
-            plug.classRequest
-          )
+          JarTreeTools
+            .resolve(
+              jarTree,
+              plug.classRequest
+            )
         }
         _ = logger.info(s"plugger resolved: ${inst}")
         _ <- {

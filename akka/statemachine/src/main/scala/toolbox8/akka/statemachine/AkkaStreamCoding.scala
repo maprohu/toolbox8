@@ -7,6 +7,7 @@ import akka.stream.{Materializer, OverflowStrategy}
 import akka.stream.scaladsl.{BidiFlow, Flow, Framing, Source, SourceQueueWithComplete}
 import akka.util.ByteString
 import boopickle.{PickleState, Pickler}
+import com.typesafe.scalalogging.LazyLogging
 import monix.execution.atomic.Atomic
 
 import scala.collection.immutable._
@@ -15,7 +16,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 /**
   * Created by pappmar on 18/10/2016.
   */
-object AkkaStreamCoding {
+object AkkaStreamCoding extends LazyLogging {
 
   implicit class SourceImpl[O, M](flow: Source[O, M]) {
     def trf[O2, M2](fn: Source[O, M] => Source[O2, M2]) = fn(flow)
@@ -341,7 +342,7 @@ object AkkaStreamCoding {
     def sequenceInAndState(
       out: StateOut,
       steps: Seq[Data => Future[Unit]],
-      andThen: State
+      andThen: () => State
     )(implicit
       executionContext: ExecutionContext
     ) : State = {
@@ -361,8 +362,10 @@ object AkkaStreamCoding {
             }
           )
         case _ => // no more steps
-          andThen.copy(
-            out = out.concat(andThen.out)
+          val s = andThen()
+
+          s.copy(
+            out = out.concat(s.out)
           )
       }
 

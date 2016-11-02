@@ -1,5 +1,7 @@
 package toolbox8.jartree.extra.shared
 
+import java.nio.file.Path
+
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
 
@@ -12,4 +14,8 @@ object ExecProtocol {
     def flow(ctx: Ctx) : Flow[ByteString, ByteString, _]
   }
 
+}
+
+trait HasLogFile {
+  def logFile: Option[Path]
 }

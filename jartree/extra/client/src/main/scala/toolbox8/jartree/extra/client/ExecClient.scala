@@ -4,6 +4,7 @@ import akka.event.Logging
 import akka.stream.Attributes
 import akka.stream.scaladsl.{Flow, Keep, Source}
 import akka.util.ByteString
+import com.typesafe.scalalogging.LazyLogging
 import maven.modules.builder.{Module, ModulePath}
 import toolbox6.jartree.api.ClassRequest
 import toolbox8.jartree.extra.shared.ExecProtocol.Executable
@@ -13,7 +14,7 @@ import scala.concurrent.Promise
 /**
   * Created by maprohu on 01-11-2016.
   */
-object ExecClient {
+object ExecClient extends LazyLogging {
 
   def source[Ctx](
     classRequest: ClassRequest[Executable[Ctx]]
@@ -22,12 +23,13 @@ object ExecClient {
     Source
       .maybe[Unit]
       .map({ _ =>
+        logger.info("sending exec request")
         ByteString(
           Pickle[ClassRequest[Executable[Ctx]]](classRequest)
             .toByteBuffer
         )
       })
-      .log("exec-source").withAttributes(Attributes.logLevels(onElement = Logging.InfoLevel))
+//      .log("exec-source").withAttributes(Attributes.logLevels(onElement = Logging.InfoLevel))
   }
 
   def flow[Ctx](

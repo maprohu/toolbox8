@@ -2,7 +2,7 @@ package toolbox8.jartree.util
 
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
-import toolbox6.jartree.api.{JarPlugResponse, JarPlugger}
+import toolbox6.jartree.api.{JarPlugResponse, JarPlugger, PullParams}
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, PeerInfo, Service}
 
 import scala.concurrent.Future
@@ -25,12 +25,15 @@ class VoidService extends Service {
 
 class VoidServicePlugger
   extends JarPlugger[Service, JarTreeStandaloneContext] {
-  override def pullAsync(previous: Service, context: JarTreeStandaloneContext): Future[JarPlugResponse[Service]] = {
+  override def pull(
+    params: PullParams[Service, JarTreeStandaloneContext]
+  ): Future[JarPlugResponse[Service]] = {
+    import params._
     Future.successful(
-      new JarPlugResponse[Service] {
-        override def instance(): Service = VoidService
-        override def andThen(): Unit = previous.close()
-      }
+      JarPlugResponse[Service](
+        VoidService,
+        () => previous.close()
+      )
     )
   }
 }

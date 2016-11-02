@@ -7,7 +7,7 @@ import akka.actor.ActorSystem
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
 import akka.util.ByteString
-import toolbox6.jartree.api.{InstanceResolver, JarCacheLike}
+import toolbox6.jartree.api.{ClassLoaderResolver, JarCacheLike, JarTreeContext}
 
 import scala.concurrent.Future
 
@@ -22,9 +22,9 @@ case class PeerInfo(
   id: Option[String] = None
 )
 
-trait JarTreeStandaloneContext extends InstanceResolver {
+trait JarTreeStandaloneContext extends ClassLoaderResolver {
 
-  def jarCache: JarCacheLike
+  def jarTreeContext: JarTreeContext
   implicit val actorSystem : ActorSystem
   implicit val materializer: Materializer
 
