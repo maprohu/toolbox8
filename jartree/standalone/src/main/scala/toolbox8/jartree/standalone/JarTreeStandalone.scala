@@ -6,7 +6,8 @@ import java.nio.file.Path
 import java.util
 
 import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer, Supervision}
+import akka.event.Logging
+import akka.stream._
 import akka.stream.scaladsl.{FileIO, Flow, Keep, Sink, Source, Tcp}
 import akka.util.ByteString
 import com.typesafe.scalalogging.LazyLogging
@@ -111,14 +112,23 @@ object JarTreeStandalone extends LazyLogging {
               runtimeVersion
             ).createManagement
 
-            peerFlow
+            val dataFlow : Flow[ByteString, ByteString, _] =
+              Flow[ByteString]
+                .via(
+                  dataProc
+                )
+                .log("data-out")
+
+            Flow[ByteString]
+              .log("peer-out")
+              .via(peerFlow)
               .join(AkkaStreamCoding.framing.reversed)
               .join(
                 AkkaStreamCoding
                   .Multiplex
                   .flow(
                     management,
-                    dataProc
+                    dataFlow
                   )
               )
               .run()

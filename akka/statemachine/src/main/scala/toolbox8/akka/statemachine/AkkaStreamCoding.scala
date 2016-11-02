@@ -3,7 +3,8 @@ package toolbox8.akka.statemachine
 import java.nio.{ByteBuffer, ByteOrder}
 
 import akka.NotUsed
-import akka.stream.{Materializer, OverflowStrategy}
+import akka.event.Logging
+import akka.stream.{Attributes, Materializer, OverflowStrategy}
 import akka.stream.scaladsl.{BidiFlow, Flow, Framing, Source, SourceQueueWithComplete}
 import akka.util.ByteString
 import boopickle.{PickleState, Pickler}
@@ -173,7 +174,7 @@ object AkkaStreamCoding extends LazyLogging {
   object Multiplex {
 
     def flow(
-      flows: Flow[ByteString, ByteString, Any]*
+      flows: Flow[ByteString, ByteString, _]*
     ) : Flow[ByteString, ByteString, NotUsed] = {
       Flow[ByteString]
         .prepend(
@@ -187,9 +188,11 @@ object AkkaStreamCoding extends LazyLogging {
         )
         .map(getByteHeader)
         .groupBy(flows.size, { case (header, data) => header })
+        .buffer(1, OverflowStrategy.backpressure)
         .prefixAndTail(1)
         .flatMapConcat({
           case (Seq((header, emptyFirstData)), data) =>
+            logger.info("setting up flow: {}", header)
             val headerBS = ByteString(header)
 
             data

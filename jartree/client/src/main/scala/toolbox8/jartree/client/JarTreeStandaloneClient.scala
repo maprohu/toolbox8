@@ -4,7 +4,8 @@ import java.io.File
 
 import akka.NotUsed
 import akka.actor.ActorSystem
-import akka.stream.{ActorMaterializer, Materializer}
+import akka.event.Logging
+import akka.stream.{ActorMaterializer, Attributes, Materializer}
 import akka.stream.scaladsl.{FileIO, Flow, Keep, Sink, Source, Tcp}
 import akka.util.ByteString
 import com.typesafe.scalalogging.LazyLogging
@@ -85,14 +86,22 @@ object JarTreeStandaloneClient extends LazyLogging {
       val f = flows(cmp)
       import f._
 
+      val dataFlow =
+        Flow[ByteString]
+          .log("data-in")
+          .via(
+            data
+          )
+
       peer
+        .log("peer-in")
         .join(
           AkkaStreamCoding.framing.reversed
         )
         .join(
           AkkaStreamCoding.Multiplex.flow(
             management,
-            data
+            dataFlow
           )
         )
         .run()

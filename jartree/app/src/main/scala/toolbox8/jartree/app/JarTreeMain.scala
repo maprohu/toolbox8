@@ -32,14 +32,12 @@ object JarTreeMain extends LazyLogging {
   }
 
   def main(args: Array[String]): Unit = {
-    val name = if (args.length >= 1) {
+    val (log, name) = if (args.length >= 1) {
       val n = args(0)
-      configureLogging(n, false)
-      n
+      (configureLogging(n, false), n)
     } else {
       val n = "jartree"
-      configureLogging(n, true)
-      n
+      (configureLogging(n, true), n)
     }
 
     import monix.execution.Scheduler.Implicits.global
@@ -48,7 +46,8 @@ object JarTreeMain extends LazyLogging {
         name,
         embeddedJars = Seq(),
         initialStartup = None,
-        runtimeVersion = JarTreeMain.getClass.getPackage.getImplementationVersion
+        runtimeVersion = JarTreeMain.getClass.getPackage.getImplementationVersion,
+        logFile = Some(log.toPath)
       )
   }
 

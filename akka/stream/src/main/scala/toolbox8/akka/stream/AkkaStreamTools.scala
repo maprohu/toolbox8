@@ -102,7 +102,7 @@ object Flows {
     Flow
       .fromSinkAndSource(
         Flow[ByteString]
-          .log("dump").withAttributes(Attributes.logLevels(onElement = Logging.InfoLevel))
+          .log("dump")
           .to(
             Sinks.Dump
           ),
