@@ -52,7 +52,9 @@ object AkkaStreamTools extends LazyLogging {
     implicit val _materializer =
       ActorMaterializer(
         Some(
-          ActorMaterializerSettings(_actorSystem)
+          ActorMaterializerSettings.apply(
+            _actorSystem:ActorSystem
+          )
             .withSupervisionStrategy({ ex:Throwable =>
               logger.error(ex.getMessage, ex)
 
