@@ -12,7 +12,7 @@ import toolbox6.jartree.impl.JarTree
 import toolbox6.jartree.util.JarTreeTools
 import toolbox8.akka.statemachine.AkkaStreamCoding
 import toolbox8.jartree.extra.shared.ExecProtocol.Executable
-import toolbox8.jartree.extra.shared.HasLogFile
+import toolbox8.jartree.extra.shared.{HasLogFile, HasStorageDir}
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, PeerInfo, Service}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -64,9 +64,10 @@ class ExecService(
   jarTreeContext: JarTreeContext
 )(implicit
   executionContext: ExecutionContext
-) extends Service with HasLogFile {
+) extends Service with HasLogFile with HasStorageDir{
 
   override val logFile: Option[Path] = jarTreeContext.log
+  override val storageDir: Option[Path] = jarTreeContext.storage
 
   val jarTree = new JarTree(
     classLoader,

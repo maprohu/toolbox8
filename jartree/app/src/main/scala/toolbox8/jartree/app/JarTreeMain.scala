@@ -10,7 +10,7 @@ import scala.collection.immutable._
 /**
   * Created by martonpapp on 20/10/16.
   */
-object JarTreeMain extends LazyLogging {
+object JarTreeMain {
 
   def configureLogging(
     name: String,
@@ -19,14 +19,15 @@ object JarTreeMain extends LazyLogging {
     val lcf = new LogbackConfigurator()
     val lc = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
     lcf.reset(lc)
-    if (debug) {
-      lcf.configStdout(lc)
-      lcf.configDebug(lc, true)
-    }
+    lcf.configDebug(lc, true)
+    //    lcf.configDebug(lc, debug)
     lcf.configure(
       name,
       lc
     )
+    if (debug) {
+      lcf.configStdout(lc)
+    }
 
     lcf.logFile(name)
   }

@@ -1,6 +1,6 @@
 package toolbox8.jartree.standalone
 
-import java.io.InputStream
+import java.io.{File, InputStream}
 import java.nio.ByteBuffer
 import java.nio.file.Path
 import java.util
@@ -56,7 +56,9 @@ object JarTreeStandalone extends LazyLogging {
   )(implicit
     scheduler: Scheduler
   ) = {
-    val cmps = AkkaStreamTools.bootstrap()
+    val cmps = AkkaStreamTools.Debug
+
+    val basePath = new File(s"/opt/${name}")
 
 
     val rt = JarTreeBootstrap
@@ -72,12 +74,13 @@ object JarTreeStandalone extends LazyLogging {
         },
         voidProcessor = VoidService,
         name = name,
-        dataPath = s"/opt/${name}/data",
+        dataPath = new File(basePath, "data").getAbsolutePath,
         version = version,
         embeddedJars,
         initialStartup,
         closer = _.close(),
-        logFile = logFile
+        logFile = logFile,
+        storageDir = Some(new File(basePath, "storage").toPath)
       )
     )
 

@@ -10,7 +10,7 @@ object Rpis {
 
   implicit val Localhost = Config(
     host = "localhost",
-    port = 9978
+    servicePort = 9978
   )
   implicit val Home = Config(
     host = "192.168.1.36"

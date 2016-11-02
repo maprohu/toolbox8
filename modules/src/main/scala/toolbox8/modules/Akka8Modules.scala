@@ -26,7 +26,9 @@ object Akka8Modules {
     mvn.`com.typesafe.akka:akka-stream_2.11:2.4.12`,
     Toolbox6Modules.Logging,
     mvn.`com.typesafe.akka:akka-slf4j_2.11:2.4.12`,
-    mvn.`io.monix:monix-execution_2.11:jar:2.0.5`
+    mvn.`io.monix:monix-execution_2.11:jar:2.0.5`,
+    Toolbox6Modules.Common
+
 
   )
 

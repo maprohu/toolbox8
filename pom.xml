@@ -19,6 +19,7 @@
         <module>akka</module>
         <module>modules</module>
         <module>common</module>
+        <module>leveldb</module>
         <module>dummy</module>
     </modules>
 </project>

@@ -201,6 +201,7 @@ object AkkaStreamCoding extends LazyLogging {
               .map(bs => headerBS ++ bs)
         })
         .mergeSubstreams
+        .buffer(1, OverflowStrategy.backpressure)
     }
   }
 

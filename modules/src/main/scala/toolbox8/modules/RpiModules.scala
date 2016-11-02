@@ -16,6 +16,7 @@ object RpiModules {
     mvn.`com.lihaoyi:ammonite-ops_2.11:jar:0.7.7`,
     mvn.`com.jcraft:jsch:jar:0.1.54`,
     JarTree8Modules.Packaging,
+    JarTree8Modules.Protocol,
     Toolbox8Modules.Modules
   )
 

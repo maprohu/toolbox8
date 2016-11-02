@@ -8,12 +8,14 @@ import toolbox8.rpi.installer.Rpis
   */
 object RunJarTreeStandaloneQuery {
 
+//  val Target = Rpis.Localhost
+  val Target = Rpis.Home
+
   def main(args: Array[String]): Unit = {
     JarTreeStandaloneClient
       .target(
-        Rpis.Home.host
-//        Rpis.MobileCable.host
-//        Rpis.MobileHomeWlan.host
+        Target.host,
+        Target.servicePort
       )
       .runQuery()
 

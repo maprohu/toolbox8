@@ -35,7 +35,9 @@ object Extra8Modules {
 
   object Hello extends ScalaModule(
     "hello",
-    Shared
+    Shared,
+    Akka8Modules.Stream,
+    mvn.`org.iq80.leveldb:leveldb:jar:0.9`
   )
 
 

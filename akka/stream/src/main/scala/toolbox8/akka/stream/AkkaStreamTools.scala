@@ -4,13 +4,14 @@ import java.io.OutputStream
 
 import akka.actor.ActorSystem
 import akka.event.Logging
-import akka.stream.scaladsl.{Flow, Keep, Source, StreamConverters}
+import akka.stream.scaladsl.{Flow, Keep, Sink, Source, StreamConverters}
 import akka.stream._
 import akka.util.ByteString
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import monix.execution.Cancelable
 import monix.execution.cancelables.AssignableCancelable
+import toolbox6.common.StringTools
 
 /**
   * Created by pappmar on 19/10/2016.
@@ -29,19 +30,9 @@ object AkkaStreamTools extends LazyLogging {
       ConfigFactory.parseString(
         s"""
           |akka {
-          |  ${
-                if (!debug) {
-                  """
-                    |  loggers = ["akka.event.slf4j.Slf4jLogger"]
-                    |  loglevel = "INFO"
-                    |  logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
-                  """.stripMargin
-                } else {
-                  """
-                    |  loglevel = "DEBUG"
-                  """.stripMargin
-                }
-             }
+          |  loggers = ["akka.event.slf4j.Slf4jLogger"]
+          |  logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
+          |  loglevel = "${if (debug) "DEBUG" else "INFO"}"
           |  jvm-exit-on-fatal-error = false
           |}
         """.stripMargin
@@ -49,17 +40,21 @@ object AkkaStreamTools extends LazyLogging {
       AkkaStreamTools.getClass.getClassLoader
     )
 
+    val decider : Supervision.Decider = {
+      case ex:Throwable =>
+        logger.error(ex.getMessage, ex)
+        Supervision.Stop
+    }
+
+
     implicit val _materializer =
       ActorMaterializer(
         Some(
-          ActorMaterializerSettings.apply(
-            _actorSystem:ActorSystem
-          )
-            .withSupervisionStrategy({ ex:Throwable =>
-              logger.error(ex.getMessage, ex)
-
-              Supervision.Stop
-            })
+          ActorMaterializerSettings
+            .apply(
+              _actorSystem:ActorSystem
+            )
+            .withSupervisionStrategy(decider)
         )
       )
 
@@ -110,6 +105,21 @@ object Flows {
           ),
         Source.maybe
       )
+
+  def stringResult(str: => String) = {
+    Flow
+      .fromSinkAndSource(
+        Sink.ignore,
+        Source
+          .single(
+            ByteString(
+              StringTools.quietly(
+                str
+              )
+            )
+          )
+      )
+  }
 
 }
 

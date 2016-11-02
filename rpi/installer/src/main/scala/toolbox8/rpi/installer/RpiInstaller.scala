@@ -4,6 +4,7 @@ import java.io.{File, FileInputStream, InputStream, OutputStream}
 
 import ammonite.ops.{Path, _}
 import com.jcraft.jsch._
+import toolbox8.jartree.standaloneapi.Protocol
 
 /**
   * Created by martonpapp on 15/10/16.
@@ -12,7 +13,8 @@ object RpiInstaller {
 
   case class Config(
     host: String,
-    port: Int = 22,
+    servicePort : Int = Protocol.DefaultPort,
+    sshPort: Int = 22,
     user: String = "pi",
     key: Path = home / ".ssh" / "id_rsa"
   )
@@ -22,7 +24,7 @@ object RpiInstaller {
   ) = {
     val jsch = new JSch
     jsch.addIdentity(config.key.toString())
-    val session = jsch.getSession(config.user, config.host, config.port)
+    val session = jsch.getSession(config.user, config.host, config.sshPort)
     session.setUserInfo(AcceptAllUserInfo)
     session.connect()
     session

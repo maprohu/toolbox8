@@ -73,7 +73,7 @@ object JarTreeStandaloneClient extends LazyLogging {
       flows: Components => Flows[_, _]
     ) = {
 
-      val cmp = AkkaStreamTools.Info
+      val cmp = AkkaStreamTools.Debug
       import cmp._
 
       val peer =

@@ -19,3 +19,6 @@ object ExecProtocol {
 trait HasLogFile {
   def logFile: Option[Path]
 }
+trait HasStorageDir {
+  def storageDir: Option[Path]
+}

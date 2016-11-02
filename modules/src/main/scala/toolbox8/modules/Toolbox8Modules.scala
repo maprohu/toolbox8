@@ -37,6 +37,14 @@ object Toolbox8Modules {
     "dummy"
   )
 
+  object Leveldb extends ScalaModule(
+    "leveldb",
+    mvn.`org.iq80.leveldb:leveldb:jar:0.9`,
+    Toolbox6Modules.Logging,
+    mvn.`com.typesafe.akka:akka-actor_2.11:jar:2.4.12`,
+    mvn.`io.monix:monix_2.11:jar:2.0.5`
+  )
+
 
 //  object Common extends ScalaModule(
 //    "common",
