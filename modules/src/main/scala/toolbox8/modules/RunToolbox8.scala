@@ -41,13 +41,8 @@ object RunToolbox8 {
     Extra8Modules.Server,
     Extra8Modules.Hello,
     Akka8Modules.StateMachine,
-//    Toolbox8Modules.JarTree,
-//    Servlet31Modules.SingleApi,
-//    Servlet31Modules.RunApi,
-//    Servlet31Modules.SampleRunner,
-//    Servlet31Modules.Webapp,
+    Akka8Modules.Actor,
     Akka8Modules.Stream
-//    Common8Modules.Tools
   )
 
   def main(args: Array[String]): Unit = {

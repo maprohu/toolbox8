@@ -15,6 +15,7 @@
     </build>
     <modules>
         <module>statemachine</module>
+        <module>actor</module>
         <module>stream</module>
     </modules>
 </project>

@@ -10,6 +10,10 @@ object Akka8Modules {
 
   implicit val Container = SubModuleContainer(Toolbox8Modules.Root, "akka")
 
+  object Actor extends ScalaModule(
+    "actor",
+    mvn.`com.typesafe.akka:akka-actor_2.11:jar:2.4.12`
+  )
 
   object StateMachine extends ScalaModule(
     "statemachine",
