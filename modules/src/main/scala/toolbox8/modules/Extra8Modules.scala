@@ -31,10 +31,11 @@ object Extra8Modules {
     Toolbox6Modules.Pickling,
     MvnmodModules.Builder
   )
-//  object Util extends ScalaModule(
-//    "util",
-//    Shared
-//  )
+
+  object Hello extends ScalaModule(
+    "hello",
+    Shared
+  )
 
 
 }

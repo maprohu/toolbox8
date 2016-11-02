@@ -15,11 +15,13 @@ import toolbox8.akka.statemachine.AkkaStreamCoding.StateMachine
 import toolbox8.akka.statemachine.{AkkaStreamCoding, DeepStream}
 import toolbox8.akka.stream.AkkaStreamTools
 import toolbox8.akka.stream.AkkaStreamTools.Components
+import toolbox8.jartree.extra.client.ExecClient
+import toolbox8.jartree.extra.shared.ExecProtocol.Executable
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management
 import toolbox8.jartree.protocol.JarTreeStandaloneProtocol.Management._
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Protocol, Service}
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, Future, Promise}
 import scala.collection.immutable._
 
 /**
@@ -27,198 +29,249 @@ import scala.collection.immutable._
   */
 object JarTreeStandaloneClient extends LazyLogging {
 
-  type ByteFlow = Flow[ByteString, ByteString, _]
+  type ByteFlow[Mat] = Flow[ByteString, ByteString, Mat]
 
-  val EmptyFlow : ByteFlow =
+  val EmptyFlow : ByteFlow[NotUsed] =
     Flow.fromSinkAndSource(
       Sink.ignore,
       Source.maybe
     )
 
-  case class Flows(
-    management: ByteFlow,
-    data: ByteFlow
+  case class Flows[MatM, MatD](
+    management: ByteFlow[MatM],
+    data: ByteFlow[MatD]
   )
 
-  def run(
+  case class Endpoint(
     host: String,
-    port: Int,
-    flows: Components => Flows
-  ) = {
-
-    val cmp = AkkaStreamTools.Info
-    import cmp._
-
-    val peer =
-      Tcp()
-        .outgoingConnection(
-          host,
-          port
-        )
-
-    val f = flows(cmp)
-    import f._
-
-    peer
-      .join(
-        AkkaStreamCoding.framing.reversed
-      )
-      .join(
-        AkkaStreamCoding.Multiplex.flow(
-          management,
-          data
-        )
-      )
-      .run()
-      .onComplete(println)
-
-  }
-
-  def runPlug(
-    host: String,
-    port: Int = Protocol.DefaultPort,
-    module: NamedModule,
-    runClassName: String,
-    target: NamedModule
-  ) = {
-    runManagement(
-      host,
-      port,
-      { implicit mat =>
-        import mat._
-        val rmh =
-          module
-            .asModule
-            .forTarget(
-              ModulePath(
-                target,
-                None
-              )
-            )
-
-        upload(
-          rmh
-            .classPath,
-          plug(
-            ClassRequest[Plugger](
-              rmh
-                .classPath
-                .map(JarTreePackaging.getId),
-              runClassName
-            )
-          )
-
-        )
-      }
-    )
-  }
-
-
-
-
-
-//  def managementFlow(
-//    runHierarchy: RunHierarchy,
-//    target: NamedModule
-//  )(implicit
-//    materializer: Materializer
-//  )  : ByteFlow = {
-//
-//    AkkaStreamCoding
-//      .Terminal
-//      .bidi
-//      .join(
-//        AkkaStreamCoding
-//          .StateMachine
-//          .flow(
-//            upload(
-//              runHierarchy,
-//              target,
-//              plug(runHierarchy)
-//            )
-//          )
-//      )
-//
-//  }
+    port: Int
+  )
 
   import boopickle.Default._
   import AkkaStreamCoding.Implicits._
   import AkkaStreamCoding.StateMachine.State
 
-  def runCat(
-    host: String,
-    port: Int = Protocol.DefaultPort,
-    sink: Components => Sink[ByteString, _]
-  ) = {
-    runData(
-      host,
-      port,
-      mat => Flow.fromSinkAndSource(
-        sink(mat),
-        Source.maybe
-      )
-    )
-
-  }
-  def runData(
-    host: String,
-    port: Int = Protocol.DefaultPort,
-    flow: Components => ByteFlow
-  ) = {
-    run(
-      host,
-      port,
-      mat => Flows(
-        management = EmptyFlow,
-        data = flow(mat)
-      )
-    )
-  }
-
-
-  def runQuery(
+  def target(
     host: String,
     port: Int = Protocol.DefaultPort
   ) = {
-    runManagement(
-      host,
-      port,
-      { implicit mat =>
-        import mat._
-        import actorSystem.dispatcher
-
-        val bytes =
-          Pickle
-            .intoBytes[Starter](
-              Query
-            )
-            .asByteString
-
-        logger.info("sending query: {}", bytes)
-
-        State(
-          out =
-            Source.single(
-              Source.single(
-                bytes
-              )
-            ),
-          next = { d =>
-            AkkaStreamCoding
-              .unpickle[QueryResponse](d)
-              .map({ r =>
-                println(r)
-                StateMachine.End
-              })
-          }
-        )
-      }
+    new Targeting(
+      Endpoint(
+        host,
+        port
+      )
     )
   }
 
+  class Targeting(
+    endpoint: Endpoint
+  ) {
+
+
+    def run(
+      flows: Components => Flows[_, _]
+    ) = {
+
+      val cmp = AkkaStreamTools.Info
+      import cmp._
+
+      val peer =
+        Tcp()
+          .outgoingConnection(
+            endpoint.host,
+            endpoint.port
+          )
+
+      val f = flows(cmp)
+      import f._
+
+      peer
+        .join(
+          AkkaStreamCoding.framing.reversed
+        )
+        .join(
+          AkkaStreamCoding.Multiplex.flow(
+            management,
+            data
+          )
+        )
+        .run()
+        .onComplete(println)
+
+    }
+
+    def runExec[Ctx](
+      module: NamedModule,
+      runClassName: String,
+      target: ModulePath,
+      runWith: Flow[ByteString, ByteString, _],
+      dataTrf: ByteFlow[NotUsed] => ByteFlow[NotUsed] = identity
+    ) = {
+      run(
+        { implicit mat =>
+          import mat._
+          val classPath =
+            module
+              .asModule
+              .forTarget(
+                target
+              )
+              .classPath
+
+          val promise = Promise[Option[Unit]]()
+
+          val management =
+            managementFlow(
+              upload(
+                classPath,
+                { () =>
+                  promise.success(Some())
+                  StateMachine.End
+                }
+            )
+          )
+
+          val data =
+            ExecClient
+              .flow(
+                JarTreePackaging.request[Executable[Ctx]](
+                  classPath,
+                  runClassName
+                ),
+                runWith
+              )
+              .mapMaterializedValue({ p =>
+                p.completeWith(promise.future)
+                NotUsed
+              })
+
+          Flows(
+            management,
+            dataTrf(data)
+          )
+        }
+      )
+    }
+
+    def runPlug(
+      module: NamedModule,
+      runClassName: String,
+      target: NamedModule
+    ) = {
+      runManagement(
+        { implicit mat =>
+          import mat._
+          val rmh =
+            module
+              .asModule
+              .forTarget(
+                ModulePath(
+                  target,
+                  None
+                )
+              )
+
+          upload(
+            rmh
+              .classPath,
+            () => plug(
+              ClassRequest[Plugger](
+                rmh
+                  .classPath
+                  .map(JarTreePackaging.getId),
+                runClassName
+              )
+            )
+
+          )
+        }
+      )
+    }
+
+    def runCat(
+      sink: Components => Sink[ByteString, _]
+    ) = {
+      runData(
+        mat => Flow.fromSinkAndSource(
+          sink(mat),
+          Source.maybe
+        )
+      )
+    }
+
+    def runData[M](
+      flow: Components => ByteFlow[M]
+    ) = {
+      run(
+        mat => Flows(
+          management = EmptyFlow,
+          data = flow(mat)
+        )
+      )
+    }
+
+
+    def runQuery(
+    ) = {
+      runManagement(
+        { implicit mat =>
+          import mat._
+          import actorSystem.dispatcher
+
+          val bytes =
+            Pickle
+              .intoBytes[Starter](
+              Query
+            )
+              .asByteString
+
+          logger.info("sending query: {}", bytes)
+
+          State(
+            out =
+              Source.single(
+                Source.single(
+                  bytes
+                )
+              ),
+            next = { d =>
+              AkkaStreamCoding
+                .unpickle[QueryResponse](d)
+                .map({ r =>
+                  println(r)
+                  StateMachine.End
+                })
+            }
+          )
+        }
+      )
+    }
+
+    def runManagement(
+      state: Components => State
+    ) = {
+      run(
+        { mat =>
+          val management : ByteFlow[NotUsed] = managementFlow(
+            state(mat)
+          )
+          Flows(
+            management,
+            EmptyFlow
+          )
+        }
+      )
+    }
+
+  }
+
+
+
+
+
   def managementFlow(
     state: State
-  ) : ByteFlow = {
+  ) : ByteFlow[NotUsed] = {
     AkkaStreamCoding
       .Terminal
       .bidi
@@ -231,42 +284,13 @@ object JarTreeStandaloneClient extends LazyLogging {
       )
   }
 
-  def runManagement(
-    host: String,
-    port: Int,
-    state: Components => State
-  ) = {
-    run(
-      host,
-      port,
-      { mat =>
-        val management : ByteFlow = managementFlow(
-          state(mat)
-        )
-        val data : ByteFlow =
-          Flow.fromSinkAndSource(
-            Sink.ignore,
-            Source.maybe
-          )
-        Flows(management, data)
-      }
-    )
-  }
 
   def upload(
     rmh: Seq[HasMavenCoordinates],
-//    target: NamedModule,
-    andThen: State
+    andThen: () => State
   )(implicit
     materializer: Materializer
   ) : State = {
-//    val rmh =
-//      runHierarchy
-//        .forTarget(
-//          JarTreePackaging.target(
-//            target
-//          )
-//        )
 
     logger.info(s"updating to: ${rmh.toString}")
     val jars = JarTreePackaging.resolverJarsFile(rmh)
@@ -293,7 +317,7 @@ object JarTreeStandaloneClient extends LazyLogging {
 
   def verifying(
     files: IndexedSeq[(String, File)],
-    andThen: State
+    andThen: () => State
   )(
     data: AkkaStreamCoding.Data
   )(implicit
@@ -336,7 +360,7 @@ object JarTreeStandaloneClient extends LazyLogging {
             .unpickle[Management.Done.type ](data)
             .map({ done =>
               logger.info(s"upload done: ${done}")
-              andThen
+              andThen()
             })
         }
       )

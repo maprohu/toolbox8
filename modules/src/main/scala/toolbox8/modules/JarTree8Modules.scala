@@ -63,7 +63,8 @@ object JarTree8Modules {
     mvn.`me.chrons:boopickle_2.11:jar:1.2.4`,
     Toolbox6Modules.StateMachine,
     Akka8Modules.StateMachine,
-    Akka8Modules.Stream
+    Akka8Modules.Stream,
+    Extra8Modules.Client
   )
 
   object Installer extends ScalaModule(

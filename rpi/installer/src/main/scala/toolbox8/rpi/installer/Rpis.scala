@@ -8,6 +8,10 @@ import toolbox8.rpi.installer.RpiInstaller.Config
 object Rpis {
 
 
+  implicit val Localhost = Config(
+    host = "localhost",
+    port = 9978
+  )
   implicit val Home = Config(
     host = "192.168.1.36"
   )

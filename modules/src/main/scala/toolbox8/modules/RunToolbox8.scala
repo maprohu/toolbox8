@@ -38,6 +38,7 @@ object RunToolbox8 {
     Extra8Modules.Shared,
     Extra8Modules.Client,
     Extra8Modules.Server,
+    Extra8Modules.Hello,
     Akka8Modules.StateMachine,
 //    Toolbox8Modules.JarTree,
 //    Servlet31Modules.SingleApi,

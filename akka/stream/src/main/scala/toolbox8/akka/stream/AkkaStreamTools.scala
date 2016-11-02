@@ -1,7 +1,9 @@
 package toolbox8.akka.stream
 
+import java.io.OutputStream
+
 import akka.actor.ActorSystem
-import akka.stream.scaladsl.{Flow, Keep, Source}
+import akka.stream.scaladsl.{Flow, Keep, Source, StreamConverters}
 import akka.stream.{ActorMaterializer, ActorMaterializerSettings, Materializer, Supervision}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
@@ -95,3 +97,27 @@ object Flows {
       .map(_.get)
   }
 }
+
+object Sinks {
+
+  val SystemOutUnclosed = new OutputStream {
+    override def write(b: Int): Unit = System.out.write(b)
+
+
+    override def flush(): Unit = {
+      super.flush()
+      System.out.flush()
+    }
+
+    override def close(): Unit = {
+      super.close()
+      flush()
+    }
+  }
+
+  val Dump =
+    StreamConverters
+      .fromOutputStream(() => SystemOutUnclosed)
+
+}
+
