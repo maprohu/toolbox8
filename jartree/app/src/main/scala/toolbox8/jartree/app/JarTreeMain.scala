@@ -12,21 +12,35 @@ import scala.collection.immutable._
   */
 object JarTreeMain extends LazyLogging {
 
-  def main(args: Array[String]): Unit = {
+  def configureLogging(
+    name: String,
+    debug: Boolean
+  ) = {
     val lcf = new LogbackConfigurator()
     val lc = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
     lcf.reset(lc)
-    val name = if (args.length >= 1) {
-      args(0)
-    } else {
+    if (debug) {
       lcf.configStdout(lc)
       lcf.configDebug(lc, true)
-      "jartree"
     }
     lcf.configure(
       name,
       lc
     )
+
+    lcf.logFile(name)
+  }
+
+  def main(args: Array[String]): Unit = {
+    val name = if (args.length >= 1) {
+      val n = args(0)
+      configureLogging(n, false)
+      n
+    } else {
+      val n = "jartree"
+      configureLogging(n, true)
+      n
+    }
 
     import monix.execution.Scheduler.Implicits.global
     JarTreeStandalone

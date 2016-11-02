@@ -11,6 +11,7 @@ import monix.execution.Scheduler.Implicits.global
 import ammonite.ops._
 import maven.modules.builder.ModulePath
 import toolbox6.jartree.api.{ClassRequest, JarKey, PlugRequest}
+import toolbox8.jartree.app.JarTreeMain
 import toolbox8.jartree.extra.server.ExecPlugger
 import toolbox8.jartree.standalone.JarTreeStandalone
 
@@ -23,6 +24,8 @@ object RunJarTreeStandalone extends LazyLogging {
 
   def main(args: Array[String]): Unit = {
     rm(root / 'opt / Name)
+
+    val logFile = JarTreeMain.configureLogging(Name, true)
 
     val module = Extra8Modules.Server
     val runClassName = classOf[ExecPlugger].getName
@@ -59,7 +62,8 @@ object RunJarTreeStandalone extends LazyLogging {
             )
           )
         ),
-      runtimeVersion = "testing"
+      runtimeVersion = "testing",
+      logFile = Some(logFile.toPath)
     )
 
 

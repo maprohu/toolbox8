@@ -50,7 +50,8 @@ object JarTreeStandalone extends LazyLogging {
     version: Int = -1,
     embeddedJars: Seq[(JarKey, () => InputStream)],
     initialStartup: Option[PlugRequest[Service, JarTreeStandaloneContext]],
-    runtimeVersion: String
+    runtimeVersion: String,
+    logFile : Option[Path] = None
   )(implicit
     scheduler: Scheduler
   ) = {
@@ -74,7 +75,8 @@ object JarTreeStandalone extends LazyLogging {
         version = version,
         embeddedJars,
         initialStartup,
-        closer = _.close()
+        closer = _.close(),
+        logFile = logFile
       )
     )
 

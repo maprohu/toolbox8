@@ -100,7 +100,7 @@ object JarTree8Modules {
     Client,
     RpiModules.Installer,
     Extra8Modules.Server,
-    mvn.`org.slf4j:slf4j-simple:jar:1.7.21`
+    App
   )
 
 

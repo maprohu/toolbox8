@@ -1,6 +1,7 @@
 package toolbox8.jartree.app
 
 import java.io.File
+import java.nio.file.Path
 
 import ch.qos.logback.classic.layout.TTLLLayout
 import ch.qos.logback.classic.spi.{Configurator, ILoggingEvent}
@@ -29,20 +30,31 @@ class LogbackConfigurator {
     encoder
   }
 
+  def logDir(name: String) : File = {
+    new File(s"/opt/${name}/logs")
+  }
+
+  def logFileName(name: String) : String = {
+    s"${name}.log"
+  }
+
+  def logFile(name: String) = {
+    new File(logDir(name), logFileName(name))
+  }
 
   def configure(
     name: String,
     lc: LoggerContext
   ): Unit = {
 
-    val logdir = new File(s"/opt/${name}/logs")
+    val logdir = logDir(name)
     val appname = name
 
 
     val fa = new RollingFileAppender[ILoggingEvent]
     fa.setContext(lc)
     fa.setName("file")
-    fa.setFile(new File(logdir, s"$appname.log").getAbsolutePath)
+    fa.setFile(logFile(name).getAbsolutePath)
 
     val tp = new SizeBasedTriggeringPolicy[ILoggingEvent]()
     tp.setMaxFileSize("5MB")
