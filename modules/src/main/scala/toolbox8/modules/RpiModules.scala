@@ -42,7 +42,7 @@ object RpiModules {
     mvn.`libmatthew-debug-java:hexdump:jar:0.2`,
     mvn.`libmatthew-debug-java:debug-enable:jar:1.1`,
     mvn.`org.scala-lang.modules:scala-xml_2.11:jar:1.0.6`,
-    Toolbox6Modules.Macros,
+    Toolbox6Modules.Macros.R1,
     mvn.`com.eed3si9n:treehugger_2.11:jar:0.4.1`
 
     //    VoiceModules,

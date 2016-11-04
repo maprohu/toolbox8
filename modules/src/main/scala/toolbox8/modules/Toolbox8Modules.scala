@@ -1,8 +1,8 @@
 package toolbox8.modules
 
 import maven.modules.builder.{RootModuleContainer, ScalaModule}
+import mvnmod.builder.MavenCentralModule
 import mvnmod.modules.MvnmodModules
-import mvnmod.poms.MavenCentralModule
 import toolbox6.modules.Toolbox6Modules
 
 /**
@@ -14,14 +14,14 @@ object Toolbox8Modules {
 
   object Modules extends ScalaModule(
     "modules",
-    MvnmodModules.Builder,
-    Toolbox6Modules.Modules
+    MvnmodModules.Builder.R2,
+    Toolbox6Modules.Modules.R1
   )
 
   object Common extends ScalaModule(
     "common",
     mvn.`io.monix:monix-eval_2.11:jar:2.0.5`,
-    Toolbox6Modules.Logging
+    Toolbox6Modules.Logging.R1
   )
 
   object JarTree extends ScalaModule(
@@ -40,7 +40,7 @@ object Toolbox8Modules {
   object Leveldb extends ScalaModule(
     "leveldb",
     mvn.`org.iq80.leveldb:leveldb:jar:0.9`,
-    Toolbox6Modules.Logging,
+    Toolbox6Modules.Logging.R1,
     mvn.`com.typesafe.akka:akka-actor_2.11:jar:2.4.12`,
     mvn.`io.monix:monix_2.11:jar:2.0.5`
   )

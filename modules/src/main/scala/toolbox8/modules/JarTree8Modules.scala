@@ -1,7 +1,6 @@
 package toolbox8.modules
 
 import maven.modules.builder.{ScalaModule, SubModuleContainer}
-import toolbox6.modules.Toolbox6Modules.Logging
 import toolbox6.modules.{JarTreeModules, Toolbox6Modules}
 
 /**
@@ -17,7 +16,7 @@ object JarTree8Modules {
     mvn.`com.typesafe.akka:akka-stream_2.11:2.4.12`,
     mvn.`io.monix:monix_2.11:jar:2.0.4`,
     StandaloneApi,
-    JarTreeModules.Util,
+    JarTreeModules.Util.R1,
     Akka8Modules.StateMachine
   )
 
@@ -30,7 +29,7 @@ object JarTree8Modules {
   object Standalone extends ScalaModule(
     "standalone",
 //    Toolbox6Modules.JavaImpl,
-    JarTreeModules.Impl,
+    JarTreeModules.Impl.R1,
     StandaloneApi,
     mvn.`com.typesafe.akka:akka-stream_2.11:2.4.12`,
     Protocol,
@@ -50,7 +49,7 @@ object JarTree8Modules {
   object Echo extends ScalaModule(
     "echo",
     StandaloneApi,
-    JarTreeModules.Util,
+    JarTreeModules.Util.R1,
     mvn.`io.monix:monix-reactive_2.11:jar:2.0.5`
 //    Toolbox6Modules.JavaImpl
   )

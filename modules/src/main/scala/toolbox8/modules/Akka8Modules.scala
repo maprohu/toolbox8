@@ -19,7 +19,7 @@ object Akka8Modules {
     "statemachine",
     Toolbox6Modules.StateMachine,
     mvn.`com.typesafe.akka:akka-actor_2.11:jar:2.4.12`,
-    Toolbox6Modules.Logging,
+    Toolbox6Modules.Logging.R1,
     mvn.`com.typesafe.akka:akka-stream_2.11:2.4.12`,
     mvn.`me.chrons:boopickle_2.11:jar:1.2.4`
 
@@ -28,10 +28,10 @@ object Akka8Modules {
   object Stream extends ScalaModule(
     "stream",
     mvn.`com.typesafe.akka:akka-stream_2.11:2.4.12`,
-    Toolbox6Modules.Logging,
+    Toolbox6Modules.Logging.R1,
     mvn.`com.typesafe.akka:akka-slf4j_2.11:2.4.12`,
     mvn.`io.monix:monix-execution_2.11:jar:2.0.5`,
-    Toolbox6Modules.Common
+    Toolbox6Modules.Common.R1
 
 
   )
