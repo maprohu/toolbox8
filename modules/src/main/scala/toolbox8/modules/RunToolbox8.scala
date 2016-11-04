@@ -2,8 +2,9 @@ package toolbox8.modules
 
 import java.io.File
 
-import maven.modules.builder.Module.ConfiguredModule
-import maven.modules.builder.{Module, PlacedRoot}
+import mvnmod.builder.Module.ConfiguredModule
+import mvnmod.builder.{Module, PlacedRoot}
+
 import scala.collection.immutable._
 
 /**

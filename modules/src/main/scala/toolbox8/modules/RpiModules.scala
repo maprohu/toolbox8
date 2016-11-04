@@ -1,6 +1,6 @@
 package toolbox8.modules
 
-import maven.modules.builder.{ScalaModule, SubModuleContainer}
+import mvnmod.builder.{ScalaModule, SubModuleContainer}
 import toolbox6.modules.Toolbox6Modules
 
 /**

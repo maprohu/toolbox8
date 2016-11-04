@@ -1,6 +1,6 @@
 package toolbox8.modules
 
-import maven.modules.builder.{ScalaModule, SubModuleContainer}
+import mvnmod.builder.{ScalaModule, SubModuleContainer}
 import toolbox6.modules.{JarTreeModules, Toolbox6Modules}
 
 /**
@@ -13,7 +13,7 @@ object JarTree8Modules {
 
   object Protocol extends ScalaModule(
     "protocol",
-    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.12`,
+    mvn.`com.typesafe.akka:akka-stream_2.11:jar:2.4.12`,
     mvn.`io.monix:monix_2.11:jar:2.0.4`,
     StandaloneApi,
     JarTreeModules.Util.R1,
@@ -31,7 +31,7 @@ object JarTree8Modules {
 //    Toolbox6Modules.JavaImpl,
     JarTreeModules.Impl.R1,
     StandaloneApi,
-    mvn.`com.typesafe.akka:akka-stream_2.11:2.4.12`,
+    mvn.`com.typesafe.akka:akka-stream_2.11:jar:2.4.12`,
     Protocol,
     Util,
     Toolbox6Modules.StateMachine,

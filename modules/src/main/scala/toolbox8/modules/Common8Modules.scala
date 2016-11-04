@@ -1,6 +1,7 @@
 package toolbox8.modules
 
-import maven.modules.builder.{ScalaModule, SubModuleContainer}
+import mvnmod.builder.{ScalaModule, SubModuleContainer}
+
 
 /**
   * Created by martonpapp on 31/08/16.

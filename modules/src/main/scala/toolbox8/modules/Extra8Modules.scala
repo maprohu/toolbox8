@@ -1,6 +1,6 @@
 package toolbox8.modules
 
-import maven.modules.builder.{ScalaModule, SubModuleContainer}
+import mvnmod.builder.{ScalaModule, SubModuleContainer}
 import mvnmod.modules.MvnmodModules
 import toolbox6.modules.{JarTreeModules, Toolbox6Modules}
 import toolbox8.modules.JarTree8Modules.Protocol
