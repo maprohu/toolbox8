@@ -15,6 +15,7 @@ import toolbox8.akka.actor.PubSubActor.Publish
   */
 class PubSubActor extends Actor {
   import PubSubActor._
+  import context.dispatcher
 
   val publisher = context.actorOf(Props[PubSubPublisherActor])
 

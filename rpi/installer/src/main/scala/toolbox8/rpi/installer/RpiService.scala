@@ -2,7 +2,7 @@ package toolbox8.rpi.installer
 
 import java.io.File
 
-import maven.modules.builder.{MavenTools, NamedModule}
+import mvnmod.builder.{MavenTools, NamedModule}
 import toolbox8.modules.RpiModules
 import toolbox8.rpi.installer.RpiInstaller.Config
 

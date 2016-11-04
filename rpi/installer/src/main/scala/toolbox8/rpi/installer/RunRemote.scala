@@ -2,7 +2,7 @@ package toolbox8.rpi.installer
 
 import java.io.File
 
-import maven.modules.builder.MavenTools
+import mvnmod.builder.MavenTools
 import toolbox8.modules.RpiModules
 
 import scala.io.StdIn

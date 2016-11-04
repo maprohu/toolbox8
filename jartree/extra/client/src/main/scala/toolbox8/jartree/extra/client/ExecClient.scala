@@ -5,7 +5,6 @@ import akka.stream.Attributes
 import akka.stream.scaladsl.{Flow, Keep, Source}
 import akka.util.ByteString
 import com.typesafe.scalalogging.LazyLogging
-import maven.modules.builder.{Module, ModulePath}
 import toolbox6.jartree.api.ClassRequest
 import toolbox8.jartree.extra.shared.ExecProtocol.Executable
 
