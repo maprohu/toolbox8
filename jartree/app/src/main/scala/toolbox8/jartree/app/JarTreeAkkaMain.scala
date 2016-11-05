@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import toolbox6.logging.LogTools
+import toolbox8.jartree.standalone.JarTreeAkka
 import toolbox8.jartree.standaloneapi.Protocol
 
 import scala.concurrent.Await
@@ -23,49 +24,10 @@ object JarTreeAkkaMain extends LazyLogging with LogTools {
       "localhost"
     }
 
-    run(name, address)
+    JarTreeAkka.run(name, address)
 
   }
 
-  def run(
-    name: String,
-    address: String
-  ) = {
 
-
-    implicit val actorSystem = ActorSystem(
-      name,
-      ConfigFactory.parseString(
-        s"""
-           |akka {
-           |  loggers = ["akka.event.slf4j.Slf4jLogger"]
-           |  logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
-           |  loglevel = "DEBUG"
-           |  jvm-exit-on-fatal-error = false
-           |  actor {
-           |    provider = remote
-           |  }
-           |  remote {
-           |    enabled-transports = ["akka.remote.netty.tcp"]
-           |    netty.tcp {
-           |      hostname = "${address}"
-           |      port = ${Protocol.AkkaDefaultPort}
-           |    }
-           |  }
-           |}
-        """.stripMargin
-      ).withFallback(ConfigFactory.load())
-    )
-
-
-    sys.addShutdownHook {
-      quietly {
-        Await.result(
-          actorSystem.terminate(),
-          15.seconds
-        )
-      }
-    }
-  }
 
 }

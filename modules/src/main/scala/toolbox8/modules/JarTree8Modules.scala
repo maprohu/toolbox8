@@ -22,14 +22,13 @@ object JarTree8Modules {
 
   object StandaloneApi extends ScalaModule(
     "standaloneapi",
-    JarTreeModules.Api.R1,
+    JarTreeModules.Api.Snapshot,
     mvn.`com.typesafe.akka:akka-stream_2.11:jar:2.4.12`
   )
 
   object Standalone extends ScalaModule(
     "standalone",
-//    Toolbox6Modules.JavaImpl,
-    JarTreeModules.Impl.R1,
+    JarTreeModules.Impl.Snapshot,
     StandaloneApi,
     mvn.`com.typesafe.akka:akka-stream_2.11:jar:2.4.12`,
     mvn.`com.typesafe.akka:akka-remote_2.11:jar:2.4.12`,

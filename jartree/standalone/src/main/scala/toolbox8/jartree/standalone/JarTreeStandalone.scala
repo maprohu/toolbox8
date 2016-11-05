@@ -66,7 +66,9 @@ object JarTreeStandalone extends LazyLogging {
       Config[Service, JarTreeStandaloneContext](
         { (jarTree, ctx) =>
           new JarTreeStandaloneContext {
-            override def resolve(request: JarSeq) : Future[ClassLoader] = jarTree.resolve(request)
+            override def resolve(request: JarSeq)(implicit
+              executionContext: ExecutionContext
+            ) : Future[ClassLoader] = jarTree.resolve(request)
             override implicit val actorSystem: ActorSystem = cmps.actorSystem
             override implicit val materializer: Materializer = cmps.materializer
             override def jarTreeContext: JarTreeContext = ctx

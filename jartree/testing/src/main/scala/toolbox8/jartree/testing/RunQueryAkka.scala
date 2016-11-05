@@ -29,9 +29,15 @@ object RunQueryAkka {
     import actorSystem.dispatcher
     import toolbox8.akka.actor.ActorImplicits._
 
+//    ref
+//      .?(Identify)
+//      .foreach(println)
+
     ref
-      .?(Identify)
+      .resolveOne()
       .foreach(println)
+
+
 
 
 

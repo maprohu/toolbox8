@@ -14,7 +14,7 @@ object Toolbox8Modules {
   object Modules extends ScalaModule(
     "modules",
     MvnmodModules.Builder,
-    Toolbox6Modules.Modules.R1
+    Toolbox6Modules.Modules
   )
 
   object Common extends ScalaModule(
