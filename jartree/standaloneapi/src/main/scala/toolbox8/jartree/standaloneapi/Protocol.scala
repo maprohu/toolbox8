@@ -6,6 +6,7 @@ package toolbox8.jartree.standaloneapi
 object Protocol {
 
   val DefaultPort = 9721
+  val AkkaDefaultPort = 9722
 
   object Target {
     val Manager = 0

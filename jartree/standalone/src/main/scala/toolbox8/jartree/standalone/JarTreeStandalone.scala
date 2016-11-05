@@ -20,7 +20,7 @@ import toolbox8.jartree.protocol.JarTreeStandaloneProtocol
 import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, PeerInfo, Protocol, Service}
 import org.reactivestreams.Processor
 import toolbox6.jartree.api._
-import toolbox6.jartree.impl.JarTreeBootstrap.Config
+import toolbox6.jartree.impl.JarTreeBootstrap.{Config, Initializer}
 import toolbox6.jartree.util.JarTreeTools
 import toolbox6.jartree.wiring.SimpleJarSocket
 import toolbox6.statemachine.State
@@ -48,9 +48,9 @@ object JarTreeStandalone extends LazyLogging {
   def run(
     name: String,
     port: Int = Protocol.DefaultPort,
-    version: Int = -1,
+    version: Option[String] = None,
     embeddedJars: Seq[(JarKey, () => InputStream)],
-    initialStartup: Option[PlugRequest[Service, JarTreeStandaloneContext]],
+    initialStartup: Option[ClassRequest[JarPlugger[Service, JarTreeStandaloneContext]]],
     runtimeVersion: String,
     logFile : Option[Path] = None
   )(implicit
@@ -76,11 +76,15 @@ object JarTreeStandalone extends LazyLogging {
         name = name,
         dataPath = new File(basePath, "data").getAbsolutePath,
         version = version,
-        embeddedJars,
-        initialStartup,
+        initializer = { () =>
+          Initializer(
+            embeddedJars,
+            initialStartup
+          )
+        },
         closer = _.close(),
-        logFile = logFile,
-        storageDir = Some(new File(basePath, "storage").toPath)
+        logFile = logFile.map(_.toFile),
+        storageDir = Some(new File(basePath, "storage"))
       )
     )
 
@@ -202,10 +206,7 @@ object JarTreeStandalone extends LazyLogging {
                     AkkaStreamCoding.pickle(
                       QueryResponse(
                         socket
-                          .query()
-                          .map({ p =>
-                            p.request
-                          }),
+                          .query(),
                         runtimeVersion
                       )
                     )
@@ -298,9 +299,7 @@ object JarTreeStandalone extends LazyLogging {
         _ = logger.info(s"plugger resolved: ${inst}")
         _ <- {
           socket.plug(
-            PlugRequest(
-              plug.classRequest
-            )
+            plug.classRequest
           )
         }
       } yield {

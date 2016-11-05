@@ -32,6 +32,7 @@ object JarTree8Modules {
     JarTreeModules.Impl.R1,
     StandaloneApi,
     mvn.`com.typesafe.akka:akka-stream_2.11:jar:2.4.12`,
+    mvn.`com.typesafe.akka:akka-remote_2.11:jar:2.4.12`,
     Protocol,
     Util,
     Toolbox6Modules.StateMachine,
@@ -99,7 +100,8 @@ object JarTree8Modules {
     Client,
     RpiModules.Installer,
     Extra8Modules.Server,
-    App
+    App,
+    Akka8Modules.Actor
   )
 
 

@@ -9,8 +9,8 @@ import toolbox8.jartree.standaloneapi.{JarTreeStandaloneContext, Service}
 import toolbox8.modules.{Extra8Modules, JarTree8Modules, Toolbox8Modules}
 import monix.execution.Scheduler.Implicits.global
 import ammonite.ops._
-import maven.modules.builder.ModulePath
-import toolbox6.jartree.api.{ClassRequest, JarKey, PlugRequest}
+import mvnmod.builder.ModulePath
+import toolbox6.jartree.api.{ClassRequest, JarKey}
 import toolbox8.jartree.app.JarTreeMain
 import toolbox8.jartree.extra.server.ExecPlugger
 import toolbox8.jartree.standalone.JarTreeStandalone
@@ -55,11 +55,9 @@ object RunJarTreeStandalone extends LazyLogging {
       embeddedJars = jars,
       initialStartup =
         Some(
-          PlugRequest[Service, JarTreeStandaloneContext](
-            ClassRequest(
-              rmh.map(JarTreePackaging.getId),
-              runClassName
-            )
+          ClassRequest(
+            rmh.map(JarTreePackaging.getId),
+            runClassName
           )
         ),
       runtimeVersion = "testing",

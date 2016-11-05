@@ -76,6 +76,7 @@ object JarTreeStandaloneClient extends LazyLogging {
       val cmp = AkkaStreamTools.Debug
       import cmp._
 
+      println(s"connecting to: ${endpoint}")
       val peer =
         Tcp()
           .outgoingConnection(

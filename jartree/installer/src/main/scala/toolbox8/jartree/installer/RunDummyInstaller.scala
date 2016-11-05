@@ -1,10 +1,10 @@
 package toolbox8.jartree.installer
 
-import maven.modules.builder.MavenTools
 import toolbox8.modules.Toolbox8Modules
 
 import scala.io.StdIn
 import ammonite.ops._
+import mvnmod.builder.MavenTools
 
 /**
   * Created by martonpapp on 19/10/16.

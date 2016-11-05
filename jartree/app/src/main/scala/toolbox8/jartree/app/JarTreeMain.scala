@@ -32,7 +32,7 @@ object JarTreeMain {
     lcf.logFile(name)
   }
 
-  def main(args: Array[String]): Unit = {
+  def parseName(args: Array[String]) = {
     val (log, name) = if (args.length >= 1) {
       val n = args(0)
       (configureLogging(n, false), n)
@@ -40,6 +40,12 @@ object JarTreeMain {
       val n = "jartree"
       (configureLogging(n, true), n)
     }
+    (log, name)
+
+  }
+
+  def main(args: Array[String]): Unit = {
+    val (log, name) = parseName(args)
 
     import monix.execution.Scheduler.Implicits.global
     JarTreeStandalone

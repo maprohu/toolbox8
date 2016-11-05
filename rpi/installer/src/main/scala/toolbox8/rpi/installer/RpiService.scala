@@ -11,12 +11,12 @@ import toolbox8.rpi.installer.RpiInstaller.Config
   */
 object RpiService {
 
-  def unit(name: String, user: String) = {
+  def unit(name: String, user: String, address: String) = {
     s"""
        |[Unit]
        |Description=${name}
        |[Service]
-       |ExecStart=/usr/bin/java -agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n -jar /opt/${name}/lib/${name}.jar ${name}
+       |ExecStart=/usr/bin/java -agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n -jar /opt/${name}/lib/${name}.jar ${name} ${address}
        |User=${user}
        |SuccessExitStatus=143
        |[Install]
@@ -26,10 +26,11 @@ object RpiService {
 
   def installCommand(
     name: String,
-    user: String
+    user: String,
+    address: String
   ) = {
    s"""sudo tee /etc/systemd/system/${name}.service > /dev/null << EOF
-      |${unit(name, user)}
+      |${unit(name, user, address)}
       |EOF
     """.stripMargin
   }
@@ -38,7 +39,8 @@ object RpiService {
     name: String,
     module: NamedModule,
     mainClass: String,
-    user: String = "pi"
+    user: String = "pi",
+    address: String = "localhost"
   )(implicit
     target: Config
   ) = {
@@ -106,7 +108,7 @@ object RpiService {
         command(s"sudo systemctl status ${name}")
         command(s"sudo systemctl stop ${name}")
         command(s"sudo systemctl disable ${name}")
-        command(RpiService.installCommand(name, user))
+        command(RpiService.installCommand(name, user, address))
         command("sudo systemctl daemon-reload")
         command(s"sudo systemctl enable ${name}")
         command(s"sudo systemctl start ${name}")

@@ -66,8 +66,8 @@ class ExecService(
   executionContext: ExecutionContext
 ) extends Service with HasLogFile with HasStorageDir{
 
-  override val logFile: Option[Path] = jarTreeContext.log
-  override val storageDir: Option[Path] = jarTreeContext.storage
+  override val logFile: Option[Path] = jarTreeContext.log.map(_.toPath)
+  override val storageDir: Option[Path] = jarTreeContext.storage.map(_.toPath)
 
   val jarTree = new JarTree(
     classLoader,
