@@ -1,10 +1,10 @@
 package toolbox8.jartree.testing
 
 import toolbox8.jartree.app.{JarTreeAkkaMain, JarTreeMain}
-import toolbox8.jartree.standalone.JarTreeAkka
 import toolbox8.jartree.standaloneapi.JarTreeAkkaApi
 import akka.pattern._
-import toolbox8.jartree.standalone.JarTreeActor.Query
+import toolbox8.jartree.akka.JarTreeActor.Query
+import toolbox8.jartree.akka.JarTreeAkka
 
 /**
   * Created by maprohu on 05-11-2016.

@@ -27,6 +27,7 @@ object RunToolbox8 {
     RpiModules.DBus,
     RpiModules.Bluetooth,
     Toolbox8Modules.Dummy,
+    JarTree8Modules.Akka,
     JarTree8Modules.StandaloneApi,
     JarTree8Modules.Protocol,
     JarTree8Modules.Standalone,

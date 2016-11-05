@@ -1,21 +1,18 @@
-package toolbox8.jartree.standalone
+package toolbox8.jartree.akka
 
 import java.nio.file.Path
 
 import akka.actor.Actor
-import akka.actor.Actor.Receive
-import toolbox6.jartree.impl.JarTreeBootstrap.Initializer
-import toolbox6.jartree.impl.{JarCache, JarTree, JarTreeBootstrap}
+
 import scala.collection.immutable._
 
 /**
   * Created by maprohu on 05-11-2016.
   */
-import JarTreeActor._
+import toolbox8.jartree.akka.JarTreeActor._
 class JarTreeActor(
   config: Config
 ) extends Actor {
-  import toolbox8.jartree.standaloneapi.JarTreeAkkaApi._
 
   var runtime : JarTreeBootstrap.Runtime[Processor, Context] = null
 
@@ -24,8 +21,6 @@ class JarTreeActor(
   override def preStart(): Unit = {
     super.preStart()
     import config._
-
-    import monix.execution.Scheduler.Implicits.global
     runtime = JarTreeBootstrap
       .init[Processor, Context](
         JarTreeBootstrap.Config(

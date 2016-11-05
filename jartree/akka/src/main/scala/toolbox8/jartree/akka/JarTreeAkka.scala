@@ -1,4 +1,4 @@
-package toolbox8.jartree.standalone
+package toolbox8.jartree.akka
 
 import java.nio.file.Paths
 
@@ -6,8 +6,7 @@ import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import toolbox6.logging.LogTools
-import toolbox8.jartree.standalone.JarTreeActor.Config
-import toolbox8.jartree.standaloneapi.{JarTreeAkkaApi, Protocol}
+import toolbox8.jartree.akka.JarTreeActor.Config
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -38,7 +37,7 @@ object JarTreeAkka extends LazyLogging with LogTools {
            |    enabled-transports = ["akka.remote.netty.tcp"]
            |    netty.tcp {
            |      hostname = "${address}"
-           |      port = ${Protocol.AkkaDefaultPort}
+           |      port = ${JarTreeAkkaApi.DefaultPort}
            |    }
            |  }
            |}

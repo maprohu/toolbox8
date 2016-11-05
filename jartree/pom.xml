@@ -15,6 +15,7 @@
     </build>
     <modules>
         <module>extra</module>
+        <module>akka</module>
         <module>standaloneapi</module>
         <module>protocol</module>
         <module>standalone</module>

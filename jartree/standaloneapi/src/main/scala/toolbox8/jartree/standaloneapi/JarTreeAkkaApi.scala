@@ -5,7 +5,6 @@ package toolbox8.jartree.standaloneapi
   */
 object JarTreeAkkaApi {
 
-  val JarTreeActorName = "jartree"
 
 
   type Processor = Any

@@ -11,6 +11,12 @@ object JarTree8Modules {
   implicit val Container = SubModuleContainer(Toolbox8Modules.Root, "jartree")
 
 
+  object Akka extends ScalaModule(
+    "akka",
+    Akka8Modules.Actor,
+    Akka8Modules.Stream
+  )
+
   object Protocol extends ScalaModule(
     "protocol",
     mvn.`com.typesafe.akka:akka-stream_2.11:jar:2.4.12`,
@@ -100,7 +106,8 @@ object JarTree8Modules {
     RpiModules.Installer,
     Extra8Modules.Server,
     App,
-    Akka8Modules.Actor
+    Akka8Modules.Actor,
+    Akka
   )
 
 

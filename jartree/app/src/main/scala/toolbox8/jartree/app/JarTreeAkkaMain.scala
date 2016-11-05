@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import toolbox6.logging.LogTools
-import toolbox8.jartree.standalone.JarTreeAkka
+import toolbox8.jartree.akka.JarTreeAkka
 import toolbox8.jartree.standaloneapi.Protocol
 
 import scala.concurrent.Await
