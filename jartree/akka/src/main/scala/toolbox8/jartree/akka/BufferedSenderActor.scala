@@ -2,6 +2,7 @@ package toolbox8.jartree.akka
 
 import akka.Done
 import akka.actor.{Actor, ActorRef}
+import akka.event.Logging
 import akka.util.ByteString
 
 import scala.collection.immutable._
@@ -16,6 +17,7 @@ import BufferedSenderActor._
 class BufferedSenderActor(
   config: Config[Any]
 ) extends Actor {
+  val log = Logging(context.system, this)
   import config._
   import context.dispatcher
 
@@ -41,6 +43,14 @@ class BufferedSenderActor(
   var pending = 0
   var complete = false
 
+  def checkComplete() = {
+    if (complete && pending == 0) {
+      log.debug("sending complete")
+      target ! Complete
+      context stop self
+    }
+  }
+
   override def receive: Receive = {
     case d : Data =>
       target ! d
@@ -54,17 +64,11 @@ class BufferedSenderActor(
         doPoll()
       }
       pending -= 1
-      if (complete && pending == 0) {
-        target ! Complete
-        context stop self
-      }
+      checkComplete()
 
     case Complete =>
       complete = true
-      if (pending == 0) {
-        target ! Complete
-        context stop self
-      }
+      checkComplete()
 
     case Error =>
       target ! Error

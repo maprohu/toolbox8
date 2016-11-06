@@ -8,10 +8,14 @@ import com.typesafe.config.ConfigFactory
   */
 object ActorSystemTools {
 
+  object Implicit {
+    implicit lazy val actorSystem = ActorSystemTools.actorSystem()
+  }
+
   def actorSystem(
-    name: String,
-    address: String,
-    port: Int
+    name: String = "toolbox8",
+    address: String = "localhost",
+    port: Int = 5555
   ) = ActorSystem(
     name,
     ConfigFactory.parseString(

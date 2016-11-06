@@ -71,7 +71,8 @@ object JarTree8Modules {
     Toolbox6Modules.StateMachine,
     Akka8Modules.StateMachine,
     Akka8Modules.Stream,
-    Extra8Modules.Client
+    Extra8Modules.Client,
+    Akka
   )
 
   object Installer extends ScalaModule(

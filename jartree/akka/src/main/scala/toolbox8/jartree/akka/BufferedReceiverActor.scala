@@ -4,18 +4,19 @@ package toolbox8.jartree.akka
   * Created by maprohu on 05-11-2016.
   */
 import akka.actor.{Actor, ActorRef}
-import akka.actor.Actor.Receive
 import akka.pattern._
 
 import scala.collection.immutable._
-import scala.concurrent.Future
-import BufferedReceiverActor._
 import akka.Done
+import akka.event.Logging
 import akka.stream.scaladsl.SourceQueueWithComplete
 import toolbox8.jartree.akka.BufferedSenderActor.{Complete, Data}
+
+import BufferedReceiverActor._
 class BufferedReceiverActor(
   config: Config[Any]
 ) extends Actor {
+  val log = Logging(context.system, this)
   import config._
   import context.dispatcher
 
@@ -27,7 +28,8 @@ class BufferedReceiverActor(
     offering = true
     val (msg, ref) = buffer.head
     buffer = buffer.tail
-    queue.offer(msg)
+    queue
+      .offer(msg)
       .map({ _ =>
         ref ! Done
 
