@@ -5,6 +5,7 @@ import java.nio.file.Path
 import akka.Done
 import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.event.Logging
+import akka.persistence.PersistentActor
 import akka.stream.{ActorMaterializer, OverflowStrategy}
 import akka.stream.scaladsl.{FileIO, Keep, Source}
 import akka.util.ByteString
@@ -19,11 +20,13 @@ import JarCacheActor._
 
 class JarCacheActor(
   config: Config
-) extends Actor {
+) extends PersistentActor {
   val log = Logging(context.system, this)
   import context.dispatcher
   import config._
   implicit val materializer = ActorMaterializer()
+
+
 
 
   @scala.throws[Exception](classOf[Exception])
@@ -39,87 +42,101 @@ class JarCacheActor(
     dir.resolve(s"${id}.jar")
   }
 
-  override def receive: Receive = {
+  override def receiveCommand: Receive = {
     case v : VerifyRequest =>
       log.debug("received: {}", v)
-      val from = sender()
+
+      val startId = state.nextId
+
       val missing =
         v
           .keys
           .to[Set]
           .--(state.lookup.keySet)
-          .zipWithIndex
-          .map({
-            case (key, idx) =>
-              val id = state.nextId + idx
-              val (queue, io) =
-                Source
-                  .queue[ByteString](0, OverflowStrategy.backpressure)
-                  .toMat(
-                    FileIO
-                      .toPath(
-                        path(id)
-                      )
-                  )(Keep.both)
-                  .run
 
-              val receiver = context.actorOf(
-                Props(
-                  classOf[BufferedReceiverActor],
-                  BufferedReceiverActor.Config(
-                    queue
+      persist(
+        NextId(startId + missing.size)
+      ) { e =>
+        updateState(e)
+
+        val from = sender()
+
+        val requests =
+          missing
+            .zipWithIndex
+            .map({
+              case (key, idx) =>
+                val id = startId + idx
+                val (queue, io) =
+                  Source
+                    .queue[ByteString](0, OverflowStrategy.backpressure)
+                    .toMat(
+                      FileIO
+                        .toPath(
+                          path(id)
+                        )
+                    )(Keep.both)
+                    .run
+
+                val receiver = context.actorOf(
+                  Props(
+                    classOf[BufferedReceiverActor],
+                    BufferedReceiverActor.Config(
+                      queue
+                    )
                   )
                 )
-              )
 
 
-              io
-                .onComplete({ r =>
-                  log.debug("write result: {} for key: {}", r, key)
-                })
+                io
+                  .onComplete({ r =>
+                    log.debug("write result: {} for key: {}", r, key)
+                  })
 
-              val finish = Finished(
-                key = key,
-                id = id,
-                from = from
-              )
+                val finish = Finished(
+                  key = key,
+                  id = id,
+                  from = from
+                )
 
-              io
-                .foreach({ _ =>
-                  self ! finish
-                })
+                io
+                  .foreach({ _ =>
+                    self ! finish
+                  })
 
-              (receiver, finish)
-          })
+                (receiver, finish)
+            })
 
-      state = state.copy(
-        nextId = state.nextId + missing.size
-      )
+        sender() ! JarsRequest(
+          requests = requests
+            .to[Seq]
+            .map({
+              case (ref, r) =>
+                JarRequest(
+                  key = r.key,
+                  target = ref
+                )
+            })
+        )
 
-      sender() ! JarsRequest(
-        requests = missing
-          .to[Seq]
-          .map({
-            case (ref, r) =>
-              JarRequest(
-                key = r.key,
-                target = ref
-              )
-          })
-      )
+
+      }
+
 
     case running : Finished =>
-//      val running = state.running(t.actor)
       log.debug("terminated: {}", running)
 
-      running.from ! Done
-
-      state = state.copy(
-        lookup = state.lookup.updated(
-          running.key,
-          running.id
+      persist(
+        PutEvent(
+          key = running.key,
+          id = running.id
         )
-      )
+      ) { e =>
+        updateState(e)
+
+        running.from ! Done
+      }
+
 
     case g : Get =>
       sender ! GetResponse(
@@ -135,11 +152,45 @@ class JarCacheActor(
       )
   }
 
+  def updateState(evt: Evt) = {
+    evt match {
+      case p : PutEvent =>
+        state = state.copy(
+          lookup = state.lookup.updated(
+            p.key,
+            p.id
+          )
+        )
+      case i : NextId =>
+        state = state.copy(
+          nextId = i.id
+        )
+    }
+  }
+
+
+
+  override def receiveRecover: Receive = {
+    case e : Evt =>
+      updateState(e)
+  }
+
+
+  override def persistenceId: String = uniqueId
 }
 
 object JarCacheActor {
+  sealed trait Evt
+  case class PutEvent(
+    id: Long,
+    key: JarKey
+  ) extends Evt
+  case class NextId(
+    id: Long
+  ) extends Evt
 
   case class Config(
+    uniqueId: String = "jar-cache",
     dir: Path
   )
 

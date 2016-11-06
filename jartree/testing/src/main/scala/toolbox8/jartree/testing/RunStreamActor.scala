@@ -4,7 +4,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.stream.{ActorMaterializer, OverflowStrategy}
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.ByteString
-import toolbox8.jartree.akka.{BufferedReceiverActor, BufferedSenderActor, StreamReceiverActor}
+import toolbox8.jartree.akka.{BufferedReceiverActor, BufferedSenderActor}
 
 /**
   * Created by maprohu on 05-11-2016.
