@@ -202,7 +202,12 @@ object JarCacheActor {
     version: String,
     classifier: Option[String] = None,
     hash: Option[String] = None
-  )
+  ) {
+    def isSnapshot = version.endsWith("SNAPSHOT")
+    def toCanonical = {
+      s"${groupId}:${artifactId}:jar:${version}"
+    }
+  }
 
   case class Finished(
     key: JarKey,

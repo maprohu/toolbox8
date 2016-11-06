@@ -24,7 +24,7 @@ object ActorSystemTools extends LazyLogging {
   ) = {
     val base = persistence
       .getOrElse(
-        new File("../toolbox8/target/persistence").getCanonicalFile.toPath
+        new File("../toolbox8/target/jartreedata").getCanonicalFile.toPath
       )
       .toAbsolutePath
 
@@ -57,6 +57,7 @@ object ActorSystemTools extends LazyLogging {
            |      plugin = "akka.persistence.journal.leveldb"
            |      leveldb {
            |        dir = "${base.resolve("journal").toFile.getAbsolutePath}"
+           |        native = off
            |      }
            |    }
            |    snapshot-store {
@@ -70,6 +71,27 @@ object ActorSystemTools extends LazyLogging {
         """.stripMargin
       ).withFallback(ConfigFactory.load())
     )
+  }
+
+  def simple(
+    name: String,
+    classLoader: ClassLoader
+  ) = {
+    ActorSystem(
+      name,
+      ConfigFactory.parseString(
+        s"""
+           |akka {
+           |  loggers = ["akka.event.slf4j.Slf4jLogger"]
+           |  logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
+           |  loglevel = "DEBUG"
+           |  jvm-exit-on-fatal-error = false
+           |}
+        """.stripMargin
+      ).withFallback(ConfigFactory.load()),
+      classLoader
+    )
+
   }
 
 

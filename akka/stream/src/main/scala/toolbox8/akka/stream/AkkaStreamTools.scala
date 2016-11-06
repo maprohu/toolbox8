@@ -6,11 +6,13 @@ import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source, StreamConverters}
 import akka.stream._
+import akka.stream.impl.fusing.GraphStages
+import akka.stream.stage.{GraphStageLogic, GraphStageWithMaterializedValue, OutHandler}
 import akka.util.ByteString
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.LazyLogging
 import monix.execution.Cancelable
-import monix.execution.cancelables.AssignableCancelable
+import monix.execution.cancelables.{AssignableCancelable, BooleanCancelable}
 import toolbox6.common.StringTools
 
 /**
@@ -79,14 +81,14 @@ object AkkaStreamTools extends LazyLogging {
 
 object Flows {
 
-  def stopper[T] : Flow[T, T, Cancelable] = {
+  def stopper[T] : Flow[T, T, BooleanCancelable] = {
     Flow[T]
       .map(Some.apply)
       .mergeMat(
         Source
           .maybe[Option[Nothing]]
           .mapMaterializedValue({ p =>
-            Cancelable({ () =>
+            BooleanCancelable({ () =>
               p.success(None)
             })
           }),
@@ -146,3 +148,33 @@ object Sinks {
 
 }
 
+object Sources {
+
+
+  def singleMaterializedValue[T](fn: () => T) = {
+    Source.fromGraph(new SingleMaterializedValueStage[T](fn))
+  }
+
+  class SingleMaterializedValueStage[T](fn: () => T) extends GraphStageWithMaterializedValue[SourceShape[T], T] {
+
+    val out = Outlet[T]("single.out")
+    val shape = SourceShape(out)
+
+    @scala.throws[Exception](classOf[Exception])
+    override def createLogicAndMaterializedValue(inheritedAttributes: Attributes): (GraphStageLogic, T) = {
+      val elem = fn()
+
+      val logic = new GraphStageLogic(shape) with OutHandler {
+        def onPull(): Unit = {
+          push(out, elem)
+          completeStage()
+        }
+        setHandler(out, this)
+      }
+
+      (logic, elem)
+    }
+
+  }
+
+}

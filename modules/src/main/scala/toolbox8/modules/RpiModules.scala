@@ -17,7 +17,8 @@ object RpiModules {
     mvn.`com.jcraft:jsch:jar:0.1.54`,
     JarTree8Modules.Packaging,
     JarTree8Modules.Protocol,
-    Toolbox8Modules.Modules
+    Toolbox8Modules.Modules,
+    JarTree8Modules.Akka
   )
 
   object Remote extends ScalaModule(

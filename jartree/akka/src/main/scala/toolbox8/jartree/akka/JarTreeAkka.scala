@@ -49,7 +49,8 @@ object JarTreeAkka extends LazyLogging with LogTools {
             JarCacheActor.Config(
               dir = cacheDir
             )
-          )
+          ),
+          JarTreeAkkaApi.JarCacheActorName
         )
 
     val service =
@@ -61,10 +62,9 @@ object JarTreeAkka extends LazyLogging with LogTools {
               cache = cacheActor,
               parent = JarTreeAkka.getClass.getClassLoader
             )
-          )
+          ),
+          JarTreeAkkaApi.PluggableServiceActorName
         )
-
-
 
     logger.info(s"started: ${name}")
 

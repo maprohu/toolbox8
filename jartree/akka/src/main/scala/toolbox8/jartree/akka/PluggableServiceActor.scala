@@ -1,7 +1,7 @@
 package toolbox8.jartree.akka
 
 import akka.Done
-import akka.actor.ActorRef
+import akka.actor.{ActorRef, ActorSystem}
 import akka.event.Logging
 import akka.persistence.{PersistentActor, RecoveryCompleted}
 import toolbox8.jartree.akka.JarCacheActor.JarKey
@@ -39,9 +39,10 @@ class PluggableServiceActor(
   ) = {
     log.info(s"plugging: ${state.request}")
     plugging = true
+    val actorSystem = context.system
 
     val fut = for {
-      pluggable <- {
+      (pluggable, cl) <- {
         state
           .request
           .map({ r =>
@@ -59,20 +60,25 @@ class PluggableServiceActor(
                   Future.successful(parent)
                 )
             } yield {
-              cl
+              val i = cl
                 .loadClass(r.className)
                 .asInstanceOf[Class[Pluggable]]
                 .newInstance()
+              (i, cl)
             }
           })
           .getOrElse(
-            Future.successful(VoidPluggable)
+            Future.successful(
+              (VoidPluggable, parent)
+            )
           )
       }
       unplugged <- plugged.preUnplug()
       replugged <- pluggable.plug(
         PlugContext(
-          previous = unplugged
+          actorSystem = actorSystem,
+          previous = unplugged,
+          classLoader = cl
         )
       )
     } yield {
@@ -161,7 +167,9 @@ object PluggableServiceActor {
 
   type Previous = Any
   case class PlugContext(
-    previous: Previous
+    actorSystem: ActorSystem,
+    previous: Previous,
+    classLoader: ClassLoader
   )
 
   trait Plugged {

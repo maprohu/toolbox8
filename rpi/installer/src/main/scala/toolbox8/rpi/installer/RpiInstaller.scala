@@ -4,6 +4,7 @@ import java.io.{File, FileInputStream, InputStream, OutputStream}
 
 import ammonite.ops.{Path, _}
 import com.jcraft.jsch._
+import toolbox8.jartree.akka.JarTreeAkkaApi
 import toolbox8.jartree.standaloneapi.Protocol
 
 /**
@@ -14,7 +15,8 @@ object RpiInstaller {
   case class Config(
     host: String,
     servicePort : Int = Protocol.DefaultPort,
-//    akkaPort : Int = Protocol.AkkaDefaultPort,
+    akkaPort : Int = JarTreeAkkaApi.DefaultPort,
+    actorSystemName : String = "voicer",
     sshPort: Int = 22,
     user: String = "pi",
     key: Path = home / ".ssh" / "id_rsa"

@@ -9,4 +9,7 @@ object JarTreeAkkaApi {
 
   val JarTreeActorName = "jartree"
 
+  val JarCacheActorName = "jarCache"
+  val PluggableServiceActorName = "pluggableService"
+
 }

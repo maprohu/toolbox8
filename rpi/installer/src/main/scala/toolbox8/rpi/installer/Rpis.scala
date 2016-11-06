@@ -10,7 +10,8 @@ object Rpis {
 
   implicit val Localhost = Config(
     host = "localhost",
-    servicePort = 9978
+    servicePort = 9978,
+    actorSystemName = "jartree"
   )
   implicit val Home = Config(
     host = "192.168.1.36"
