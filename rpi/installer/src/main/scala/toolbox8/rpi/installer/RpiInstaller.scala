@@ -14,7 +14,7 @@ object RpiInstaller {
   case class Config(
     host: String,
     servicePort : Int = Protocol.DefaultPort,
-    akkaPort : Int = Protocol.AkkaDefaultPort,
+//    akkaPort : Int = Protocol.AkkaDefaultPort,
     sshPort: Int = 22,
     user: String = "pi",
     key: Path = home / ".ssh" / "id_rsa"

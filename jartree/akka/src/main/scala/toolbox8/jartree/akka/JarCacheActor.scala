@@ -3,6 +3,7 @@ package toolbox8.jartree.akka
 import java.nio.file.Path
 
 import akka.actor.{Actor, ActorRef, Props}
+import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{FileIO, Source}
 import akka.util.ByteString
 import toolbox8.jartree.akka.JarCacheUploaderActor.{JarRequest, JarsRequest}
@@ -18,6 +19,8 @@ import JarCacheActor._
 class JarCacheActor(
   dir: Path
 ) extends Actor {
+  implicit val materializer = ActorMaterializer()
+
 
   var state = State()
 

@@ -14,7 +14,9 @@ object JarTree8Modules {
   object Akka extends ScalaModule(
     "akka",
     Akka8Modules.Actor,
-    Akka8Modules.Stream
+    Akka8Modules.Stream,
+    mvn.`com.typesafe.akka:akka-remote_2.11:jar:2.4.12`,
+    mvn.`com.typesafe.akka:akka-persistence_2.11:jar:2.4.12`
   )
 
   object Protocol extends ScalaModule(

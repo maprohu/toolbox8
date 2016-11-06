@@ -18,7 +18,6 @@ import JarCacheUploaderActor._
 class JarCacheUploaderActor(
   config: Config
 ) extends Actor {
-  import context.system
   import config._
   implicit val materializer = ActorMaterializer()
 
