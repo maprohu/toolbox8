@@ -1,78 +1,84 @@
 package toolbox8.jartree.akka
 
-import java.nio.file.Paths
+import java.io.File
+import java.nio.file.{Path, Paths}
 
-//import akka.actor.{ActorSystem, Props}
-//import com.typesafe.config.ConfigFactory
-//import com.typesafe.scalalogging.LazyLogging
-//import toolbox6.logging.LogTools
-//import toolbox8.jartree.akka.JarTreeActor.Config
-//
-//import scala.concurrent.Await
-//import scala.concurrent.duration._
-//
-///**
-//  * Created by maprohu on 05-11-2016.
-//  */
-//object JarTreeAkka extends LazyLogging with LogTools {
-//
-//  def run(
-//    name: String,
-//    address: String
-//  ) = {
-//
-//    implicit val actorSystem = ActorSystem(
-//      name,
-//      ConfigFactory.parseString(
-//        s"""
-//           |akka {
-//           |  loggers = ["akka.event.slf4j.Slf4jLogger"]
-//           |  logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
-//           |  loglevel = "DEBUG"
-//           |  jvm-exit-on-fatal-error = false
-//           |  actor {
-//           |    provider = remote
-//           |  }
-//           |  remote {
-//           |    enabled-transports = ["akka.remote.netty.tcp"]
-//           |    netty.tcp {
-//           |      hostname = "${address}"
-//           |      port = ${JarTreeAkkaApi.DefaultPort}
-//           |    }
-//           |  }
-//           |}
-//        """.stripMargin
-//      ).withFallback(ConfigFactory.load())
-//    )
-//
-//    val basePath = Paths.get(s"/opt/${name}")
-//
-//    val jarTreeRef = actorSystem.actorOf(
-//      Props(
-//        classOf[JarTreeActor],
-//        Config(
-//          name = name,
-//          dataPath = basePath.resolve("data"),
-//          version = Option(getClass.getPackage.getImplementationVersion),
-//          logFile = Some(basePath.resolve(Paths.get("logs", s"${name}.log"))),
-//          storageDir = Some(basePath.resolve("storage"))
-//        )
-//      ),
-//      JarTreeAkkaApi.JarTreeActorName
-//    )
-//
-//    logger.info(s"started: ${jarTreeRef}")
-//
-//    sys.addShutdownHook {
-//      quietly {
-//        Await.result(
-//          actorSystem.terminate(),
-//          15.seconds
-//        )
-//      }
-//    }
-//
-//    actorSystem
-//  }
-//
-//}
+import akka.actor.{ActorRef, ActorSystem, Props}
+import com.typesafe.scalalogging.LazyLogging
+import toolbox6.logging.LogTools
+import toolbox8.akka.actor.{ActorSystemTools, ActorTools}
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
+
+/**
+  * Created by maprohu on 05-11-2016.
+  */
+object JarTreeAkka extends LazyLogging with LogTools {
+
+  def run(
+    name: String,
+    address: String,
+    port: Int,
+    basePathOpt : Option[Path] = None
+  ) = {
+    val basePath =
+      basePathOpt
+        .getOrElse(
+          Paths.get(s"/opt/${name}")
+        )
+
+    val cacheDir = basePath.resolve("jarcache")
+    val persistenceDir = basePath.resolve("persistence")
+
+    implicit val actorSystem = ActorSystemTools.actorSystem(
+      name = name,
+      address = address,
+      port = port,
+      persistence = Some(
+        persistenceDir
+      )
+    )
+
+
+    val cacheActor =
+      actorSystem
+        .actorOf(
+          Props(
+            classOf[JarCacheActor],
+            JarCacheActor.Config(
+              dir = cacheDir
+            )
+          )
+        )
+
+    val service =
+      actorSystem
+        .actorOf(
+          Props(
+            classOf[PluggableServiceActor],
+            PluggableServiceActor.Config(
+              cache = cacheActor,
+              parent = JarTreeAkka.getClass.getClassLoader
+            )
+          )
+        )
+
+
+
+    logger.info(s"started: ${name}")
+
+    Output(
+      actorSystem = actorSystem,
+      jarCache = cacheActor,
+      pluggableService = service
+    )
+  }
+
+  case class Output(
+    actorSystem: ActorSystem,
+    jarCache: ActorRef,
+    pluggableService: ActorRef
+  )
+
+}

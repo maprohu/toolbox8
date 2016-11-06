@@ -12,7 +12,8 @@ object Akka8Modules {
 
   object Actor extends ScalaModule(
     "actor",
-    mvn.`com.typesafe.akka:akka-actor_2.11:jar:2.4.12`
+    mvn.`com.typesafe.akka:akka-actor_2.11:jar:2.4.12`,
+    mvn.`com.typesafe.scala-logging:scala-logging_2.11:jar:3.4.0`
   )
 
   object StateMachine extends ScalaModule(

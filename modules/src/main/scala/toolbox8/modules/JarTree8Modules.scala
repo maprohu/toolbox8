@@ -60,7 +60,8 @@ object JarTree8Modules {
     "echo",
     StandaloneApi,
     JarTreeModules.Util.R1,
-    mvn.`io.monix:monix-reactive_2.11:jar:2.0.5`
+    mvn.`io.monix:monix-reactive_2.11:jar:2.0.5`,
+    Akka
 //    Toolbox6Modules.JavaImpl
   )
 
@@ -91,7 +92,8 @@ object JarTree8Modules {
 
   object App extends ScalaModule(
     "app",
-    Standalone,
+//    Standalone,
+    Akka,
     mvn.`ch.qos.logback:logback-classic:jar:1.1.7`
   )
 

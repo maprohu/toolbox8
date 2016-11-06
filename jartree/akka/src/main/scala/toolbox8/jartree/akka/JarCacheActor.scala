@@ -33,6 +33,8 @@ class JarCacheActor(
   override def preStart(): Unit = {
     super.preStart()
 
+    log.info(s"${uniqueId} - ${dir}")
+
     dir.toFile.mkdirs()
   }
 

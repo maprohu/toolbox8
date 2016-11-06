@@ -5,11 +5,12 @@ import java.nio.file.Path
 
 import akka.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
+import com.typesafe.scalalogging.LazyLogging
 
 /**
   * Created by maprohu on 05-11-2016.
   */
-object ActorSystemTools {
+object ActorSystemTools extends LazyLogging {
 
   object Implicit {
     implicit lazy val actorSystem = ActorSystemTools.actorSystem()
@@ -21,9 +22,17 @@ object ActorSystemTools {
     port: Int = 5555,
     persistence: Option[Path] = None
   ) = {
-    val base = persistence.getOrElse(
-      new File("../toolbox8/target/persistence").toPath
+    val base = persistence
+      .getOrElse(
+        new File("../toolbox8/target/persistence").getCanonicalFile.toPath
+      )
+      .toAbsolutePath
+
+    logger.info(
+      s"actorSystem: ${name} - ${address}:${port} - ${base}"
     )
+
+
     ActorSystem(
       name,
       ConfigFactory.parseString(

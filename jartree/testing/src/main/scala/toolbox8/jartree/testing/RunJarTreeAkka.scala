@@ -5,11 +5,13 @@ import java.io.File
 import akka.actor.{ActorSystem, Props}
 import toolbox8.akka.actor.{ActorSystemTools, ActorTools}
 import toolbox8.jartree.akka.JarCacheActor.JarKey
-import toolbox8.jartree.akka.{JarCacheActor, JarCacheUploaderActor, ParentLastUrlClassloader}
+import toolbox8.jartree.akka.{JarCacheActor, JarCacheUploaderActor, ParentLastUrlClassloader, PluggableServiceActor}
 import toolbox8.jartree.app.JarTreeMain
 import toolbox8.jartree.client.JarResolver
-import toolbox8.modules.{Akka8Modules, Toolbox8Modules}
+import toolbox8.modules.{Akka8Modules, JarTree8Modules, Toolbox8Modules}
 import akka.pattern._
+import mvnmod.builder.ModulePath
+import toolbox8.jartree.akka.PluggableServiceActor.PlugRequest
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
@@ -23,6 +25,7 @@ object RunJarTreeAkka {
   def main(args: Array[String]): Unit = {
     JarTreeMain.configureLogging("jartree", true)
 
+    import toolbox8.akka.actor.ActorImplicits._
     import ActorSystemTools.Implicit._
     import actorSystem.dispatcher
 
@@ -40,8 +43,14 @@ object RunJarTreeAkka {
         )
 
     val jars =
-      Toolbox8Modules
-        .Dummy
+      JarTree8Modules
+        .Echo
+        .forTarget(
+          ModulePath(
+            JarTree8Modules.Akka,
+            None
+          )
+        )
         .classPath
         .map({ m =>
           JarKey(
@@ -64,20 +73,28 @@ object RunJarTreeAkka {
           )
         )
 
+    val service =
+      actorSystem
+        .actorOf(
+          Props(
+            classOf[PluggableServiceActor],
+            PluggableServiceActor.Config(
+              cache = cacheActor,
+              parent = RunJarTreeAkka.getClass.getClassLoader
+            )
+          )
+        )
+
     println(
       Await.result(
         for {
           _ <- ActorTools.watchFuture(uploader)
-          _ = println("loading")
-          cl <- ParentLastUrlClassloader(
-            jars = jars,
-            parent = RunJarTreeAkka.getClass.getClassLoader,
-            cacheActor
+          _ <- service ? PlugRequest(
+            classLoader = Some(jars),
+            className = "toolbox8.jartree.echo.TestPluggable"
           )
         } yield {
-          println(
-            cl.loadClass("toolbox8.dummy.DummyMain")
-          )
+          "plugged"
         },
         Duration.Inf
       )

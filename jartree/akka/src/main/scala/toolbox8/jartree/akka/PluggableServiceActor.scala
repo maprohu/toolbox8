@@ -1,5 +1,6 @@
 package toolbox8.jartree.akka
 
+import akka.Done
 import akka.actor.ActorRef
 import akka.event.Logging
 import akka.persistence.{PersistentActor, RecoveryCompleted}
@@ -33,7 +34,10 @@ class PluggableServiceActor(
     }
   }
 
-  def doPlugging() = {
+  def doPlugging(
+    replyTo: Option[ActorRef]
+  ) = {
+    log.info(s"plugging: ${state.request}")
     plugging = true
 
     val fut = for {
@@ -72,8 +76,9 @@ class PluggableServiceActor(
         )
       )
     } yield {
-      SetPlugged(
-        replugged
+      PluggingComplete(
+        replugged,
+        replyTo
       )
     }
 
@@ -84,7 +89,7 @@ class PluggableServiceActor(
 
   override def receiveRecover: Receive = {
     case RecoveryCompleted =>
-      doPlugging()
+      doPlugging(None)
 
     case e : Evt =>
       updateState(e)
@@ -92,7 +97,8 @@ class PluggableServiceActor(
   }
 
   override def receiveCommand: Receive = {
-    case p : SetPlugged =>
+    case p : PluggingComplete =>
+      log.info("plugging complete: {}", p)
       plugging = false
       plugged
         .postUnplug()
@@ -102,6 +108,7 @@ class PluggableServiceActor(
 
       plugged = p.plugged
       unstashAll()
+      p.replyTo.foreach(_ ! Done)
 
     case GetPlugged =>
       if (plugging) {
@@ -116,7 +123,7 @@ class PluggableServiceActor(
       } else {
         persist(p)({ p =>
           updateState(p)
-          doPlugging()
+          doPlugging(Some(sender()))
         })
       }
 
@@ -138,15 +145,16 @@ object PluggableServiceActor {
     className: String = classOf[VoidPluggable].getName
   ) extends Evt with Cmd
 
-  case class SetPlugged(
-    plugged: Plugged
+  case class PluggingComplete(
+    plugged: Plugged,
+    replyTo: Option[ActorRef]
   ) extends Cmd
 
   case object GetPlugged extends Cmd
 
 
   case class Config(
-    uniqueId: String,
+    uniqueId: String = "pluggable-service",
     cache: ActorRef,
     parent: ClassLoader
   )
