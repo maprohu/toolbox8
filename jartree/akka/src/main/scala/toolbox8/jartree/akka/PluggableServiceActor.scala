@@ -1,11 +1,13 @@
 package toolbox8.jartree.akka
 
 import akka.actor.ActorRef
+import akka.event.Logging
 import akka.persistence.{PersistentActor, RecoveryCompleted}
 import toolbox8.jartree.akka.JarCacheActor.JarKey
 
 import scala.collection.immutable._
 import scala.concurrent.Future
+import akka.pattern._
 
 /**
   * Created by maprohu on 06-11-2016.
@@ -14,7 +16,9 @@ import PluggableServiceActor._
 class PluggableServiceActor(
   config: Config
 ) extends PersistentActor {
+  val log = Logging(context.system, this)
   import config._
+  import context.dispatcher
 
   var state = State()
   var plugged : Plugged = VoidPlugged
@@ -32,7 +36,7 @@ class PluggableServiceActor(
   def doPlugging() = {
     plugging = true
 
-    for {
+    val fut = for {
       pluggable <- {
         state
           .request
@@ -67,8 +71,14 @@ class PluggableServiceActor(
           previous = unplugged
         )
       )
+    } yield {
+      SetPlugged(
+        replugged
+      )
     }
 
+    fut
+      .pipeTo(self)
 
   }
 
@@ -82,6 +92,33 @@ class PluggableServiceActor(
   }
 
   override def receiveCommand: Receive = {
+    case p : SetPlugged =>
+      plugging = false
+      plugged
+        .postUnplug()
+        .foreach({ _ =>
+          log.info("postUnplug complete")
+        })
+
+      plugged = p.plugged
+      unstashAll()
+
+    case GetPlugged =>
+      if (plugging) {
+        stash()
+      } else {
+        sender() ! plugged
+      }
+
+    case p : PlugRequest =>
+      if (plugging) {
+        stash()
+      } else {
+        persist(p)({ p =>
+          updateState(p)
+          doPlugging()
+        })
+      }
 
   }
 
@@ -100,6 +137,12 @@ object PluggableServiceActor {
     classLoader: Option[Seq[JarKey]] = None,
     className: String = classOf[VoidPluggable].getName
   ) extends Evt with Cmd
+
+  case class SetPlugged(
+    plugged: Plugged
+  ) extends Cmd
+
+  case object GetPlugged extends Cmd
 
 
   case class Config(
