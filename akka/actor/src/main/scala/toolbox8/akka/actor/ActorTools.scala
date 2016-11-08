@@ -57,3 +57,7 @@ object WatchActor {
     promise: Promise[Terminated]
   )
 }
+
+case class SetOut(
+  ref: ActorRef
+)
