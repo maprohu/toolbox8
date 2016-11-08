@@ -39,14 +39,16 @@ object ActorSystemTools extends LazyLogging {
         s"""
            |akka {
            |  loggers = ["akka.event.slf4j.Slf4jLogger"]
-           |  extensions = ["com.romix.akka.serialization.kryo.KryoSerializationExtension${"$"}"]
            |  logging-filter = "akka.event.slf4j.Slf4jLoggingFilter"
            |  loglevel = "DEBUG"
            |  jvm-exit-on-fatal-error = false
            |  actor {
            |    provider = remote
            |    serializers {
-           |      kryo = "com.romix.akka.serialization.kryo.KryoSerializer"
+           |      boo = "toolbox8.akka.actor.BoopickleSerializer"
+           |    }
+           |    serialization-bindings {
+           |      "toolbox8.akka.actor.Pickled" = boo
            |    }
            |  }
            |  remote {

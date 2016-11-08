@@ -13,8 +13,8 @@ object Toolbox8Modules {
 
   object Modules extends ScalaModule(
     "modules",
-    MvnmodModules.Builder,
-    Toolbox6Modules.Modules
+    MvnmodModules.Builder.Snapshot,
+    Toolbox6Modules.Modules.Snapshot
   )
 
   object Common extends ScalaModule(
