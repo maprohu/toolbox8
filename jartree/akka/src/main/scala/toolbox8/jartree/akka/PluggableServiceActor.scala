@@ -31,6 +31,10 @@ class PluggableServiceActor(
         state = state.copy(
           request = Some(p)
         )
+      case Clear =>
+        state = state.copy(
+          request = None
+        )
     }
   }
 
@@ -123,7 +127,7 @@ class PluggableServiceActor(
         sender() ! plugged
       }
 
-    case p : PlugRequest =>
+    case p : Evt =>
       if (plugging) {
         stash()
       } else {
@@ -151,10 +155,12 @@ object PluggableServiceActor {
     className: String = classOf[VoidPluggable].getName
   ) extends Evt with Cmd
 
+  case object Clear extends Cmd with Evt
+
   case class PluggingComplete(
     plugged: Plugged,
     replyTo: Option[ActorRef]
-  ) extends Cmd
+  )
 
   case object GetPlugged extends Cmd
 

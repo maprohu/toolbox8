@@ -60,7 +60,6 @@ class BoopickleSerializer extends Serializer {
 }
 
 object BoopickleSerializer {
-  @volatile
   val global = Atomic(Map.empty[Int, Pickler[Pickled]])
 
   type Picklers = Map[Int, Pickler[Pickled]]
