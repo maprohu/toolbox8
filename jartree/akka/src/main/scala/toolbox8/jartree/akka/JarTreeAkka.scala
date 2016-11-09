@@ -25,7 +25,7 @@ object JarTreeAkka extends LazyLogging with LogTools {
     val basePath =
       basePathOpt
         .getOrElse(
-          Paths.get(s"/opt/${name}")
+          Paths.get(s"/opt/${name}/data")
         )
 
     val cacheDir = basePath.resolve("jarcache")

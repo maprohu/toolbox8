@@ -3,15 +3,10 @@ package toolbox8.jartree.testing
 import akka.actor.{Address, Props, RootActorPath}
 import akka.pattern._
 import akka.util.Timeout
-import mvnmod.builder.ModulePath
 import toolbox8.akka.actor.{ActorSystemTools, ActorTools}
-import toolbox8.jartree.akka.JarCacheActor.JarKey
 import toolbox8.jartree.akka.PluggableServiceActor.{Clear, PlugRequest}
 import toolbox8.jartree.akka._
 import toolbox8.jartree.app.JarTreeMain
-import toolbox8.jartree.client.JarResolver
-import toolbox8.jartree.echo.TestPluggable
-import toolbox8.modules.JarTree8Modules
 import toolbox8.rpi.installer.Rpis
 
 import scala.concurrent.Await

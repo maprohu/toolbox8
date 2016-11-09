@@ -108,6 +108,7 @@ object RpiService {
         command(s"sudo systemctl status ${name}")
         command(s"sudo systemctl stop ${name}")
         command(s"sudo systemctl disable ${name}")
+        command(s"sudo rm -rf /opt/${name}/data")
         command(RpiService.installCommand(name, user, address))
         command("sudo systemctl daemon-reload")
         command(s"sudo systemctl enable ${name}")
