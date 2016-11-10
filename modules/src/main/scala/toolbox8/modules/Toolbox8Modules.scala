@@ -13,14 +13,14 @@ object Toolbox8Modules {
 
   object Modules extends ScalaModule(
     "modules",
-    MvnmodModules.Builder.Snapshot,
-    Toolbox6Modules.Modules.Snapshot
+    MvnmodModules.Builder,
+    Toolbox6Modules.Modules
   )
 
   object Common extends ScalaModule(
     "common",
-    mvn.`io.monix:monix-eval_2.11:jar:2.0.5`,
-    Toolbox6Modules.Logging.R1
+    Toolbox6Modules.Logging,
+    mvn.`io.monix:monix-eval_2.11:jar:2.0.6`
   )
 
   object JarTree extends ScalaModule(
@@ -38,31 +38,10 @@ object Toolbox8Modules {
 
   object Leveldb extends ScalaModule(
     "leveldb",
+    Toolbox6Modules.Logging,
     mvn.`org.iq80.leveldb:leveldb:jar:0.9`,
-    Toolbox6Modules.Logging.R1,
     mvn.`com.typesafe.akka:akka-actor_2.11:jar:2.4.12`,
-    mvn.`io.monix:monix_2.11:jar:2.0.5`
+    mvn.`io.monix:monix_2.11:jar:2.0.6`
   )
-
-
-//  object Common extends ScalaModule(
-//    "common",
-//    "1.0.0-SNAPSHOT",
-//    mvn.`com.lihaoyi:scalarx_2.11:jar:0.3.1`
-//  )
-
-//  object JarTree extends ScalaModule(
-//    "jartree",
-//    "1.0.0-SNAPSHOT",
-//    mvn.`commons-io:commons-io:jar:2.5`,
-//    mvn.`org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-api:jar:2.2.2`,
-//    mvn.`org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-spi:jar:2.2.2`,
-//    mvn.`org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-api-maven:jar:2.2.2`,
-//    mvn.`org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-spi-maven:jar:2.2.2`,
-//    mvn.`org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-impl-maven:jar:2.2.2`,
-//    mvn.`org.jboss.shrinkwrap.resolver:shrinkwrap-resolver-impl-maven-archive:jar:2.2.2`
-//  )
-
-
 
 }

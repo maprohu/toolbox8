@@ -52,6 +52,7 @@ object JarTreeAkka extends LazyLogging with LogTools {
           ),
           JarTreeAkkaApi.JarCacheActorName
         )
+    logger.info(s"created cache: ${cacheActor}")
 
     val service =
       actorSystem
@@ -65,6 +66,7 @@ object JarTreeAkka extends LazyLogging with LogTools {
           ),
           JarTreeAkkaApi.PluggableServiceActorName
         )
+    logger.info(s"created service: ${service}")
 
     logger.info(s"started: ${name}")
 

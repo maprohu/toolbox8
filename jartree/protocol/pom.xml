@@ -105,16 +105,6 @@
     </build>
     <dependencies>
         <dependency>
-            <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-stream_2.11</artifactId>
-            <version>2.4.12</version>
-        </dependency>
-        <dependency>
-            <groupId>io.monix</groupId>
-            <artifactId>monix_2.11</artifactId>
-            <version>2.0.4</version>
-        </dependency>
-        <dependency>
             <groupId>toolbox8</groupId>
             <artifactId>toolbox8-jartree-standaloneapi</artifactId>
             <version>2-SNAPSHOT</version>
@@ -122,12 +112,22 @@
         <dependency>
             <groupId>toolbox6</groupId>
             <artifactId>toolbox6-jartree-util</artifactId>
-            <version>1.1</version>
+            <version>2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>toolbox8</groupId>
             <artifactId>toolbox8-akka-statemachine</artifactId>
             <version>2-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-stream_2.11</artifactId>
+            <version>2.4.12</version>
+        </dependency>
+        <dependency>
+            <groupId>io.monix</groupId>
+            <artifactId>monix_2.11</artifactId>
+            <version>2.0.6</version>
         </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>

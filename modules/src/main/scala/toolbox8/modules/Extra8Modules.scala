@@ -21,15 +21,15 @@ object Extra8Modules {
     "server",
     Shared,
     JarTree8Modules.Util,
-    Toolbox6Modules.Pickling.R1,
-    JarTreeModules.Impl.R1
+    Toolbox6Modules.Pickling,
+    JarTreeModules.Impl
   )
   object Client extends ScalaModule(
     "client",
     Shared,
     JarTree8Modules.Util,
-    Toolbox6Modules.Pickling.R1,
-    MvnmodModules.Builder.R2
+    Toolbox6Modules.Pickling,
+    MvnmodModules.Builder
   )
 
   object Hello extends ScalaModule(

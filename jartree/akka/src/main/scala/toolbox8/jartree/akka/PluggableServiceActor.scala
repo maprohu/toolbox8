@@ -137,6 +137,10 @@ class PluggableServiceActor(
         })
       }
 
+    case Query =>
+      sender() ! state.request
+
+
   }
 
   override def persistenceId: String = uniqueId
@@ -163,6 +167,8 @@ object PluggableServiceActor {
   )
 
   case object GetPlugged extends Cmd
+
+  case object Query extends Cmd
 
 
   case class Config(

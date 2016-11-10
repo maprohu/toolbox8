@@ -34,12 +34,6 @@ object RunAkkaPlug {
 
 
   def main(args: Array[String]): Unit = {
-    JarTreeMain.configureLogging("jartree", true)
-
-    import toolbox8.akka.actor.ActorImplicits._
-    implicit val actorSystem = ActorSystemTools.actorSystem("csufomen", "192.168.10.122")
-    import actorSystem.dispatcher
-
     val jars =
       PluggableModule
         .forTarget(
@@ -57,69 +51,37 @@ object RunAkkaPlug {
           )
         })
 
-    val remoteActorSystem =
-      RootActorPath(
-        Address(
-          protocol = "akka.tcp",
-          system = Target.actorSystemName,
-          host = Target.host,
-          port = Target.akkaPort
-        )
-      ) / "user"
-
-    val fut = for {
-      cacheActor <-
-        actorSystem
-          .actorSelection(
-            remoteActorSystem / JarTreeAkkaApi.JarCacheActorName
-          )
-          .resolveOne()
-      _ <- {
-        val uploader =
-          actorSystem
-            .actorOf(
-              Props(
-                classOf[JarCacheUploaderActor],
-                JarCacheUploaderActor.Config(
-                  cache = cacheActor,
-                  keys = jars,
-                  resources = JarResolver.resources
+    val r = AkkaJartreeClientTools.run(Target) { i => import i._
+      for {
+        _ <- {
+          val uploader =
+            actorSystem
+              .actorOf(
+                Props(
+                  classOf[JarCacheUploaderActor],
+                  JarCacheUploaderActor.Config(
+                    cache = cache,
+                    keys = jars,
+                    resources = JarResolver.resources
+                  )
                 )
               )
-            )
 
-        ActorTools
-          .watchFuture(uploader)
-      }
-      service <-
-        actorSystem
-          .actorSelection(
-            remoteActorSystem / JarTreeAkkaApi.PluggableServiceActorName
-          )
-          .resolveOne()
-      done <- service.ask(
-        PlugRequest(
+          ActorTools
+            .watchFuture(uploader)
+        }
+        done <- service.ask(
+          PlugRequest(
             classLoader = Some(jars),
             className = PluggableClassName
           )
-      )(Timeout(1.minute))
-    } yield {
-      done
+        )(Timeout(1.minute))
+      } yield {
+        done
+      }
     }
 
-
-
-
-    println(
-      Await.result(
-        fut,
-        Duration.Inf
-      )
-    )
-
-
-
-
+    println(r)
   }
 
 

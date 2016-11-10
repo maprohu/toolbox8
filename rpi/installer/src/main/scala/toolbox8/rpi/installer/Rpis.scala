@@ -14,7 +14,8 @@ object Rpis {
     actorSystemName = "jartree"
   )
   implicit val Home = Config(
-    host = "192.168.1.36"
+//    host = "192.168.1.36"
+    host = "172.24.1.1"
   )
   implicit val MobileCable = Config(
     host = "10.1.1.49"

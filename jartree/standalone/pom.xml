@@ -107,22 +107,12 @@
         <dependency>
             <groupId>toolbox6</groupId>
             <artifactId>toolbox6-jartree-impl</artifactId>
-            <version>1.2</version>
+            <version>2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>toolbox8</groupId>
             <artifactId>toolbox8-jartree-standaloneapi</artifactId>
             <version>2-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-stream_2.11</artifactId>
-            <version>2.4.12</version>
-        </dependency>
-        <dependency>
-            <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-remote_2.11</artifactId>
-            <version>2.4.12</version>
         </dependency>
         <dependency>
             <groupId>toolbox8</groupId>
@@ -148,6 +138,16 @@
             <groupId>toolbox8</groupId>
             <artifactId>toolbox8-akka-stream</artifactId>
             <version>2-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-stream_2.11</artifactId>
+            <version>2.4.12</version>
+        </dependency>
+        <dependency>
+            <groupId>com.typesafe.akka</groupId>
+            <artifactId>akka-remote_2.11</artifactId>
+            <version>2.4.12</version>
         </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>
