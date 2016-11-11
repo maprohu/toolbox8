@@ -1,6 +1,6 @@
 package toolbox8.jartree.testing
 
-import akka.actor.{ActorRef, ActorSystem, Address, RootActorPath}
+import akka.actor.{ActorPath, ActorRef, ActorSystem, Address, RootActorPath}
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.util.Timeout
 import toolbox8.akka.actor.ActorSystemTools
@@ -20,7 +20,8 @@ object AkkaJartreeClientTools {
 
   class Context(
     val service : ActorRef,
-    val cache : ActorRef
+    val cache : ActorRef,
+    val remoteActorSystem : ActorPath
   )(implicit
     val actorSystem : ActorSystem,
     val materializer : Materializer,
@@ -72,7 +73,8 @@ object AkkaJartreeClientTools {
       done <- fn(
         new Context(
           service = service,
-          cache = cache
+          cache = cache,
+          remoteActorSystem = remoteActorSystem
         )(
           actorSystem = actorSystem,
           materializer = ActorMaterializer()

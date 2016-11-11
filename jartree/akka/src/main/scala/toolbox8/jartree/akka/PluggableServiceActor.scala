@@ -4,7 +4,7 @@ import akka.Done
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.Logging
 import akka.persistence.{PersistentActor, RecoveryCompleted}
-import toolbox8.jartree.akka.JarCacheActor.JarKey
+import toolbox8.jartree.akka.JarCacheActor.{JarKey, NextId, PutEvent, VerifyRequest}
 
 import scala.collection.immutable._
 import scala.concurrent.Future
@@ -212,23 +212,26 @@ object PluggableServiceActor {
       Future.successful(VoidPlugged)
   }
 
-  trait Picky extends Pickled {
-    override def booId: Int = Ids.Toolbox8JartreeAkka
-  }
+  trait Picky
 
-  import boopickle.Default._
-  import PlugRequest._
-  implicit val pickler =
-    compositePickler[Pickled]
-      .addConcreteType[PlugRequest]
-      .addConcreteType[QueryResponse]
-      .addConcreteType[Query.type]
-      .addConcreteType[Clear.type]
-
-  BoopickleSerializer.register(
-    Ids.Toolbox8JartreeAkka,
-    pickler
-  )
+//  trait Picky extends Pickled {
+//    override def booId: Int = Ids.Toolbox8JartreeAkka
+//  }
+//
+//  import boopickle.Default._
+//  import PlugRequest._
+//  implicit val pickler =
+//    compositePickler[Pickled]
+//      .addConcreteType[PlugRequest]
+//      .addConcreteType[QueryResponse]
+//      .addConcreteType[Query.type]
+//      .addConcreteType[Clear.type]
+//      .addConcreteType[VerifyRequest]
+//
+//  BoopickleSerializer.register(
+//    Ids.Toolbox8JartreeAkka,
+//    pickler
+//  )
 
 }
 

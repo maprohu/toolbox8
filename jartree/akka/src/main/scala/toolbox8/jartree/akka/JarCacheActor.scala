@@ -10,6 +10,7 @@ import akka.stream.{ActorMaterializer, OverflowStrategy}
 import akka.stream.scaladsl.{FileIO, Keep, Source}
 import akka.util.ByteString
 import toolbox8.jartree.akka.JarCacheUploaderActor.{JarRequest, JarsRequest}
+import toolbox8.jartree.akka.PluggableServiceActor.Picky
 
 import scala.collection.immutable._
 
@@ -223,7 +224,7 @@ object JarCacheActor {
 
   case class VerifyRequest(
     keys: Iterable[JarKey]
-  )
+  ) extends Picky
 
   case class Get(
     keys: Iterable[JarKey]
