@@ -5,6 +5,8 @@ package toolbox8.jartree.akka
   */
 object JarTreeAkkaApi {
 
+  PluggableServiceActor
+
   val DefaultPort = 9722
 
   val JarTreeActorName = "jartree"

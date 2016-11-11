@@ -9,6 +9,8 @@ import toolbox8.jartree.akka.JarCacheActor.JarKey
 import scala.collection.immutable._
 import scala.concurrent.Future
 import akka.pattern._
+import boopickle.DefaultBasic.PicklerGenerator
+import toolbox8.akka.actor.{BoopickleSerializer, Ids, Pickled}
 
 /**
   * Created by maprohu on 06-11-2016.
@@ -138,7 +140,7 @@ class PluggableServiceActor(
       }
 
     case Query =>
-      sender() ! state.request
+      sender() ! QueryResponse(state.request)
 
 
   }
@@ -157,9 +159,14 @@ object PluggableServiceActor {
   case class PlugRequest(
     classLoader: Option[Seq[JarKey]] = None,
     className: String = classOf[VoidPluggable].getName
-  ) extends Evt with Cmd
+  ) extends Evt with Cmd with Picky
+  object PlugRequest {
+    import boopickle.Default._
+    implicit val picklerPlugRequest = PicklerGenerator.generatePickler[PlugRequest]
 
-  case object Clear extends Cmd with Evt
+  }
+
+  case object Clear extends Cmd with Evt with Picky
 
   case class PluggingComplete(
     plugged: Plugged,
@@ -168,7 +175,10 @@ object PluggableServiceActor {
 
   case object GetPlugged extends Cmd
 
-  case object Query extends Cmd
+  case object Query extends Cmd with Picky
+  case class QueryResponse(
+    request: Option[PlugRequest]
+  ) extends Picky
 
 
   case class Config(
@@ -201,6 +211,24 @@ object PluggableServiceActor {
     override def plug(context: PlugContext): Future[Plugged] =
       Future.successful(VoidPlugged)
   }
+
+  trait Picky extends Pickled {
+    override def booId: Int = Ids.Toolbox8JartreeAkka
+  }
+
+  import boopickle.Default._
+  import PlugRequest._
+  implicit val pickler =
+    compositePickler[Pickled]
+      .addConcreteType[PlugRequest]
+      .addConcreteType[QueryResponse]
+      .addConcreteType[Query.type]
+      .addConcreteType[Clear.type]
+
+  BoopickleSerializer.register(
+    Ids.Toolbox8JartreeAkka,
+    pickler
+  )
 
 }
 

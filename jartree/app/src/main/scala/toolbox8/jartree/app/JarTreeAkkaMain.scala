@@ -3,7 +3,7 @@ package toolbox8.jartree.app
 import com.typesafe.scalalogging.LazyLogging
 import toolbox6.logging.LogTools
 import toolbox8.jartree.akka.JarTreeAkka._
-import toolbox8.jartree.akka.{JarTreeAkka, JarTreeAkkaApi}
+import toolbox8.jartree.akka.{JarTreeAkka, JarTreeAkkaApi, PluggableServiceActor}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._

@@ -49,6 +49,9 @@ object ActorSystemTools extends LazyLogging {
            |    }
            |    serialization-bindings {
            |      "toolbox8.akka.actor.Pickled" = boo
+           |      "java.io.Serializable" = none
+           |      "akka.actor.Identify" = java
+           |      "akka.actor.ActorIdentity" = java
            |    }
            |  }
            |  remote {

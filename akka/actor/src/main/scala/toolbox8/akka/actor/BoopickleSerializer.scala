@@ -32,10 +32,10 @@ class BoopickleSerializer extends Serializer {
 
     val bytes = Array.ofDim[Byte](4 + bb.remaining())
 
-    ByteBuffer
-      .allocate(4)
-      .putInt(booId)
-      .get(bytes, 0, 4)
+    val bbi = ByteBuffer.allocate(4)
+    bbi.putInt(booId)
+    bbi.flip()
+    bbi.get(bytes, 0, 4)
 
     bb
       .get(bytes, 4, bb.remaining())
@@ -63,4 +63,37 @@ object BoopickleSerializer {
   val global = Atomic(Map.empty[Int, Pickler[Pickled]])
 
   type Picklers = Map[Int, Pickler[Pickled]]
+
+  trait Registration {
+    def unregister() : Unit
+  }
+
+  def register(
+    id: Int,
+    pickler: Pickler[Pickled]
+  ) : Registration = {
+    global.transform({ map =>
+      map.updated(id, pickler)
+    })
+
+    new Registration {
+      override def unregister(): Unit = {
+        global.transform({ map =>
+          map
+            .get(id)
+            .filter(_ eq pickler)
+            .map(_ => map - id)
+            .getOrElse(map)
+        })
+      }
+    }
+
+
+  }
+}
+
+object Ids {
+  val Toolbox8JartreeAkka = 0
+  val VoiceCore = 1
+
 }

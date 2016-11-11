@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, ActorSystem, Address, RootActorPath}
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.util.Timeout
 import toolbox8.akka.actor.ActorSystemTools
-import toolbox8.jartree.akka.JarTreeAkkaApi
+import toolbox8.jartree.akka.{JarTreeAkkaApi, PluggableServiceActor}
 import toolbox8.jartree.akka.PluggableServiceActor.Clear
 import toolbox8.jartree.app.JarTreeMain
 import toolbox8.rpi.installer.{RpiInstaller, Rpis}
@@ -17,6 +17,7 @@ import akka.pattern._
   * Created by maprohu on 10-11-2016.
   */
 object AkkaJartreeClientTools {
+
   class Context(
     val service : ActorRef,
     val cache : ActorRef

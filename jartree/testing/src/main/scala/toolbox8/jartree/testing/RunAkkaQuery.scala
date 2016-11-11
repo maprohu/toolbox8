@@ -19,6 +19,7 @@ import scala.io.StdIn
 object RunAkkaQuery {
 
   val Target = Rpis.Home
+//  val Target = Rpis.Localhost
 
 
 
