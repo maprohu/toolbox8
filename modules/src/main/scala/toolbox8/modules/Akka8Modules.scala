@@ -30,8 +30,8 @@ object Akka8Modules {
 
   object Stream extends ScalaModule(
     "stream",
-    Toolbox6Modules.Common,
-    Toolbox6Modules.Logging,
+    Toolbox6Modules.Common.R3,
+    Toolbox6Modules.Logging.R2,
     mvn.`com.typesafe.akka:akka-stream_2.11:jar:2.4.12`,
     mvn.`com.typesafe.akka:akka-slf4j_2.11:jar:2.4.12`,
     mvn.`io.monix:monix-execution_2.11:jar:2.0.6`

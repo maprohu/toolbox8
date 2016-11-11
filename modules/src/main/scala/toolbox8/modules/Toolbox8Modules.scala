@@ -19,7 +19,7 @@ object Toolbox8Modules {
 
   object Common extends ScalaModule(
     "common",
-    Toolbox6Modules.Logging,
+    Toolbox6Modules.Logging.R2,
     mvn.`io.monix:monix-eval_2.11:jar:2.0.6`
   )
 
@@ -38,7 +38,7 @@ object Toolbox8Modules {
 
   object Leveldb extends ScalaModule(
     "leveldb",
-    Toolbox6Modules.Logging,
+    Toolbox6Modules.Logging.R2,
     mvn.`org.iq80.leveldb:leveldb:jar:0.9`,
     mvn.`com.typesafe.akka:akka-actor_2.11:jar:2.4.12`,
     mvn.`io.monix:monix_2.11:jar:2.0.6`

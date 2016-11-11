@@ -94,6 +94,11 @@ class PluggableServiceActor(
       )
     }
 
+    fut.onFailure({
+      case ex =>
+        log.error(ex, "error during plugging")
+    })
+
     fut
       .pipeTo(self)
 

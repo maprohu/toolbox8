@@ -1,17 +1,21 @@
 package toolbox8.jartree.testing
 
-import akka.actor.{ActorPath, ActorRef, ActorSystem, Address, RootActorPath}
+import akka.actor.{ActorPath, ActorRef, ActorSystem, Address, Props, RootActorPath}
 import akka.stream.{ActorMaterializer, Materializer}
 import akka.util.Timeout
-import toolbox8.akka.actor.ActorSystemTools
-import toolbox8.jartree.akka.{JarTreeAkkaApi, PluggableServiceActor}
-import toolbox8.jartree.akka.PluggableServiceActor.Clear
+import toolbox8.akka.actor.{ActorSystemTools, ActorTools}
+import toolbox8.jartree.akka.{JarCacheUploaderActor, JarTreeAkkaApi, PluggableServiceActor}
+import toolbox8.jartree.akka.PluggableServiceActor.{Clear, PlugRequest}
 import toolbox8.jartree.app.JarTreeMain
 import toolbox8.rpi.installer.{RpiInstaller, Rpis}
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import akka.pattern._
+import mvnmod.builder.{Module, ModulePath}
+import toolbox8.jartree.akka.JarCacheActor.JarKey
+import toolbox8.jartree.client.JarResolver
+import toolbox8.modules.JarTree8Modules
 
 /**
   * Created by maprohu on 10-11-2016.
@@ -97,4 +101,58 @@ object AkkaJartreeClientTools {
     r.value.get.get
   }
 
+
+  def plug(
+    pluggableModule: Module,
+    pluggableClassName: String,
+    rpiTarget: RpiInstaller.Config,
+    runtimeTarget: ModulePath = ModulePath(JarTree8Modules.Akka, None)
+  ) = {
+    val jars =
+      pluggableModule
+        .forTarget(
+          runtimeTarget
+        )
+        .classPath
+        .map({ m =>
+          JarResolver.resolveHash(
+            JarKey(
+              groupId = m.groupId,
+              artifactId = m.artifactId,
+              version = m.version
+            )
+          )
+        })
+    val r = AkkaJartreeClientTools.run(rpiTarget) { i => import i._
+      for {
+        _ <- {
+          val uploader =
+            actorSystem
+              .actorOf(
+                Props(
+                  classOf[JarCacheUploaderActor],
+                  JarCacheUploaderActor.Config(
+                    cache = cache,
+                    keys = jars,
+                    resources = JarResolver.resources
+                  )
+                )
+              )
+
+          ActorTools
+            .watchFuture(uploader)
+        }
+        done <- service.ask(
+          PlugRequest(
+            classLoader = Some(jars),
+            className = pluggableClassName
+          )
+        )(Timeout(1.minute))
+      } yield {
+        done
+      }
+    }
+
+    println(r)
+  }
 }
