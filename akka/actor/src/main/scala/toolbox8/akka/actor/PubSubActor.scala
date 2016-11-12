@@ -18,9 +18,9 @@ class PubSubActor extends Actor {
   import PubSubActor._
   import context.dispatcher
 
-  val publisher = context.actorOf(
-    Props[PubSubPublisherActor]
-  )
+//  val publisher = context.actorOf(
+//    Props[PubSubPublisherActor]
+//  )
 
   case class State(
     refs: Set[ActorRef] = Set.empty
@@ -60,8 +60,8 @@ class PubSubActor extends Actor {
 //          replyTo ! Done
 //        })
 
-    case GetPublisher =>
-      sender() ! publisher
+//    case GetPublisher =>
+//      sender() ! publisher
   }
 }
 
@@ -85,7 +85,7 @@ object PubSubActor {
   case class Subscribe(ref: ActorRef)
   case class Unsubscribe(ref: ActorRef)
   case class Publish(msg: Any)
-  case object GetPublisher
+//  case object GetPublisher
 
 
 }

@@ -40,6 +40,7 @@ object JarTreeMain extends LazyLogging {
       (configureLogging(n, true), n)
     }
     logger.info("logfile: {}", log)
+    logger.debug("debug level enabled")
     (log, name)
   }
 

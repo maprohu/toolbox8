@@ -58,6 +58,5 @@ object WatchActor {
   )
 }
 
-case class SetOut(
-  ref: ActorRef
-)
+
+case object GetComponents
