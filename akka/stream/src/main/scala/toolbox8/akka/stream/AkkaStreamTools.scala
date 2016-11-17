@@ -6,7 +6,7 @@ import akka.actor.ActorSystem
 import akka.event.Logging
 import akka.stream.scaladsl.{Flow, Keep, Sink, Source, StreamConverters}
 import akka.stream._
-import akka.stream.impl.fusing.GraphStages
+import akka.stream.impl.fusing.{GraphStages, ScanAsync}
 import akka.stream.stage.{GraphStageLogic, GraphStageWithMaterializedValue, OutHandler}
 import akka.util.ByteString
 import com.typesafe.config.ConfigFactory
@@ -14,6 +14,8 @@ import com.typesafe.scalalogging.LazyLogging
 import monix.execution.Cancelable
 import monix.execution.cancelables.{AssignableCancelable, BooleanCancelable}
 import toolbox6.common.StringTools
+
+import scala.concurrent.Future
 
 /**
   * Created by pappmar on 19/10/2016.
@@ -72,8 +74,9 @@ object AkkaStreamTools extends LazyLogging {
 
 
   object Implicits {
+    implicit class SourceExt[Out, Mat](flow: Source[Out, Mat]) {
+    }
     implicit class FlowExt[In, Out, Mat](flow: Flow[In, Out, Mat]) {
-
     }
   }
 
