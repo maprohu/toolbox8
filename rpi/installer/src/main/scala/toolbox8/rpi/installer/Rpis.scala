@@ -7,6 +7,9 @@ import toolbox8.rpi.installer.RpiInstaller.Config
   */
 object Rpis {
 
+  val ClientPort = 5501
+  val HomePort = 5502
+  val MobilePort = 5503
 
   implicit val Localhost = Config(
     host = "localhost",
@@ -15,13 +18,16 @@ object Rpis {
   )
   implicit val Home = Config(
 //    host = "192.168.1.36"
-    host = "172.24.1.1"
+    host = "172.24.1.1",
+    akkaPort = HomePort
   )
   implicit val MobileCable = Config(
-    host = "10.1.1.49"
+    host = "10.1.1.49",
+    akkaPort = MobilePort
   )
   implicit val MobileHomeWlan = Config(
-    host = "192.168.10.215"
+    host = "192.168.10.215",
+    akkaPort = MobilePort
   )
 
 }

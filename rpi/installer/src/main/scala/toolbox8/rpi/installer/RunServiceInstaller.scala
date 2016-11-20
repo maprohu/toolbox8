@@ -7,7 +7,8 @@ import toolbox8.modules.{JarTree8Modules, RpiModules, Toolbox8Modules}
   */
 object RunServiceInstaller {
 
-  val Target = Rpis.Home
+//  val Target = Rpis.Home
+  val Target = Rpis.MobileCable
 
   def main(args: Array[String]): Unit = {
 //    import Rpis.MobileHomeWlan
@@ -16,9 +17,8 @@ object RunServiceInstaller {
       .upload(
         "voicer",
         JarTree8Modules.App,
-        //        "toolbox8.jartree.app.JarTreeMain"
         "toolbox8.jartree.app.JarTreeAkkaMain",
-        address = Target.host
+        port = Target.akkaPort
       )(Target)
 
   }

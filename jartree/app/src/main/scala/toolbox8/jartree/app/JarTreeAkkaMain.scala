@@ -13,20 +13,22 @@ import scala.concurrent.duration._
   */
 object JarTreeAkkaMain extends LazyLogging with LogTools {
 
+  val DefaultPort = 5500
+
   def main(args: Array[String]): Unit = {
     val (log, name) = JarTreeMain.initLogging(args)
 
-    val address = if (args.length >= 2) {
-      args(1)
+    val port = if (args.length >= 2) {
+      args(1).toInt
     } else {
-      "localhost"
+      DefaultPort
     }
 
     val out = JarTreeAkka
       .run(
         name,
-        address,
-        JarTreeAkkaApi.DefaultPort
+        "localhost",
+        port
       )
 
     import out._

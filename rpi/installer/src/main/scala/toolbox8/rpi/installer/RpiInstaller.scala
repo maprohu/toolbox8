@@ -12,6 +12,7 @@ import toolbox8.jartree.standaloneapi.Protocol
   */
 object RpiInstaller {
 
+
   case class Config(
     host: String,
     servicePort : Int = Protocol.DefaultPort,
@@ -19,7 +20,8 @@ object RpiInstaller {
     actorSystemName : String = "voicer",
     sshPort: Int = 22,
     user: String = "pi",
-    key: Path = home / ".ssh" / "id_rsa"
+    key: Path = home / ".ssh" / "id_rsa",
+    localAddress : String = "10.1.1.1"
   )
 
   def connect(implicit

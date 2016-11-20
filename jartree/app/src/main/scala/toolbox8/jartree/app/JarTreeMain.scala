@@ -18,8 +18,7 @@ object JarTreeMain extends LazyLogging {
     val lcf = new LogbackConfigurator()
     val lc = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
     lcf.reset(lc)
-    lcf.configDebug(lc, true)
-    //    lcf.configDebug(lc, debug)
+    lcf.configDebug(lc, debug)
     lcf.configure(
       name,
       lc

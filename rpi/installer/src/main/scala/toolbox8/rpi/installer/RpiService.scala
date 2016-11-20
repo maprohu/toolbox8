@@ -3,6 +3,7 @@ package toolbox8.rpi.installer
 import java.io.File
 
 import mvnmod.builder.{MavenTools, NamedModule}
+import toolbox8.jartree.akka.JarTreeAkkaApi
 import toolbox8.modules.RpiModules
 import toolbox8.rpi.installer.RpiInstaller.Config
 
@@ -11,12 +12,12 @@ import toolbox8.rpi.installer.RpiInstaller.Config
   */
 object RpiService {
 
-  def unit(name: String, user: String, address: String) = {
+  def unit(name: String, user: String, port: Int) = {
     s"""
        |[Unit]
        |Description=${name}
        |[Service]
-       |ExecStart=/usr/bin/java -agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n -jar /opt/${name}/lib/${name}.jar ${name} ${address}
+       |ExecStart=/usr/bin/java -agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n -jar /opt/${name}/lib/${name}.jar ${name} ${port}
        |User=${user}
        |SuccessExitStatus=143
        |[Install]
@@ -27,10 +28,10 @@ object RpiService {
   def installCommand(
     name: String,
     user: String,
-    address: String
+    port: Int
   ) = {
    s"""sudo tee /etc/systemd/system/${name}.service > /dev/null << EOF
-      |${unit(name, user, address)}
+      |${unit(name, user, port)}
       |EOF
     """.stripMargin
   }
@@ -40,7 +41,7 @@ object RpiService {
     module: NamedModule,
     mainClass: String,
     user: String = "pi",
-    address: String = "localhost"
+    port: Int
   )(implicit
     target: Config
   ) = {
@@ -109,7 +110,7 @@ object RpiService {
         command(s"sudo systemctl stop ${name}")
         command(s"sudo systemctl disable ${name}")
         command(s"sudo rm -rf /opt/${name}/data")
-        command(RpiService.installCommand(name, user, address))
+        command(RpiService.installCommand(name, user, port))
         command("sudo systemctl daemon-reload")
         command(s"sudo systemctl enable ${name}")
         command(s"sudo systemctl start ${name}")
@@ -118,6 +119,30 @@ object RpiService {
         session.disconnect()
 
       }
+
+  }
+
+  def tunnel(
+    reversePort: Int = Rpis.ClientPort
+  )(implicit
+    target: Config
+  ) = {
+    import RpiInstaller._
+    implicit val session = connect
+
+    println(s"localhost:${target.akkaPort} -> ${target.host}")
+    session.setPortForwardingL(
+      target.akkaPort,
+      "localhost",
+      target.akkaPort
+    )
+
+    println(s"localhost:${reversePort} <- ${target.host}")
+    session.setPortForwardingR(
+      reversePort,
+      "localhost",
+      reversePort
+    )
 
   }
 

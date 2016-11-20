@@ -38,11 +38,14 @@ object AkkaJartreeClientTools {
     JarTreeMain.configureLogging("jartree", true)
 
     import toolbox8.akka.actor.ActorImplicits._
-    implicit val actorSystem = ActorSystemTools.actorSystem(
-      "csufomen",
-//      "192.168.10.122"
-      "172.24.1.94"
-    )
+    implicit val actorSystem =
+      ActorSystemTools
+        .actorSystem(
+          name = "csufomen",
+          port = Rpis.ClientPort
+    //      "192.168.10.122"
+    //      "172.24.1.94"
+        )
     import actorSystem.dispatcher
 
     val remoteActorSystem =
@@ -50,7 +53,7 @@ object AkkaJartreeClientTools {
         Address(
           protocol = "akka.tcp",
           system = target.actorSystemName,
-          host = target.host,
+          host = "localhost",
           port = target.akkaPort
         )
       ) / "user"
