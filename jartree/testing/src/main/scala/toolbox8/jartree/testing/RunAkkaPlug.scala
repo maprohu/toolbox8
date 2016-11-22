@@ -4,7 +4,6 @@ import java.io.File
 
 import akka.actor.{ActorSelection, ActorSystem, Address, Props, RootActorPath}
 import toolbox8.akka.actor.{ActorSystemTools, ActorTools}
-import toolbox8.jartree.akka.JarCacheActor.JarKey
 import toolbox8.jartree.akka._
 import toolbox8.jartree.app.JarTreeMain
 import toolbox8.jartree.client.JarResolver
@@ -13,6 +12,7 @@ import akka.pattern._
 import akka.util.Timeout
 import mvnmod.builder.ModulePath
 import toolbox8.jartree.akka.PluggableServiceActor.PlugRequest
+import toolbox8.jartree.common.JarKey
 import toolbox8.jartree.echo.TestPluggable
 import toolbox8.rpi.installer.Rpis
 

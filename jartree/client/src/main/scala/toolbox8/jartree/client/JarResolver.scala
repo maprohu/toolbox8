@@ -11,7 +11,7 @@ import org.apache.commons.codec.binary.Base64
 import org.jboss.shrinkwrap.resolver.api.maven.Maven
 import toolbox6.jartree.impl.JarCache
 import toolbox6.jartree.packaging.JarTreePackaging
-import toolbox8.jartree.akka.JarCacheActor.JarKey
+import toolbox8.jartree.common.JarKey
 
 
 /**

@@ -13,8 +13,8 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import akka.pattern._
 import mvnmod.builder.{Module, ModulePath}
-import toolbox8.jartree.akka.JarCacheActor.JarKey
 import toolbox8.jartree.client.JarResolver
+import toolbox8.jartree.common.JarKey
 import toolbox8.modules.JarTree8Modules
 
 /**

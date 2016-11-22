@@ -4,7 +4,6 @@ import java.io.File
 
 import akka.actor.{ActorSystem, Props}
 import toolbox8.akka.actor.{ActorSystemTools, ActorTools}
-import toolbox8.jartree.akka.JarCacheActor.JarKey
 import toolbox8.jartree.akka.{JarCacheActor, JarCacheUploaderActor, ParentLastUrlClassloader, PluggableServiceActor}
 import toolbox8.jartree.app.JarTreeMain
 import toolbox8.jartree.client.JarResolver
@@ -12,6 +11,7 @@ import toolbox8.modules.{Akka8Modules, JarTree8Modules, Toolbox8Modules}
 import akka.pattern._
 import mvnmod.builder.ModulePath
 import toolbox8.jartree.akka.PluggableServiceActor.PlugRequest
+import toolbox8.jartree.common.JarKey
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration

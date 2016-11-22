@@ -7,7 +7,8 @@ import akka.event.Logging
 import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.ByteString
-import toolbox8.jartree.akka.JarCacheActor.{JarKey, VerifyRequest}
+import toolbox8.jartree.akka.JarCacheActor.VerifyRequest
+import toolbox8.jartree.common.JarKey
 
 import scala.collection.immutable._
 

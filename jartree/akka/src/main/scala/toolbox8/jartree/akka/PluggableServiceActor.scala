@@ -4,13 +4,13 @@ import akka.Done
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.Logging
 import akka.persistence.{PersistentActor, RecoveryCompleted}
-import toolbox8.jartree.akka.JarCacheActor.{JarKey, NextId, PutEvent, VerifyRequest}
 
 import scala.collection.immutable._
 import scala.concurrent.Future
 import akka.pattern._
 import boopickle.DefaultBasic.PicklerGenerator
 import toolbox8.akka.actor.{BoopickleSerializer, Ids, Pickled}
+import toolbox8.jartree.common.JarKey
 
 /**
   * Created by maprohu on 06-11-2016.

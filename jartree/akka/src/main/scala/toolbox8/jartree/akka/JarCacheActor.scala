@@ -11,6 +11,7 @@ import akka.stream.scaladsl.{FileIO, Keep, Source}
 import akka.util.ByteString
 import toolbox8.jartree.akka.JarCacheUploaderActor.{JarRequest, JarsRequest}
 import toolbox8.jartree.akka.PluggableServiceActor.Picky
+import toolbox8.jartree.common.JarKey
 
 import scala.collection.immutable._
 
@@ -197,18 +198,18 @@ object JarCacheActor {
     dir: Path
   )
 
-  case class JarKey(
-    groupId: String,
-    artifactId: String,
-    version: String,
-    classifier: Option[String] = None,
-    hash: Option[String] = None
-  ) {
-    def isSnapshot = version.endsWith("SNAPSHOT")
-    def toCanonical = {
-      s"${groupId}:${artifactId}:jar:${version}"
-    }
-  }
+//  case class JarKey(
+//    groupId: String,
+//    artifactId: String,
+//    version: String,
+//    classifier: Option[String] = None,
+//    hash: Option[String] = None
+//  ) {
+//    def isSnapshot = version.endsWith("SNAPSHOT")
+//    def toCanonical = {
+//      s"${groupId}:${artifactId}:jar:${version}"
+//    }
+//  }
 
   case class Finished(
     key: JarKey,

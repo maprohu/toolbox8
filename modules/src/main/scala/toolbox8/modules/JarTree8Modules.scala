@@ -1,5 +1,6 @@
 package toolbox8.modules
 
+import mvnmod.builder.Module.ConfiguredModule
 import mvnmod.builder.{ScalaModule, SubModuleContainer}
 import toolbox6.modules.{JarTreeModules, Toolbox6Modules}
 
@@ -10,9 +11,13 @@ object JarTree8Modules {
 
   implicit val Container = SubModuleContainer(Toolbox8Modules.Root, "jartree")
 
+  object Common extends ScalaModule(
+    "common"
+  )
 
   object Akka extends ScalaModule(
     "akka",
+    Common,
     Akka8Modules.Actor,
     Akka8Modules.Stream,
     mvn.`com.typesafe.akka:akka-remote_2.11:jar:2.4.12`,
@@ -66,6 +71,7 @@ object JarTree8Modules {
 
   object Client extends ScalaModule(
     "client",
+    Common,
     JarTreeModules.Client,
     JarTreeModules.Packaging,
     Protocol,
@@ -95,6 +101,20 @@ object JarTree8Modules {
     mvn.`ch.qos.logback:logback-classic:jar:1.1.7`
   )
 
+  object Logging extends ScalaModule(
+    "logging",
+    Toolbox6Modules.Logging,
+    mvn.`ch.qos.logback:logback-classic:jar:1.1.7`
+  )
+
+  object StreamApp extends ScalaModule(
+    "streamapp",
+    Common,
+    Logging,
+    JarTreeModules.Common,
+    mvn.`commons-io:commons-io:jar:2.5`
+  )
+
   object Testing extends ScalaModule(
     "testing",
     Standalone,
@@ -106,7 +126,8 @@ object JarTree8Modules {
     Extra8Modules.Server,
     App,
     Akka8Modules.Actor,
-    Akka
+    Akka,
+    StreamApp
   )
 
 

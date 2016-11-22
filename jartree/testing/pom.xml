@@ -4,6 +4,9 @@
     <artifactId>toolbox8-jartree-testing</artifactId>
     <version>2-SNAPSHOT</version>
     <packaging>jar</packaging>
+    <organization>
+        <name>toolbox8</name>
+    </organization>
     <build>
         <finalName>product</finalName>
         <plugins>
@@ -152,6 +155,11 @@
         <dependency>
             <groupId>toolbox8</groupId>
             <artifactId>toolbox8-jartree-akka</artifactId>
+            <version>2-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>toolbox8</groupId>
+            <artifactId>toolbox8-jartree-streamapp</artifactId>
             <version>2-SNAPSHOT</version>
         </dependency>
         <dependency>

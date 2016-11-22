@@ -4,7 +4,7 @@ import java.net.{URL, URLClassLoader}
 
 import akka.actor.ActorRef
 import com.typesafe.scalalogging.LazyLogging
-import toolbox8.jartree.akka.JarCacheActor.JarKey
+import toolbox8.jartree.common.JarKey
 
 import scala.concurrent.{ExecutionContext, ExecutionException, Future}
 import scala.util.Try
