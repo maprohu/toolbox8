@@ -40,8 +40,7 @@ object Toolbox8Modules {
     "leveldb",
     Toolbox6Modules.Logging.R2,
     mvn.`org.iq80.leveldb:leveldb:jar:0.9`,
-    mvn.`com.typesafe.akka:akka-actor_2.11:jar:2.4.12`,
-    mvn.`io.monix:monix_2.11:jar:2.0.6`
+    mvn.`io.monix:monix-execution_2.11:jar:2.1.1`
   )
 
 }
