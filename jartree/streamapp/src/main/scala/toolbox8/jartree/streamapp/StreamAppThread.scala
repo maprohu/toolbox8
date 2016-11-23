@@ -123,7 +123,7 @@ class StreamAppThread(
         quietly { is.close() }
         quietly { os.close() }
         quietly { socket.close() }
-        quietly { onStop() }
+        quietly { onStop(this) }
       }
     }
 
