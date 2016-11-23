@@ -17,7 +17,8 @@ class StreamAppThread(
   id: Int,
   cache: JarCache,
   rootDir: File,
-  ctx: RootContext
+  ctx: RootContext,
+  onStop: StreamAppThread => Unit
 ) extends Thread with StrictLogging with LogTools {
   setName(s"client-${id}")
   val rootConfigFile = new File(rootDir, ClassLoaderConfig.ClassLoaderConfigFileName)
@@ -122,6 +123,7 @@ class StreamAppThread(
         quietly { is.close() }
         quietly { os.close() }
         quietly { socket.close() }
+        quietly { onStop() }
       }
     }
 

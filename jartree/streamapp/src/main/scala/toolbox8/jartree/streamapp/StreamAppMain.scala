@@ -1,9 +1,12 @@
 package toolbox8.jartree.streamapp
 
 import java.io.{File, FileInputStream, ObjectInputStream}
-import java.net.ServerSocket
+import java.net.{ServerSocket, SocketException}
 
 import com.typesafe.scalalogging.StrictLogging
+import monix.execution.atomic.Atomic
+import monix.execution.cancelables.CompositeCancelable
+import toolbox6.logging.LogTools
 import toolbox8.jartree.common.JarKey
 import toolbox8.jartree.logging.LoggingSetup
 
@@ -12,7 +15,7 @@ import scala.util.control.NonFatal
 /**
   * Created by maprohu on 21-11-2016.
   */
-object StreamAppMain extends StrictLogging {
+object StreamAppMain extends StrictLogging with LogTools {
 
   val DefaultPort = 9981
 
@@ -67,6 +70,8 @@ object StreamAppMain extends StrictLogging {
     )
 
 
+
+
     val port = if (args.length >= 2) {
       args(1).toInt
     } else {
@@ -77,21 +82,67 @@ object StreamAppMain extends StrictLogging {
 
     logger.info(s"bound to port: ${port}")
 
+
+    @volatile var stopped = false
+
     var id = 0
 
-    while (true) {
-      val client = socket.accept()
+    val clientThreads = Atomic(Seq.empty[StreamAppThread])
 
-      new StreamAppThread(
-        client,
-        id,
-        cache,
-        rootDir,
-        ctx
-      ).start()
+    while (!stopped) {
+      try {
+        val client = socket.accept()
 
-      id += 1
+        if (!stopped) {
+          val thread = new StreamAppThread(
+            client,
+            id,
+            cache,
+            rootDir,
+            ctx,
+            { th =>
+              if (!stopped) {
+                clientThreads.transform(ct => ct.filterNot(_ == th))
+              }
+            }
+          )
+          thread.start()
+          clientThreads.transform(_ :+ thread)
+
+          id += 1
+        }
+      } catch {
+        case ex : SocketException =>
+          if (stopped) {
+            logger.info("server socket stopped: {}", ex.getMessage)
+          } else {
+            throw ex
+          }
+      }
     }
+
+    Runtime.getRuntime.addShutdownHook(
+      new Thread() {
+        override def run(): Unit = {
+          logger.info("starting shutdown")
+          stopped = true
+          logger.info("closing server socket")
+          socket.close()
+          val cth = clientThreads.get
+          if (!cth.isEmpty) {
+            logger.info("waiting for client threads")
+            cth.foreach({ th =>
+              logger.info(s"waiting for ${th}")
+              th.join(5000)
+            })
+          }
+          logger.info("unplugging")
+          quietly { ctx.root.preUnplug }
+          quietly { ctx.root.postUnplug }
+          logger.info("shutdown sequence complete")
+        }
+      }
+    )
 
   }
 

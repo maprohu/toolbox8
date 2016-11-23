@@ -43,6 +43,13 @@ class LevelDB(
     keySize
   )
 
+  def sub(
+    prefix: Array[Byte]
+  ) = new SubLevelDB(
+    db,
+    prefix
+  )
+
 
 
 //  def list[T](
@@ -80,6 +87,10 @@ object LevelDB {
   def apply(
     dbDir: File
   ): LevelDB = new LevelDB(dbDir)
+
+  def intPrefix(v: Int) : Array[Byte] = {
+    IntSize.toArray(v)
+  }
 }
 
 //case class Key(
@@ -172,6 +183,21 @@ object LevelDBTable {
 
   val InsertWriteOptions =
     KeyWriteOptions
+
+}
+
+
+class SubLevelDB(
+  val db: DB,
+  prefix: Array[Byte]
+) {
+
+  def createKey(key: Array[Byte]) : Array[Byte] = {
+    val bb = ByteBuffer.allocate(prefix.length + key.length)
+    bb.put(prefix)
+    bb.put(key)
+    bb.array()
+  }
 
 }
 

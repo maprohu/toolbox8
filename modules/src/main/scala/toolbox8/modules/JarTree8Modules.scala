@@ -112,7 +112,8 @@ object JarTree8Modules {
     Common,
     Logging,
     JarTreeModules.Common,
-    mvn.`commons-io:commons-io:jar:2.5`
+    mvn.`commons-io:commons-io:jar:2.5`,
+    mvn.`io.monix:monix-execution_2.11:jar:2.1.1`
   )
 
   object Testing extends ScalaModule(
