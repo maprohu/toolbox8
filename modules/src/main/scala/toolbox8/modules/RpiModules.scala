@@ -25,24 +25,24 @@ object RpiModules {
     "remote"
   )
 
-  object  Bluetooth extends ScalaModule(
-    "bluetooth",
-    mvn.`net.sf.bluecove:bluecove:jar:2.1.0`,
-    mvn.`net.sf.bluecove:bluecove-gpl:jar:2.1.0`,
-    mvn.`libdbus-java:dbus:jar:2.8`
-  )
+//  object  Bluetooth extends ScalaModule(
+//    "bluetooth",
+//    mvn.`net.sf.bluecove:bluecove:jar:2.1.0`,
+//    mvn.`net.sf.bluecove:bluecove-gpl:jar:2.1.0`
+//    mvn.`libdbus-java:dbus:jar:2.8`
+//  )
 
 
 
-  object DBus extends ScalaModule(
-    "dbus",
-    Toolbox6Modules.Macros,
-    mvn.`libdbus-java:dbus:jar:2.8`,
-    mvn.`libdbus-java:dbus-bin:jar:2.8`,
-    mvn.`libunix-java:unix:jar:0.5`,
-    mvn.`libmatthew-debug-java:hexdump:jar:0.2`,
-    mvn.`libmatthew-debug-java:debug-enable:jar:1.1`,
-    mvn.`org.scala-lang.modules:scala-xml_2.11:jar:1.0.6`,
-    mvn.`com.eed3si9n:treehugger_2.11:jar:0.4.1`
-  )
+//  object DBus extends ScalaModule(
+//    "dbus",
+//    Toolbox6Modules.Macros,
+//    mvn.`libdbus-java:dbus:jar:2.8`,
+//    mvn.`libdbus-java:dbus-bin:jar:2.8`,
+//    mvn.`libunix-java:unix:jar:0.5`,
+//    mvn.`libmatthew-debug-java:hexdump:jar:0.2`,
+//    mvn.`libmatthew-debug-java:debug-enable:jar:1.1`,
+//    mvn.`org.scala-lang.modules:scala-xml_2.11:jar:1.0.6`,
+//    mvn.`com.eed3si9n:treehugger_2.11:jar:0.4.1`
+//  )
 }

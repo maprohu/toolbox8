@@ -16,7 +16,5 @@
     <modules>
         <module>remote</module>
         <module>installer</module>
-        <module>dbus</module>
-        <module>bluetooth</module>
     </modules>
 </project>
