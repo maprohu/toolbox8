@@ -74,6 +74,21 @@ class StreamAppThread(
 
               true
 
+            case p : RunRequest =>
+              logger.info("run request: {}", p)
+
+              logger.info("loading requestable instance")
+              val r = cache.loadInstance(
+                p.classLoaderConfig,
+                getClass.getClassLoader
+              )
+
+              try {
+
+
+              }
+
+
             case p : PutRoot =>
               logger.info("put root: {}", p)
 
@@ -149,4 +164,9 @@ case class PutCacheRequest(
 
 case class PutRoot(
   classLoaderConfig: ClassLoaderConfig[Root]
+) extends Init
+
+case class RunRequest(
+  classLoaderConfig: ClassLoaderConfig[Requestable],
+  input: Array[Byte]
 ) extends Init

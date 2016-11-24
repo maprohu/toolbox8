@@ -168,6 +168,9 @@ trait Plugged {
   def postUnplug : Unit
 }
 
+trait Requestable {
+  def request(data: AnyRef) : AnyRef
+}
 
 
 object DummyRoot extends Root {
