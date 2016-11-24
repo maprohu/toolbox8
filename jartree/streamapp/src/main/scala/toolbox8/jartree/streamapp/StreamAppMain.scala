@@ -89,6 +89,31 @@ object StreamAppMain extends StrictLogging with LogTools {
 
     val clientThreads = Atomic(Seq.empty[StreamAppThread])
 
+    logger.info("adding shutdown hook")
+    Runtime.getRuntime.addShutdownHook(
+      new Thread() {
+        override def run(): Unit = {
+          logger.info("starting shutdown")
+          stopped = true
+          logger.info("closing server socket")
+          socket.close()
+          val cth = clientThreads.get
+          if (!cth.isEmpty) {
+            logger.info("waiting for client threads")
+            cth.foreach({ th =>
+              logger.info(s"waiting for ${th}")
+              th.join(5000)
+            })
+          }
+          logger.info("unplugging")
+          quietly { ctx.root.preUnplug }
+          quietly { ctx.root.postUnplug }
+          logger.info("shutdown sequence complete")
+        }
+      }
+    )
+
+    logger.info("starting accepting clients")
     while (!stopped) {
       try {
         val client = socket.accept()
@@ -121,28 +146,6 @@ object StreamAppMain extends StrictLogging with LogTools {
       }
     }
 
-    Runtime.getRuntime.addShutdownHook(
-      new Thread() {
-        override def run(): Unit = {
-          logger.info("starting shutdown")
-          stopped = true
-          logger.info("closing server socket")
-          socket.close()
-          val cth = clientThreads.get
-          if (!cth.isEmpty) {
-            logger.info("waiting for client threads")
-            cth.foreach({ th =>
-              logger.info(s"waiting for ${th}")
-              th.join(5000)
-            })
-          }
-          logger.info("unplugging")
-          quietly { ctx.root.preUnplug }
-          quietly { ctx.root.postUnplug }
-          logger.info("shutdown sequence complete")
-        }
-      }
-    )
 
   }
 
