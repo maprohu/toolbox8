@@ -14,18 +14,10 @@
         </plugins>
     </build>
     <modules>
-        <module>extra</module>
-        <module>akka</module>
         <module>common</module>
-        <module>standaloneapi</module>
-        <module>protocol</module>
-        <module>standalone</module>
-        <module>echo</module>
-        <module>util</module>
         <module>client</module>
         <module>installer</module>
         <module>packaging</module>
-        <module>app</module>
         <module>logging</module>
         <module>streamapp</module>
         <module>testing</module>

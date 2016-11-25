@@ -14,9 +14,10 @@ object RpiModules {
   object Installer extends ScalaModule(
     "installer",
     JarTree8Modules.Packaging,
-    JarTree8Modules.Protocol,
+//    JarTree8Modules.Protocol,
     Toolbox8Modules.Modules,
-    JarTree8Modules.Akka,
+//    JarTree8Modules.Akka,
+    Toolbox8Modules.Installer,
     mvn.`com.lihaoyi:ammonite-ops_2.11:jar:0.7.7`,
     mvn.`com.jcraft:jsch:jar:0.1.54`
   )

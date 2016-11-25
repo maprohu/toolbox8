@@ -43,4 +43,12 @@ object Toolbox8Modules {
     mvn.`io.monix:monix-execution_2.11:jar:2.1.1`
   )
 
+  object Installer extends ScalaModule(
+    "installer",
+    MvnmodModules.Common,
+    mvn.`com.lihaoyi:ammonite-ops_2.11:jar:0.8.0`,
+    mvn.`com.jcraft:jsch:jar:0.1.54`
+
+  )
+
 }

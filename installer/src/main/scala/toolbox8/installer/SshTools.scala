@@ -1,28 +1,21 @@
-package toolbox8.rpi.installer
+package toolbox8.installer
 
 import java.io.{File, FileInputStream, InputStream, OutputStream}
 
-import ammonite.ops.{Path, _}
+import ammonite.ops.Path
 import com.jcraft.jsch._
-import toolbox8.jartree.akka.JarTreeAkkaApi
-import toolbox8.jartree.standaloneapi.Protocol
 
 /**
   * Created by martonpapp on 15/10/16.
   */
-object RpiInstaller {
+object SshTools {
 
-
-  case class Config(
-    host: String,
-    servicePort : Int = Protocol.DefaultPort,
-    akkaPort : Int = JarTreeAkkaApi.DefaultPort,
-    actorSystemName : String = "voicer",
-    sshPort: Int = 22,
-    user: String = "pi",
-    key: Path = home / ".ssh" / "id_rsa",
-    localAddress : String = "10.1.1.1"
-  )
+  trait Config {
+    def user: String
+    def host: String
+    def sshPort: Int
+    def key : Path
+  }
 
   def connect(implicit
     config: Config
@@ -34,8 +27,6 @@ object RpiInstaller {
     session.connect()
     session
   }
-
-
 
   def run(
     cmd: String
@@ -154,5 +145,28 @@ object RpiInstaller {
     override def getPassphrase: String = ???
   }
 
+  def tunnel(
+    forwardPort: Int,
+    reversePort: Int
+  )(implicit
+    target: Config
+  ) = {
+    implicit val session = connect
+
+    println(s"localhost:${forwardPort} -> ${target.host}")
+    session.setPortForwardingL(
+      forwardPort,
+      "localhost",
+      forwardPort
+    )
+
+    println(s"localhost:${reversePort} <- ${target.host}")
+    session.setPortForwardingR(
+      reversePort,
+      "localhost",
+      reversePort
+    )
+
+  }
 
 }

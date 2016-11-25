@@ -109,17 +109,7 @@
     <dependencies>
         <dependency>
             <groupId>toolbox8</groupId>
-            <artifactId>toolbox8-jartree-standalone</artifactId>
-            <version>2-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>toolbox8</groupId>
             <artifactId>toolbox8-modules</artifactId>
-            <version>2-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>toolbox8</groupId>
-            <artifactId>toolbox8-jartree-echo</artifactId>
             <version>2-SNAPSHOT</version>
         </dependency>
         <dependency>
@@ -139,22 +129,7 @@
         </dependency>
         <dependency>
             <groupId>toolbox8</groupId>
-            <artifactId>toolbox8-jartree-extra-server</artifactId>
-            <version>2-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>toolbox8</groupId>
-            <artifactId>toolbox8-jartree-app</artifactId>
-            <version>2-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>toolbox8</groupId>
             <artifactId>toolbox8-akka-actor</artifactId>
-            <version>2-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>toolbox8</groupId>
-            <artifactId>toolbox8-jartree-akka</artifactId>
             <version>2-SNAPSHOT</version>
         </dependency>
         <dependency>

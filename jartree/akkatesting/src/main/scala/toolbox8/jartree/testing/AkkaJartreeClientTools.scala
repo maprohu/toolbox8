@@ -7,12 +7,13 @@ import toolbox8.akka.actor.{ActorSystemTools, ActorTools}
 import toolbox8.jartree.akka.{JarCacheUploaderActor, JarTreeAkkaApi, PluggableServiceActor}
 import toolbox8.jartree.akka.PluggableServiceActor.{Clear, PlugRequest}
 import toolbox8.jartree.app.JarTreeMain
-import toolbox8.rpi.installer.{RpiInstaller, Rpis}
+import toolbox8.rpi.installer.Rpis
 
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration._
 import akka.pattern._
 import mvnmod.builder.{Module, ModulePath}
+import toolbox8.installer.SshTools
 import toolbox8.jartree.client.JarResolver
 import toolbox8.jartree.common.JarKey
 import toolbox8.modules.JarTree8Modules
@@ -34,7 +35,7 @@ object AkkaJartreeClientTools {
     implicit val executionContext : ExecutionContext = actorSystem.dispatcher
   }
 
-  def run[T](target: RpiInstaller.Config)(fn: Context => Future[T]) : T = {
+  def run[T](target: SshTools.Config)(fn: Context => Future[T]) : T = {
     JarTreeMain.configureLogging("jartree", true)
 
     import toolbox8.akka.actor.ActorImplicits._
@@ -108,7 +109,7 @@ object AkkaJartreeClientTools {
   def plug(
     pluggableModule: Module,
     pluggableClassName: String,
-    rpiTarget: RpiInstaller.Config,
+    rpiTarget: SshTools.Config,
     runtimeTarget: ModulePath = ModulePath(JarTree8Modules.Akka, None)
   ) = {
     val jars =

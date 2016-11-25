@@ -20,6 +20,7 @@
         <module>modules</module>
         <module>common</module>
         <module>leveldb</module>
+        <module>installer</module>
         <module>dummy</module>
     </modules>
 </project>

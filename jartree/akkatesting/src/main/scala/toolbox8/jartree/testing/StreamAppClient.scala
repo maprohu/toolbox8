@@ -1,22 +1,20 @@
 package toolbox8.jartree.testing
 
 import java.io._
-import java.net.Socket
+import java.net.{InetAddress, Socket}
 
 import mvnmod.builder.{Module, ModulePath}
 import org.apache.commons.io.IOUtils
+import toolbox8.installer.SshTools
 import toolbox8.jartree.client.JarResolver
 import toolbox8.jartree.common.JarKey
 import toolbox8.jartree.streamapp._
 import toolbox8.modules.JarTree8Modules
-import toolbox8.jartree.common.JarTreeApp.Config
 
 /**
   * Created by maprohu on 21-11-2016.
   */
 object StreamAppClient {
-
-
 
   case class StreamAppConnection(
     socket: Socket,
@@ -36,7 +34,7 @@ object StreamAppClient {
 
 
   def open(
-    target: Config
+    target: SshTools.Config
   ) = {
 
     val socket = new Socket(
@@ -124,7 +122,7 @@ object StreamAppClient {
   def plug(
     module: Module,
     rootClassName: String,
-    target: Config
+    target: SshTools.Config
   ) = {
     val c = open(target)
     val jars = putCache(module, c)
@@ -149,7 +147,7 @@ object StreamAppClient {
     module: Module,
     requestableClassName: String,
     inputParam: AnyRef,
-    target: Config
+    target: SshTools.Config
   ) = {
     val c = open(target)
     val jars = putCache(module, c)

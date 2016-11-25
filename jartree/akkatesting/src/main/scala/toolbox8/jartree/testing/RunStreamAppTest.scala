@@ -5,6 +5,7 @@ import java.net.{InetAddress, Socket}
 
 import mvnmod.builder.ModulePath
 import org.apache.commons.io.IOUtils
+import toolbox8.jartree.akka.PluggableServiceActor.PlugRequest
 import toolbox8.jartree.client.JarResolver
 import toolbox8.jartree.common.JarKey
 import toolbox8.jartree.streamapp._
