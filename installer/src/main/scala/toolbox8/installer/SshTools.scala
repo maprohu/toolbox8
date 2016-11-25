@@ -169,4 +169,63 @@ object SshTools {
 
   }
 
+  case class ForwardTunnel(
+    localPort: Int,
+    remoteHost: String = "localhost",
+    remotePort: Int
+  )
+  object ForwardTunnel {
+    implicit def apply(
+      port: Int
+    ): ForwardTunnel = ForwardTunnel(
+      localPort = port,
+      remotePort = port
+    )
+  }
+  case class ReverseTunnel(
+    remotePort: Int,
+    localHost: String = "localhost",
+    localPort: Int
+  )
+  object ReverseTunnel {
+    implicit def apply(
+      port: Int
+    ): ReverseTunnel = new ReverseTunnel(
+      remotePort = port,
+      localPort = port
+    )
+  }
+
+  def tunnels(
+    forward: Seq[ForwardTunnel] = Seq.empty,
+    reverse: Seq[ReverseTunnel] = Seq.empty
+  )(implicit
+    target: Config
+  ) = {
+    implicit val session = connect
+
+    forward
+      .foreach({ f =>
+        import f._
+        println(s"localhost:${localPort} -> (${target.host}:${target.sshPort}) -> ${remoteHost}:${remotePort}")
+        session.setPortForwardingL(
+          localPort,
+          remoteHost,
+          remotePort
+        )
+      })
+
+    reverse.foreach({ r =>
+      import r._
+      println(s"${localHost}:${localPort} <- (${target.host}:${target.sshPort}) <- localhost:${remotePort}")
+      session.setPortForwardingR(
+        remotePort,
+        localHost,
+        localPort
+      )
+    })
+
+    session
+  }
+
 }

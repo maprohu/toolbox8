@@ -19,8 +19,8 @@ object Toolbox8Modules {
 
   object Common extends ScalaModule(
     "common",
-    Toolbox6Modules.Logging.R2,
-    mvn.`io.monix:monix-eval_2.11:jar:2.0.6`
+    Toolbox6Modules.Logging.Snapshot,
+    mvn.`io.monix:monix-eval_2.11:jar:2.1.1`
   )
 
   object JarTree extends ScalaModule(
