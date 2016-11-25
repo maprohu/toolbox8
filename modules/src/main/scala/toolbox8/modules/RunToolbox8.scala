@@ -41,14 +41,14 @@ object RunToolbox8 {
 //    JarTree8Modules.App,
     JarTree8Modules.Logging,
     JarTree8Modules.StreamApp,
-    JarTree8Modules.Testing,
+    JarTree8Modules.Testing
 //    Extra8Modules.Shared,
 //    Extra8Modules.Client,
 //    Extra8Modules.Server,
 //    Extra8Modules.Hello,
-    Akka8Modules.StateMachine,
-    Akka8Modules.Actor,
-    Akka8Modules.Stream
+//    Akka8Modules.StateMachine,
+//    Akka8Modules.Actor,
+//    Akka8Modules.Stream
   )
 
   def main(args: Array[String]): Unit = {

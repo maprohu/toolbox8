@@ -10,12 +10,18 @@ import toolbox8.installer.SshTools.Config
   */
 object JavaServiceTools {
 
-  def unit(name: String, user: String, bindAddress: String, port: Int) = {
+  def unit(
+    name: String,
+    user: String,
+    bindAddress: String,
+    port: Int,
+    debug: Boolean = false
+  ) = {
     s"""
        |[Unit]
        |Description=${name}
        |[Service]
-       |ExecStart=/usr/bin/java -agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n -jar /opt/${name}/lib/${name}.jar ${name} ${bindAddress} ${port}
+       |ExecStart=/usr/bin/java ${if (debug) "-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n" else ""} -jar /opt/${name}/lib/${name}.jar ${name} ${bindAddress} ${port}
        |User=${user}
        |SuccessExitStatus=143
        |[Install]

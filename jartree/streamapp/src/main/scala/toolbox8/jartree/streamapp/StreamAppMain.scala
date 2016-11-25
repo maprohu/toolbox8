@@ -1,7 +1,7 @@
 package toolbox8.jartree.streamapp
 
 import java.io.{File, FileInputStream, ObjectInputStream}
-import java.net.{ServerSocket, SocketException}
+import java.net.{InetAddress, ServerSocket, SocketException}
 
 import com.typesafe.scalalogging.StrictLogging
 import monix.execution.atomic.Atomic
@@ -17,6 +17,7 @@ import scala.util.control.NonFatal
   */
 object StreamAppMain extends StrictLogging with LogTools {
 
+  val DefaultBindAddress = "127.0.0.1"
   val DefaultPort = 9981
 
 
@@ -72,15 +73,25 @@ object StreamAppMain extends StrictLogging with LogTools {
 
 
 
-    val port = if (args.length >= 2) {
-      args(1).toInt
+    val bindAddress = if (args.length >= 2) {
+      args(1)
+    } else {
+      DefaultBindAddress
+    }
+
+    val port = if (args.length >= 3) {
+      args(2).toInt
     } else {
       DefaultPort
     }
 
-    val socket = new ServerSocket(port)
+    val socket = new ServerSocket(
+      port,
+      50,
+      InetAddress.getByName(bindAddress)
+    )
 
-    logger.info(s"bound to port: ${port}")
+    logger.info(s"bound to port: ${bindAddress}:${port}")
 
 
     @volatile var stopped = false

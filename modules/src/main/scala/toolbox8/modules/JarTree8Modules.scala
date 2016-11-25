@@ -126,7 +126,7 @@ object JarTree8Modules {
     RpiModules.Installer,
 //    Extra8Modules.Server,
 //    App,
-    Akka8Modules.Actor,
+//    Akka8Modules.Actor,
 //    Akka,
     StreamApp
   )

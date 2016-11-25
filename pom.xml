@@ -16,7 +16,6 @@
     <modules>
         <module>rpi</module>
         <module>jartree</module>
-        <module>akka</module>
         <module>modules</module>
         <module>common</module>
         <module>leveldb</module>

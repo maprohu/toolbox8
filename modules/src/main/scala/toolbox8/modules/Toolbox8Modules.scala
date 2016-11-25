@@ -25,7 +25,7 @@ object Toolbox8Modules {
 
   object JarTree extends ScalaModule(
     "jartree",
-    Akka8Modules.Stream,
+//    Akka8Modules.Stream,
     mvn.`com.typesafe.akka:akka-stream_2.11:jar:2.4.9`,
     mvn.`org.scala-lang.modules:scala-pickling_2.11:jar:0.10.1`,
     mvn.`io.monix:monix_2.11:jar:2.0.2`
