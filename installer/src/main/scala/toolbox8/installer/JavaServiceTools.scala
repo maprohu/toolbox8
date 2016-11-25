@@ -104,7 +104,7 @@ object JavaServiceTools {
 
         val targetRoot = s"/opt/${name}"
         val targetLib = s"${targetRoot}/lib"
-        command(s"sudo mkdir -p ${targetLib} && sudo chown -R ${user}: ${targetRoot}")
+        command(s"sudo mkdir -p ${targetLib} && sudo chown -R ${target.user}: ${targetRoot}")
         ls(Path(dir.getAbsoluteFile) / 'target / 'lib)
           .foreach({ jar =>
             scp(
@@ -112,6 +112,7 @@ object JavaServiceTools {
               s"${targetLib}/${jar.name}"
             )
           })
+        command(s"sudo chown -R ${user}: ${targetRoot}")
         command(s"sudo systemctl status ${name}")
         command(s"sudo systemctl stop ${name}")
         command(s"sudo systemctl disable ${name}")

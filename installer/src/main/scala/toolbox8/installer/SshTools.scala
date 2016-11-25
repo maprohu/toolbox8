@@ -43,6 +43,7 @@ object SshTools {
   )(implicit
     session: Session
   ) = {
+    println(s"running: ${cmd}")
     val channel = session.openChannel("exec").asInstanceOf[ChannelExec]
     try {
       channel.setCommand(cmd)
