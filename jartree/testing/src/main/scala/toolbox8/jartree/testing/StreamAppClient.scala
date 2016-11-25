@@ -1,6 +1,6 @@
 package toolbox8.jartree.testing
 
-import java.io.{FileInputStream, ObjectInputStream, ObjectOutputStream}
+import java.io._
 import java.net.{InetAddress, Socket}
 
 import mvnmod.builder.{Module, ModulePath}
@@ -14,13 +14,26 @@ import toolbox8.rpi.installer.RpiInstaller
 /**
   * Created by maprohu on 21-11-2016.
   */
-object StreamAppPlugger {
+object StreamAppClient {
+
+  case class StreamAppConnection(
+    socket: Socket,
+    os: OutputStream,
+    dos: ObjectOutputStream,
+    is: InputStream,
+    dis: ObjectInputStream
+  ) {
+    def close() = {
+      dos.close()
+      os.close()
+      dis.close()
+      is.close()
+      socket.close()
+    }
+  }
 
 
-
-  def run(
-    module: Module,
-    rootClassName: String,
+  def open(
     target: RpiInstaller.Config
   ) = {
 
@@ -28,6 +41,27 @@ object StreamAppPlugger {
       target.host,
       target.servicePort
     )
+
+    val os = socket.getOutputStream
+    val dos = new ObjectOutputStream(os)
+    val is = socket.getInputStream
+    val dis = new ObjectInputStream(is)
+
+    StreamAppConnection(
+      socket,
+      os,
+      dos,
+      is,
+      dis
+    )
+  }
+
+  def putCache(
+    module: Module,
+    connection: StreamAppConnection
+  ) = {
+
+    import connection._
 
     val jars =
       module
@@ -38,11 +72,6 @@ object StreamAppPlugger {
           )
         )
         .classPath
-
-    val os = socket.getOutputStream
-    val dos = new ObjectOutputStream(os)
-    val is = socket.getInputStream
-    val dis = new ObjectInputStream(is)
 
     val vreq = VerifyCacheRequest(
       jars =
@@ -87,10 +116,23 @@ object StreamAppPlugger {
         fis.close()
       })
 
+    vreq.jars
+  }
+
+  def plug(
+    module: Module,
+    rootClassName: String,
+    target: RpiInstaller.Config
+  ) = {
+    val c = open(target)
+    val jars = putCache(module, c)
+    import c._
+
+
     val preq =
       PutRoot(
         ClassLoaderConfig[Root](
-          vreq.jars,
+          jars,
           rootClassName
         )
       )
@@ -98,12 +140,35 @@ object StreamAppPlugger {
     dos.writeObject(preq)
     dos.flush()
 
-    dos.close()
-    os.close()
-    socket.close()
+    c.close()
+  }
 
+  def request(
+    module: Module,
+    requestableClassName: String,
+    inputParam: AnyRef,
+    target: RpiInstaller.Config
+  ) = {
+    val c = open(target)
+    val jars = putCache(module, c)
+    import c._
 
+    val preq =
+      RunRequest(
+        ClassLoaderConfig[Requestable](
+          jars,
+          requestableClassName
+        ),
+        inputParam
+      )
+    println(preq)
+    dos.writeObject(preq)
+    dos.flush()
 
+    val result = dis.readObject()
+    println(s"result: ${result}")
+
+    c.close()
   }
 
 }

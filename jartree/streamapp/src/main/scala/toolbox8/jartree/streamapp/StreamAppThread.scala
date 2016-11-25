@@ -83,11 +83,19 @@ class StreamAppThread(
                 getClass.getClassLoader
               )
 
-              try {
-
-
+              val result = try {
+                r.request(p.input)
+              } catch {
+                case ex : Throwable =>
+                  ex
               }
 
+              logger.info("sending response: {}", r)
+              dos.writeObject(
+                result
+              )
+              dos.flush()
+              true
 
             case p : PutRoot =>
               logger.info("put root: {}", p)
@@ -168,5 +176,5 @@ case class PutRoot(
 
 case class RunRequest(
   classLoaderConfig: ClassLoaderConfig[Requestable],
-  input: Array[Byte]
+  input: AnyRef
 ) extends Init
