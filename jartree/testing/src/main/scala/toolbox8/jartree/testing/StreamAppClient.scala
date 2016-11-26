@@ -58,22 +58,41 @@ object StreamAppClient {
     )
   }
 
+  val StreamAppPath =
+    ModulePath(
+      JarTree8Modules.StreamApp,
+      None
+    )
+
   def putCache(
     module: Module,
-    connection: StreamAppConnection
+    connection: StreamAppConnection,
+    targetPath : ModulePath = StreamAppPath
+  ) = {
+    putCacheMulti(
+      Seq(module),
+      connection,
+      targetPath
+    )
+  }
+  def putCacheMulti(
+    module: Seq[Module],
+    connection: StreamAppConnection,
+    targetPath : ModulePath = StreamAppPath
   ) = {
 
     import connection._
 
     val jars =
       module
-        .forTarget(
-          ModulePath(
-            JarTree8Modules.StreamApp,
-            None
-          )
-        )
-        .classPath
+        .flatMap({ m =>
+          m
+            .forTarget(
+              targetPath
+            )
+            .classPath
+        })
+        .distinct
 
     val vreq = VerifyCacheRequest(
       jars =
@@ -124,10 +143,29 @@ object StreamAppClient {
   def plug(
     module: Module,
     rootClassName: String,
-    target: Config
-  ) = {
+    target: Config,
+    targetPath: ModulePath = StreamAppPath
+  ) : Unit = {
+    plugMulti(
+      Seq(module),
+      rootClassName,
+      target,
+      targetPath
+    )
+  }
+
+  def plugMulti(
+    module: Seq[Module],
+    rootClassName: String,
+    target: Config,
+    targetPath: ModulePath = StreamAppPath
+  ) : Unit = {
     val c = open(target)
-    val jars = putCache(module, c)
+    val jars = putCacheMulti(
+      module,
+      c,
+      targetPath
+    )
     import c._
 
 
@@ -149,11 +187,12 @@ object StreamAppClient {
     module: Module,
     requestableClassName: String,
     inputParam: In,
-    target: Config
+    target: Config,
+    targetPath: ModulePath = StreamAppPath
   ) : Out = {
     val c = open(target)
     try {
-      val jars = putCache(module, c)
+      val jars = putCache(module, c, targetPath)
       import c._
 
       val preq =

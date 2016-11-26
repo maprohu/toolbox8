@@ -101,7 +101,7 @@ class StreamAppThread[P <: Plugged](
                 logger.info("loading requestable instance")
                 val r = cache.loadInstance(
                   pt.classLoaderConfig,
-                  getClass.getClassLoader
+                  ctx.root.getClass.getClassLoader
                 )
 
                 logger.info("reading request input")

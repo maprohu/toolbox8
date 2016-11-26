@@ -113,14 +113,9 @@
             <version>2-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.lihaoyi</groupId>
-            <artifactId>ammonite-ops_2.11</artifactId>
-            <version>0.8.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.jcraft</groupId>
-            <artifactId>jsch</artifactId>
-            <version>0.1.54</version>
+            <groupId>toolbox6</groupId>
+            <artifactId>toolbox6-ssh</artifactId>
+            <version>2-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>

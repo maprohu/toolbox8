@@ -3,7 +3,7 @@ package toolbox8.installer
 import java.io.File
 
 import mvnmod.builder.{MavenTools, NamedModule}
-import toolbox8.installer.SshTools.Config
+import toolbox6.ssh.SshTools.Config
 
 /**
   * Created by martonpapp on 20/10/16.
@@ -98,7 +98,7 @@ object JavaServiceTools {
         "package"
       ) { dir =>
         import ammonite.ops._
-        import toolbox8.installer.SshTools._
+        import toolbox6.ssh.SshTools._
         implicit val session = connect
 
 
