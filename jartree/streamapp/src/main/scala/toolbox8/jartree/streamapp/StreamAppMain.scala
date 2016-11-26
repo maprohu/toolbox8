@@ -179,8 +179,8 @@ trait Plugged {
   def postUnplug : Unit
 }
 
-trait Requestable {
-  def request(data: AnyRef) : AnyRef
+trait Requestable[-In, +Out] {
+  def request(data: In) : Out
 }
 
 

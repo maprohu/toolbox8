@@ -145,32 +145,39 @@ object StreamAppClient {
     c.close()
   }
 
-  def request(
+  def request[In, Out](
     module: Module,
     requestableClassName: String,
-    inputParam: AnyRef,
+    inputParam: In,
     target: Config
-  ) = {
+  ) : Out = {
     val c = open(target)
-    val jars = putCache(module, c)
-    import c._
+    try {
+      val jars = putCache(module, c)
+      import c._
 
-    val preq =
-      RunRequest(
-        ClassLoaderConfig[Requestable](
-          jars,
-          requestableClassName
-        ),
-        inputParam
-      )
-    println(preq)
-    dos.writeObject(preq)
-    dos.flush()
+      val preq =
+        RunRequest(
+          ClassLoaderConfig[Requestable[In, Out]](
+            jars,
+            requestableClassName
+          )
+        )
+      println(preq)
+      dos.writeObject(preq)
+      dos.writeObject(RunRequestInput(inputParam))
+      dos.flush()
 
-    val result = dis.readObject()
-    println(s"result: ${result}")
+      val result =
+        dis
+          .readObject()
+          .asInstanceOf[Out]
 
-    c.close()
+      result
+    } finally {
+      c.close()
+    }
+
   }
 
 }

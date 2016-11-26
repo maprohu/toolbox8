@@ -30,7 +30,26 @@ class StreamAppThread(
       val os = socket.getOutputStream
 
       try {
-        val dis = new ObjectInputStream(is)
+        var inputClassLoader = getClass.getClassLoader
+        val dis = new ObjectInputStream(is) {
+          override def resolveClass(desc: ObjectStreamClass): Class[_] = {
+            try {
+              Class.forName(desc.getName, false, inputClassLoader)
+            } catch {
+              case _ : ClassNotFoundException =>
+                super.resolveClass(desc)
+            }
+          }
+        }
+        def withInputClassLoader[T](cl: ClassLoader)(fn: () => T) = {
+          val saved = inputClassLoader
+          inputClassLoader = cl
+          try {
+            fn()
+          } finally {
+            inputClassLoader = saved
+          }
+        }
         val dos = new ObjectOutputStream(os)
 
         while ({
@@ -74,23 +93,34 @@ class StreamAppThread(
 
               true
 
-            case p : RunRequest =>
+            case p : RunRequest[_, _] =>
+              val pt = p.asInstanceOf[RunRequest[AnyRef, AnyRef]]
               logger.info("run request: {}", p)
 
-              logger.info("loading requestable instance")
-              val r = cache.loadInstance(
-                p.classLoaderConfig,
-                getClass.getClassLoader
-              )
-
               val result = try {
-                r.request(p.input)
+                logger.info("loading requestable instance")
+                val r = cache.loadInstance(
+                  pt.classLoaderConfig,
+                  getClass.getClassLoader
+                )
+
+                logger.info("reading request input")
+
+                val input = withInputClassLoader(r.getClass.getClassLoader) { () =>
+                  dis
+                    .readObject()
+                    .asInstanceOf[RunRequestInput[AnyRef]]
+                }
+
+                logger.info("processing request")
+
+                r.request(input.input)
               } catch {
                 case ex : Throwable =>
                   ex
               }
 
-              logger.info("sending response: {}", r)
+              logger.info(s"sending response: ${result}")
               dos.writeObject(
                 result
               )
@@ -174,7 +204,10 @@ case class PutRoot(
   classLoaderConfig: ClassLoaderConfig[Root]
 ) extends Init
 
-case class RunRequest(
-  classLoaderConfig: ClassLoaderConfig[Requestable],
-  input: AnyRef
+case class RunRequest[In, Out](
+  classLoaderConfig: ClassLoaderConfig[Requestable[In, Out]]
 ) extends Init
+
+case class RunRequestInput[In](
+  input: In
+)
