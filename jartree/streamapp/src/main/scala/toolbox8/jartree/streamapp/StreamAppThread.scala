@@ -12,13 +12,13 @@ import toolbox8.jartree.common.JarKey
 /**
   * Created by maprohu on 21-11-2016.
   */
-class StreamAppThread(
+class StreamAppThread[P <: Plugged](
   socket: Socket,
   id: Int,
   cache: JarCache,
   rootDir: File,
-  ctx: RootContext,
-  onStop: StreamAppThread => Unit
+  ctx: RootContext[P],
+  onStop: StreamAppThread[P] => Unit
 ) extends Thread with StrictLogging with LogTools {
   setName(s"client-${id}")
   val rootConfigFile = new File(rootDir, ClassLoaderConfig.ClassLoaderConfigFileName)
@@ -93,8 +93,8 @@ class StreamAppThread(
 
               true
 
-            case p : RunRequest[_, _] =>
-              val pt = p.asInstanceOf[RunRequest[AnyRef, AnyRef]]
+            case p : RunRequest[_, _, _] =>
+              val pt = p.asInstanceOf[RunRequest[P, AnyRef, AnyRef]]
               logger.info("run request: {}", p)
 
               val result = try {
@@ -114,7 +114,7 @@ class StreamAppThread(
 
                 logger.info("processing request")
 
-                r.request(input.input)
+                r.request(ctx.root, input.input)
               } catch {
                 case ex : Throwable =>
                   ex
@@ -142,13 +142,16 @@ class StreamAppThread(
                    ctx.root.preUnplug
 
                 logger.info("plugging new instance")
-                val plugged = r.plug(
-                  PlugParams(
-                    prev,
-                    cache,
-                    rootDir
-                  )
-                )
+                val plugged =
+                  r
+                    .plug(
+                      PlugParams(
+                        prev,
+                        cache,
+                        rootDir
+                      )
+                    )
+                    .asInstanceOf[P]
 
                 val oldRoot = ctx.root
                 ctx.root = plugged
@@ -204,8 +207,8 @@ case class PutRoot(
   classLoaderConfig: ClassLoaderConfig[Root]
 ) extends Init
 
-case class RunRequest[In, Out](
-  classLoaderConfig: ClassLoaderConfig[Requestable[In, Out]]
+case class RunRequest[Ctx <: Plugged, In, Out](
+  classLoaderConfig: ClassLoaderConfig[Requestable[Ctx, In, Out]]
 ) extends Init
 
 case class RunRequestInput[In](

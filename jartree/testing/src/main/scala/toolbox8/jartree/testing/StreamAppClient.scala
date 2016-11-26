@@ -158,7 +158,7 @@ object StreamAppClient {
 
       val preq =
         RunRequest(
-          ClassLoaderConfig[Requestable[In, Out]](
+          ClassLoaderConfig[Requestable[Plugged, In, Out]](
             jars,
             requestableClassName
           )

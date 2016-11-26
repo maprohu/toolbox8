@@ -39,7 +39,7 @@ object StreamAppMain extends StrictLogging with LogTools {
 
     val cache = new JarCache(cacheDir)
 
-    val ctx = new RootContext(
+    val ctx = new RootContext[Plugged](
       if (rootConfigFile.exists()) {
         logger.info("trying to load root from config file")
         try {
@@ -98,7 +98,7 @@ object StreamAppMain extends StrictLogging with LogTools {
 
     var id = 0
 
-    val clientThreads = Atomic(Seq.empty[StreamAppThread])
+    val clientThreads = Atomic(Seq.empty[StreamAppThread[_]])
 
     logger.info("adding shutdown hook")
     Runtime.getRuntime.addShutdownHook(
@@ -130,7 +130,7 @@ object StreamAppMain extends StrictLogging with LogTools {
         val client = socket.accept()
 
         if (!stopped) {
-          val thread = new StreamAppThread(
+          val thread = new StreamAppThread[Plugged](
             client,
             id,
             cache,
@@ -179,8 +179,8 @@ trait Plugged {
   def postUnplug : Unit
 }
 
-trait Requestable[-In, +Out] {
-  def request(data: In) : Out
+trait Requestable[-Ctx <: Plugged, -In, +Out] {
+  def request(ctx: Ctx, data: In) : Out
 }
 
 
@@ -201,6 +201,6 @@ case class ClassLoaderConfig[T](
   className: String
 )
 
-class RootContext(
-  var root: Plugged
+class RootContext[P <: Plugged](
+  var root: P
 )
