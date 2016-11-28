@@ -32,10 +32,15 @@ class JarCache(
     config: ClassLoaderConfig[T],
     parent: ClassLoader
   ) = {
-    val cl = new ParentLastUrlClassloader(
-      config.jars.map(j => get(j).toURI.toURL),
-      parent
-    )
+    val cl =
+      if (config.jars.isEmpty) {
+        parent
+      } else {
+        new ParentLastUrlClassloader(
+          config.jars.map(j => get(j).toURI.toURL),
+          parent
+        )
+      }
 
     val clazz = cl.loadClass(config.className)
 
