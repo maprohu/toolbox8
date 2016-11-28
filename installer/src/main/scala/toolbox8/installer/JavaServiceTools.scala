@@ -1,8 +1,8 @@
 package toolbox8.installer
 
-import java.io.File
+import java.io.{ByteArrayInputStream, File}
 
-import mvnmod.builder.{MavenTools, NamedModule}
+import mvnmod.builder.{MavenTools, Module, NamedModule}
 import toolbox6.ssh.SshTools.Config
 
 /**
@@ -41,6 +41,187 @@ object JavaServiceTools {
     """.stripMargin
   }
 
+  def uploadWithPom(
+    name: String,
+    module: NamedModule,
+    mainClass: String,
+    user: String = "pi",
+    bindAddress: String,
+    port: Int
+  )(implicit
+    target: Config
+  ) = {
+    val pom = downloaderPom(
+      module,
+      s"/opt/${name}/lib"
+    )
+
+    import ammonite.ops._
+    import toolbox6.ssh.SshTools._
+    implicit val session = connect
+
+
+    val targetRoot = s"/opt/${name}"
+    val targetLib = s"${targetRoot}/lib"
+    command(s"sudo mkdir -p ${targetLib} && sudo chown -R ${target.user}: ${targetRoot}")
+
+    val pomFile = "/tmp/pom.xml"
+
+    val ba = pom.toString().getBytes
+    scpStream(
+      () => new ByteArrayInputStream(ba),
+      ba.length,
+      pomFile
+    )
+
+    commandInteractive(
+      s"mvn -f ${pomFile} package"
+    )
+
+
+
+    session.disconnect()
+
+//    buildMain(
+//      name,
+//      module,
+//      mainClass
+//    ) { dir =>
+//
+//    }
+//
+//    MavenTools
+//      .runMaven(
+//        MavenTools.pom(
+//          <build>
+//            <finalName>{name}</finalName>
+//            <plugins>
+//              <plugin>
+//                <groupId>org.apache.maven.plugins</groupId>
+//                <artifactId>maven-jar-plugin</artifactId>
+//                <configuration>
+//                  <archive>
+//                    <manifest>
+//                      <addClasspath>true</addClasspath>
+//                      <mainClass>{mainClass}</mainClass>
+//                    </manifest>
+//                  </archive>
+//                  <outputDirectory>target/lib</outputDirectory>
+//                </configuration>
+//              </plugin>
+//              <plugin>
+//                <groupId>org.apache.maven.plugins</groupId>
+//                <artifactId>maven-dependency-plugin</artifactId>
+//                <version>2.10</version>
+//                <executions>
+//                  <execution>
+//                    <id>copy-dependencies</id>
+//                    <phase>package</phase>
+//                    <goals>
+//                      <goal>copy-dependencies</goal>
+//                    </goals>
+//                    <configuration>
+//                      <outputDirectory>target/lib</outputDirectory>
+//                    </configuration>
+//                  </execution>
+//                </executions>
+//              </plugin>
+//            </plugins>
+//          </build>
+//            <dependencies>
+//              {
+//              module.pomDependency
+//              }
+//            </dependencies>
+//        ),
+//        "package"
+//      ) { dir =>
+//        import ammonite.ops._
+//        import toolbox6.ssh.SshTools._
+//        implicit val session = connect
+//
+//
+//        val targetRoot = s"/opt/${name}"
+//        val targetLib = s"${targetRoot}/lib"
+//        command(s"sudo mkdir -p ${targetLib} && sudo chown -R ${target.user}: ${targetRoot}")
+//        ls(Path(dir.getAbsoluteFile) / 'target / 'lib)
+//          .foreach({ jar =>
+//            scp(
+//              new File(jar.toString()),
+//              s"${targetLib}/${jar.name}"
+//            )
+//          })
+//        command(s"sudo chown -R ${user}: ${targetRoot}")
+//        command(s"sudo systemctl status ${name}")
+//        command(s"sudo systemctl stop ${name}")
+//        command(s"sudo systemctl disable ${name}")
+//        command(s"sudo rm -rf /opt/${name}/data")
+//        command(JavaServiceTools.installCommand(name, user, bindAddress, port))
+//        command("sudo systemctl daemon-reload")
+//        command(s"sudo systemctl enable ${name}")
+//        command(s"sudo systemctl start ${name}")
+//        command(s"sudo systemctl status ${name}")
+//
+//        session.disconnect()
+//
+//      }
+
+  }
+
+
+  def buildMain(
+    name: String,
+    module: NamedModule,
+    mainClass: String
+  )(andThen: File => Unit) = {
+    MavenTools
+      .runMaven(
+        MavenTools.pom(
+          <build>
+            <finalName>{name}</finalName>
+            <plugins>
+              <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                  <archive>
+                    <manifest>
+                      <addClasspath>true</addClasspath>
+                      <mainClass>{mainClass}</mainClass>
+                    </manifest>
+                  </archive>
+                  <outputDirectory>target/lib</outputDirectory>
+                </configuration>
+              </plugin>
+              <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.10</version>
+                <executions>
+                  <execution>
+                    <id>copy-dependencies</id>
+                    <phase>package</phase>
+                    <goals>
+                      <goal>copy-dependencies</goal>
+                    </goals>
+                    <configuration>
+                      <outputDirectory>target/lib</outputDirectory>
+                    </configuration>
+                  </execution>
+                </executions>
+              </plugin>
+            </plugins>
+          </build>
+            <dependencies>
+              {
+              module.pomDependency
+              }
+            </dependencies>
+        ),
+        "package"
+      )(andThen)
+
+  }
   def upload(
     name: String,
     module: NamedModule,
@@ -129,6 +310,55 @@ object JavaServiceTools {
 
   }
 
+  def downloaderPom(
+    module: Module,
+    targetDir: String
+  ) = {
+    MavenTools.pom(
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.10</version>
+            <executions>
+              <execution>
+                <id>copy-dependencies</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>copy-dependencies</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>{targetDir}</outputDirectory>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+      <dependencies>
+        {
+        module
+          .resolve
+          .toSeq
+          .filter(_.source.isEmpty)
+          .distinct
+          .map(_.version.asPomDependency)
+        }
+      </dependencies>
+      <repositories>
+        {
+        module.repos.map { r =>
+          <repository>
+            <id>{r.id}</id>
+            <url>{r.url}</url>
+          </repository>
+        }
+        }
+      </repositories>
+    )
+
+  }
 
 
 }
