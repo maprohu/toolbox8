@@ -9,6 +9,7 @@ import monix.execution.cancelables.CompositeCancelable
 import toolbox6.logging.LogTools
 import toolbox8.jartree.common.JarKey
 import toolbox8.jartree.logging.LoggingSetup
+import toolbox8.jartree.requestapi.RequestMarker
 
 import scala.util.control.NonFatal
 
@@ -18,7 +19,7 @@ import scala.util.control.NonFatal
 object StreamAppMain extends StrictLogging with LogTools {
 
   val DefaultBindAddress = "127.0.0.1"
-  val DefaultPort = 9981
+  val DefaultPort = 33001
 
 
   def main(args: Array[String]): Unit = {
@@ -175,6 +176,7 @@ trait Root {
 }
 
 trait Plugged {
+  def marked[In, Out](marker: RequestMarker[In, Out], in: In) : Out
   def preUnplug : Any
   def postUnplug : Unit
 }
@@ -191,6 +193,7 @@ object DummyRoot extends Root {
 object DummyPlugged extends Plugged{
   override def postUnplug: Unit = ()
   override def preUnplug: Any = ()
+  override def marked[In, Out](marker: RequestMarker[In, Out], in: In): Out = ???
 }
 
 object ClassLoaderConfig {

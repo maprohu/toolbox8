@@ -2,6 +2,7 @@ package toolbox8.modules
 
 import mvnmod.builder.Module.ConfiguredModule
 import mvnmod.builder.{ScalaModule, SubModuleContainer}
+import mvnmod.modules.MvnmodModules
 import toolbox6.modules.{JarTreeModules, Toolbox6Modules}
 
 /**
@@ -110,10 +111,21 @@ object JarTree8Modules {
   object StreamApp extends ScalaModule(
     "streamapp",
     Common,
+    RequestApi,
     Logging,
     JarTreeModules.Common,
     mvn.`commons-io:commons-io:jar:2.5`,
     mvn.`io.monix:monix-execution_2.11:jar:2.1.1`
+  )
+
+  object RequestApi extends ScalaModule(
+    "requestapi"
+  )
+
+  object Request extends ScalaModule(
+    "request",
+    RequestApi,
+    JarTree8Modules.StreamApp
   )
 
   object Testing extends ScalaModule(
@@ -123,6 +135,7 @@ object JarTree8Modules {
 //    Echo,
     JarTreeModules.Packaging,
     Client,
+    Request,
     RpiModules.Installer,
 //    Extra8Modules.Server,
 //    App,
@@ -130,6 +143,8 @@ object JarTree8Modules {
 //    Akka,
     StreamApp
   )
+
+
 
 
 

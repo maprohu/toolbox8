@@ -1,5 +1,6 @@
 package toolbox8.jartree.testing
 
+import toolbox8.jartree.requestapi.RequestMarker
 import toolbox8.jartree.streamapp.{PlugParams, Plugged, Root}
 
 /**
@@ -18,6 +19,8 @@ class TestingRoot extends Root {
       override def postUnplug: Unit = {
         println("postUnplug")
       }
+
+      override def marked[In, Out](marker: RequestMarker[In, Out], in: In): Out = ???
     }
   }
 

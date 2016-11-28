@@ -20,6 +20,8 @@
         <module>packaging</module>
         <module>logging</module>
         <module>streamapp</module>
+        <module>requestapi</module>
+        <module>request</module>
         <module>testing</module>
     </modules>
 </project>

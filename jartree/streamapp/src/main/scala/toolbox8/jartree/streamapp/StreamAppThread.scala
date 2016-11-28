@@ -8,6 +8,7 @@ import org.apache.commons.io.IOUtils
 import org.apache.commons.io.input.BoundedInputStream
 import toolbox6.logging.LogTools
 import toolbox8.jartree.common.JarKey
+import toolbox8.jartree.requestapi.RequestMarker
 
 /**
   * Created by maprohu on 21-11-2016.
@@ -91,6 +92,40 @@ class StreamAppThread[P <: Plugged](
               )
               fos.close()
 
+              true
+
+            case p : RunMarked =>
+              logger.info("run marked: {}", p)
+
+              val result = try {
+                logger.info("reading request input")
+                val cl = cache.classLoader(
+                  p.jars,
+                  ctx.root.getClass.getClassLoader
+                )
+
+                val input = withInputClassLoader(cl) { () =>
+                  dis
+                    .readObject()
+                    .asInstanceOf[RunMarkedRequest[AnyRef, AnyRef]]
+                }
+
+                logger.info("processing request")
+                ctx.root.marked(
+                  input.marker,
+                  input.input
+                )
+              } catch {
+                case ex : Throwable =>
+                  logger.error(ex.getMessage, ex)
+                  ex
+              }
+
+              logger.info(s"sending response: ${result}")
+              dos.writeObject(
+                result
+              )
+              dos.flush()
               true
 
             case p : RunRequest[_, _, _] =>
@@ -207,9 +242,18 @@ case class PutRoot(
   classLoaderConfig: ClassLoaderConfig[Root]
 ) extends Init
 
+case class RunMarked(
+  jars: Vector[JarKey]
+) extends Init
+
 case class RunRequest[Ctx <: Plugged, In, Out](
   classLoaderConfig: ClassLoaderConfig[Requestable[Ctx, In, Out]]
 ) extends Init
+
+case class RunMarkedRequest[In, Out](
+  marker: RequestMarker[In, Out],
+  input: In
+)
 
 case class RunRequestInput[In](
   input: In

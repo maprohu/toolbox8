@@ -28,19 +28,28 @@ class JarCache(
     )
   }
 
+  def classLoader(
+    jars: Vector[JarKey],
+    parent: ClassLoader
+  ) = {
+    if (jars.isEmpty) {
+      parent
+    } else {
+      new ParentLastUrlClassloader(
+        jars.map(j => get(j).toURI.toURL),
+        parent
+      )
+    }
+  }
+
   def loadInstance[T](
     config: ClassLoaderConfig[T],
     parent: ClassLoader
   ) = {
-    val cl =
-      if (config.jars.isEmpty) {
-        parent
-      } else {
-        new ParentLastUrlClassloader(
-          config.jars.map(j => get(j).toURI.toURL),
-          parent
-        )
-      }
+    val cl = classLoader(
+      config.jars,
+      parent
+    )
 
     val clazz = cl.loadClass(config.className)
 

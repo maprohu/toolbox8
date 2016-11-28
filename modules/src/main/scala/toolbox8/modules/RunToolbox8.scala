@@ -41,6 +41,8 @@ object RunToolbox8 {
 //    JarTree8Modules.App,
     JarTree8Modules.Logging,
     JarTree8Modules.StreamApp,
+    JarTree8Modules.RequestApi,
+    JarTree8Modules.Request,
     JarTree8Modules.Testing
 //    Extra8Modules.Shared,
 //    Extra8Modules.Client,

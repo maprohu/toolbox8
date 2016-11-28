@@ -3,6 +3,7 @@ package toolbox8.jartree.testing
 import java.io._
 import java.net.Socket
 
+import com.typesafe.scalalogging.LazyLogging
 import mvnmod.builder.{Module, ModulePath}
 import org.apache.commons.io.IOUtils
 import toolbox8.jartree.client.JarResolver
@@ -14,7 +15,7 @@ import toolbox8.jartree.common.JarTreeApp.Config
 /**
   * Created by maprohu on 21-11-2016.
   */
-object StreamAppClient {
+object StreamAppClient extends LazyLogging {
 
 
 
@@ -38,6 +39,8 @@ object StreamAppClient {
   def open(
     target: Config
   ) = {
+
+    logger.info(s"connecting to: ${target.host}:${target.servicePort}")
 
     val socket = new Socket(
       target.host,
