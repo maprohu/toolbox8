@@ -68,7 +68,6 @@ object StreamAppRequest {
         RunMarked(
           Vector.empty
         )
-      println(preq)
       dos.writeObject(preq)
       dos.writeObject(RunMarkedRequest(marker, inputParam))
       dos.flush()
