@@ -19,7 +19,7 @@ object Toolbox8Modules {
 
   object Common extends ScalaModule(
     "common",
-    Toolbox6Modules.Logging.Snapshot,
+    Toolbox6Modules.Logging.R3,
     mvn.`io.monix:monix-eval_2.11:jar:2.1.1`
   )
 
