@@ -10,9 +10,12 @@ import scala.collection.immutable._
 /**
   * Created by pappmar on 29/08/2016.
   */
+object Place {
+  val RootPath = Seq("..", "toolbox8")
+}
 object RunToolbox8 {
 
-  val RootDir = new File("../toolbox8")
+  val RootDir = new File(Place.RootPath.mkString("/"))
 
   val Roots = Seq[PlacedRoot](
     Toolbox8Modules.Root -> RootDir

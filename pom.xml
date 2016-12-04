@@ -21,5 +21,6 @@
         <module>leveldb</module>
         <module>installer</module>
         <module>dummy</module>
+        <module>builders</module>
     </modules>
 </project>
