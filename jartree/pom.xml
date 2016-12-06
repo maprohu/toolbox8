@@ -22,6 +22,8 @@
         <module>streamapp</module>
         <module>requestapi</module>
         <module>request</module>
+        <module>requests</module>
+        <module>pluggednull</module>
         <module>testing</module>
     </modules>
 </project>

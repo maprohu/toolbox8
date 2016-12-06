@@ -12,15 +12,8 @@ class TestingRoot extends Root {
     println(s"plug: ${params}")
 
     new Plugged {
-      override def preUnplug: Any = {
-        println("preUnplug")
-      }
-
-      override def postUnplug: Unit = {
-        println("postUnplug")
-      }
-
       override def marked[In, Out](marker: RequestMarker[In, Out], in: In): Out = ???
+      override def stop(): Unit = ()
     }
   }
 

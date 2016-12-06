@@ -90,6 +90,16 @@ object build_toolbox8_jartree_request extends mvnmod.builder.ModuleBuilder(
   "./jartree/request"
 )
            
+object build_toolbox8_jartree_requests extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./jartree/requests"
+)
+           
+object build_toolbox8_jartree_pluggednull extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./jartree/pluggednull"
+)
+           
 object build_toolbox8_jartree_testing extends mvnmod.builder.ModuleBuilder(
   toolbox8.modules.Place.RootPath,
   "./jartree/testing"

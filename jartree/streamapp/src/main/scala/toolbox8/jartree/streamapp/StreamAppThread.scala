@@ -13,14 +13,15 @@ import toolbox8.jartree.requestapi.RequestMarker
 /**
   * Created by maprohu on 21-11-2016.
   */
-class StreamAppThread[P <: Plugged](
+class StreamAppThread(
   socket: Socket,
   id: Int,
-  cache: JarCache,
   rootDir: File,
-  ctx: RootContext[P],
-  onStop: StreamAppThread[P] => Unit
+  ctx: RootContext,
+  onStop: StreamAppThread => Unit
 ) extends Thread with StrictLogging with LogTools {
+  import ctx.cache
+
   setName(s"client-${id}")
   val rootConfigFile = new File(rootDir, ClassLoaderConfig.ClassLoaderConfigFileName)
 
@@ -92,6 +93,9 @@ class StreamAppThread[P <: Plugged](
               )
               fos.close()
 
+              dos.writeObject(Done)
+              dos.flush()
+
               true
 
             case p : RunMarked =>
@@ -99,9 +103,11 @@ class StreamAppThread[P <: Plugged](
 
               val result = try {
                 logger.info("reading request input")
+                val root = ctx.holder.get
+
                 val cl = cache.classLoader(
                   p.jars,
-                  ctx.root.getClass.getClassLoader
+                  root.getClass.getClassLoader
                 )
 
                 val input = withInputClassLoader(cl) { () =>
@@ -111,7 +117,7 @@ class StreamAppThread[P <: Plugged](
                 }
 
                 logger.info("processing request")
-                ctx.root.marked(
+                root.plugged.marked(
                   input.marker,
                   input.input
                 )
@@ -128,83 +134,82 @@ class StreamAppThread[P <: Plugged](
               dos.flush()
               true
 
-            case p : RunRequest[_, _, _] =>
-              val pt = p.asInstanceOf[RunRequest[P, AnyRef, AnyRef]]
-              logger.info("run request: {}", p)
+            case pt : RunRequest =>
+              logger.info("run request: {}", pt)
 
-              val result = try {
+              try {
                 logger.info("loading requestable instance")
                 val r = cache.loadInstance(
                   pt.classLoaderConfig,
-                  ctx.root.getClass.getClassLoader
+                  ctx.parent
                 )
-
-                logger.info("reading request input")
-
-                val input = withInputClassLoader(r.getClass.getClassLoader) { () =>
-                  dis
-                    .readObject()
-                    .asInstanceOf[RunRequestInput[AnyRef]]
-                }
 
                 logger.info("processing request")
 
-                r.request(ctx.root, input.input)
+                r.request(
+                  ctx,
+                  is,
+                  os
+                )
+
+                logger.info(s"request processing complete")
               } catch {
                 case ex : Throwable =>
-                  ex
+                  dos.writeObject(
+                    ex
+                  )
+                  dos.flush()
+                  logger.warn("request processing failed", ex)
               }
 
-              logger.info(s"sending response: ${result}")
-              dos.writeObject(
-                result
-              )
+              dos.writeObject(Done)
               dos.flush()
-              true
-
-            case p : PutRoot =>
-              logger.info("put root: {}", p)
-
-              logger.info("loading new root instance")
-              val r = cache.loadInstance(
-                p.classLoaderConfig,
-                getClass.getClassLoader
-              )
-
-              val oldRoot = ctx.synchronized {
-                logger.info("pre unplugging old instance")
-                val prev =
-                   ctx.root.preUnplug
-
-                logger.info("plugging new instance")
-                val plugged =
-                  r
-                    .plug(
-                      PlugParams(
-                        prev,
-                        cache,
-                        rootDir
-                      )
-                    )
-                    .asInstanceOf[P]
-
-                val oldRoot = ctx.root
-                ctx.root = plugged
-                oldRoot
-              }
-              quietly {
-                logger.info("post unplugging old instance")
-                oldRoot.postUnplug
-              }
-              logger.info("saving root config")
-              val fos = new ObjectOutputStream(new FileOutputStream(rootConfigFile))
-              try {
-                fos.writeObject(p.classLoaderConfig)
-              } finally {
-                fos.close()
-              }
 
               true
+
+//            case p : PutRoot =>
+//              logger.info("put root: {}", p)
+//
+//              logger.info("loading new root instance")
+//              val r = cache.loadInstance(
+//                p.classLoaderConfig,
+//                getClass.getClassLoader
+//              )
+//
+//              val oldRoot = ctx.synchronized {
+//                logger.info("pre unplugging old instance")
+//                val prev =
+//                   ctx.root.preUnplug
+//
+//                logger.info("plugging new instance")
+//                val plugged =
+//                  r
+//                    .plug(
+//                      PlugParams(
+//                        prev,
+//                        cache,
+//                        rootDir
+//                      )
+//                    )
+//                    .asInstanceOf[P]
+//
+//                val oldRoot = ctx.root
+//                ctx.root = plugged
+//                oldRoot
+//              }
+//              quietly {
+//                logger.info("post unplugging old instance")
+//                oldRoot.postUnplug
+//              }
+//              logger.info("saving root config")
+//              val fos = new ObjectOutputStream(new FileOutputStream(rootConfigFile))
+//              try {
+//                fos.writeObject(p.classLoaderConfig)
+//              } finally {
+//                fos.close()
+//              }
+//
+//              true
 
             case End =>
               false
@@ -225,6 +230,9 @@ class StreamAppThread[P <: Plugged](
 sealed trait Init
 case object End extends Init
 
+@SerialVersionUID(1)
+case object Done
+
 case class VerifyCacheRequest(
   jars: Vector[JarKey]
 ) extends Init
@@ -238,16 +246,16 @@ case class PutCacheRequest(
   size: Long
 ) extends Init
 
-case class PutRoot(
-  classLoaderConfig: ClassLoaderConfig[Root]
-) extends Init
+//case class PutRoot(
+//  classLoaderConfig: ClassLoaderConfig[Root]
+//) extends Init
 
 case class RunMarked(
   jars: Vector[JarKey]
 ) extends Init
 
-case class RunRequest[Ctx <: Plugged, In, Out](
-  classLoaderConfig: ClassLoaderConfig[Requestable[Ctx, In, Out]]
+case class RunRequest(
+  classLoaderConfig: ClassLoaderConfig[Requestable]
 ) extends Init
 
 case class RunMarkedRequest[In, Out](
@@ -255,6 +263,6 @@ case class RunMarkedRequest[In, Out](
   input: In
 )
 
-case class RunRequestInput[In](
-  input: In
-)
+//case class RunRequestInput[In](
+//  input: In
+//)

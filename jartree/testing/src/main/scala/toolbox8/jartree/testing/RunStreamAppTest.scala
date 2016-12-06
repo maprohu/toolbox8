@@ -17,89 +17,89 @@ object RunStreamAppTest {
 
 
 
-  def main(args: Array[String]): Unit = {
-
-    val socket = new Socket(
-      InetAddress.getLocalHost,
-      StreamAppMain.DefaultPort
-    )
-
-    val jars =
-      JarTree8Modules
-        .Testing
-        .forTarget(
-          ModulePath(
-            JarTree8Modules.StreamApp,
-            None
-          )
-        )
-        .classPath
-
-    val os = socket.getOutputStream
-    val dos = new ObjectOutputStream(os)
-    val is = socket.getInputStream
-    val dis = new ObjectInputStream(is)
-
-    val vreq = VerifyCacheRequest(
-      jars =
-        jars
-          .map({ f =>
-            JarResolver.resolveHash(
-              JarKey(
-                f.groupId,
-                f.artifactId,
-                f.version
-              )
-            )
-          })
-          .toVector
-    )
-    println(vreq)
-    dos.writeObject(
-      vreq
-    )
-    dos.flush()
-
-    val r = dis.readObject().asInstanceOf[VerifyCacheResponse]
-    println(r)
-
-    r
-      .missing
-      .foreach({ k =>
-        println(k)
-        val f = JarResolver.resolveFile(k)
-        dos.writeObject(
-          PutCacheRequest(
-            k,
-            f.length()
-          )
-        )
-        dos.flush()
-        val fis = new FileInputStream(f)
-        IOUtils.copy(
-          fis,
-          os
-        )
-        fis.close()
-      })
-
-    val preq =
-      PutRoot(
-        ClassLoaderConfig[Root](
-          vreq.jars,
-          classOf[TestingRoot].getName
-        )
-      )
-    println(preq)
-    dos.writeObject(preq)
-    dos.flush()
-
-    dos.close()
-    os.close()
-    socket.close()
-
-
-
-  }
+//  def main(args: Array[String]): Unit = {
+//
+//    val socket = new Socket(
+//      InetAddress.getLocalHost,
+//      StreamAppMain.DefaultPort
+//    )
+//
+//    val jars =
+//      JarTree8Modules
+//        .Testing
+//        .forTarget(
+//          ModulePath(
+//            JarTree8Modules.StreamApp,
+//            None
+//          )
+//        )
+//        .classPath
+//
+//    val os = socket.getOutputStream
+//    val dos = new ObjectOutputStream(os)
+//    val is = socket.getInputStream
+//    val dis = new ObjectInputStream(is)
+//
+//    val vreq = VerifyCacheRequest(
+//      jars =
+//        jars
+//          .map({ f =>
+//            JarResolver.resolveHash(
+//              JarKey(
+//                f.groupId,
+//                f.artifactId,
+//                f.version
+//              )
+//            )
+//          })
+//          .toVector
+//    )
+//    println(vreq)
+//    dos.writeObject(
+//      vreq
+//    )
+//    dos.flush()
+//
+//    val r = dis.readObject().asInstanceOf[VerifyCacheResponse]
+//    println(r)
+//
+//    r
+//      .missing
+//      .foreach({ k =>
+//        println(k)
+//        val f = JarResolver.resolveFile(k)
+//        dos.writeObject(
+//          PutCacheRequest(
+//            k,
+//            f.length()
+//          )
+//        )
+//        dos.flush()
+//        val fis = new FileInputStream(f)
+//        IOUtils.copy(
+//          fis,
+//          os
+//        )
+//        fis.close()
+//      })
+//
+//    val preq =
+//      PutRoot(
+//        ClassLoaderConfig[Root](
+//          vreq.jars,
+//          classOf[TestingRoot].getName
+//        )
+//      )
+//    println(preq)
+//    dos.writeObject(preq)
+//    dos.flush()
+//
+//    dos.close()
+//    os.close()
+//    socket.close()
+//
+//
+//
+//  }
 
 }

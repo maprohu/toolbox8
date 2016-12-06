@@ -1,17 +1,15 @@
 package toolbox8.jartree.streamapp
 
-import java.io.{File, FileInputStream, ObjectInputStream}
+import java.io._
 import java.net.{InetAddress, ServerSocket, SocketException}
 
 import com.typesafe.scalalogging.StrictLogging
 import monix.execution.atomic.Atomic
-import monix.execution.cancelables.CompositeCancelable
 import toolbox6.logging.LogTools
 import toolbox8.jartree.common.JarKey
 import toolbox8.jartree.logging.LoggingSetup
 import toolbox8.jartree.requestapi.RequestMarker
 
-import scala.util.control.NonFatal
 
 /**
   * Created by maprohu on 21-11-2016.
@@ -19,8 +17,10 @@ import scala.util.control.NonFatal
 object StreamAppMain extends StrictLogging with LogTools {
 
   val DefaultBindAddress = "127.0.0.1"
-  val DefaultPort = 33001
+  val DefaultPort = 33002
 
+  def rootConfigFileFor(rootDir: File) =
+    new File(rootDir, ClassLoaderConfig.ClassLoaderConfigFileName)
 
   def main(args: Array[String]): Unit = {
     LoggingSetup.initLogging(args)
@@ -36,39 +36,56 @@ object StreamAppMain extends StrictLogging with LogTools {
     val rootDir = new File(dataDir, "root")
     rootDir.mkdirs()
 
-    val rootConfigFile = new File(rootDir, ClassLoaderConfig.ClassLoaderConfigFileName)
+    val rootConfigFile = rootConfigFileFor(rootDir)
 
     val cache = new JarCache(cacheDir)
 
-    val ctx = new RootContext[Plugged](
+    val ctx = new RootContext(
       if (rootConfigFile.exists()) {
         logger.info("trying to load root from config file")
         try {
           val is = new ObjectInputStream(new FileInputStream(rootConfigFile))
+
           val r = try {
-            is.readObject().asInstanceOf[ClassLoaderConfig[Root]]
+            is
+              .readObject()
+              .asInstanceOf[ClassLoaderConfig[Root]]
           } finally {
             is.close()
           }
 
-          val ri = cache.loadInstance(r, StreamAppMain.getClass.getClassLoader)
-
-          ri.plug(
-            PlugParams(
-              previous = null,
-              cache,
-              rootDir
-            )
+          val ri = cache.loadInstance(
+            r,
+            StreamAppMain.getClass.getClassLoader
           )
+
+          val pl =
+            ri
+              .plug(
+                PlugParams(
+                  cache,
+                  dataDir
+                )
+              )
+
+          PluggedConfig(
+            pl,
+            r
+          )
+
         } catch {
           case ex : Throwable =>
             logger.error("error during initial plugging", ex)
-            DummyPlugged
+            DummyPlugged.Config
         }
       } else {
         logger.info("no root config found, starting with dummy")
-        DummyPlugged
-      }
+        DummyPlugged.Config
+      },
+      rootDir,
+      cache,
+      dataDir,
+      StreamAppMain.getClass.getClassLoader
     )
 
 
@@ -99,7 +116,7 @@ object StreamAppMain extends StrictLogging with LogTools {
 
     var id = 0
 
-    val clientThreads = Atomic(Seq.empty[StreamAppThread[_]])
+    val clientThreads = Atomic(Seq.empty[StreamAppThread])
 
     logger.info("adding shutdown hook")
     Runtime.getRuntime.addShutdownHook(
@@ -118,8 +135,7 @@ object StreamAppMain extends StrictLogging with LogTools {
             })
           }
           logger.info("unplugging")
-          quietly { ctx.root.preUnplug }
-          quietly { ctx.root.postUnplug }
+          quietly { ctx.holder.get.plugged.stop() }
           logger.info("shutdown sequence complete")
         }
       }
@@ -131,10 +147,9 @@ object StreamAppMain extends StrictLogging with LogTools {
         val client = socket.accept()
 
         if (!stopped) {
-          val thread = new StreamAppThread[Plugged](
+          val thread = new StreamAppThread(
             client,
             id,
-            cache,
             rootDir,
             ctx,
             { th =>
@@ -158,31 +173,33 @@ object StreamAppMain extends StrictLogging with LogTools {
       }
     }
 
-
   }
-
-
 
 }
 
+
+trait Root {
+  def plug(params: PlugParams) : Plugged
+}
+
 case class PlugParams(
-  previous : Any,
   cache: JarCache,
   dir: File
 )
 
-trait Root {
-  def plug(params: PlugParams): Plugged
-}
 
 trait Plugged {
   def marked[In, Out](marker: RequestMarker[In, Out], in: In) : Out
-  def preUnplug : Any
-  def postUnplug : Unit
+  def stop() : Unit
 }
 
-trait Requestable[-Ctx <: Plugged, -In, +Out] {
-  def request(ctx: Ctx, data: In) : Out
+
+trait Requestable {
+  def request(
+    ctx: RootContext,
+    in: InputStream,
+    out: OutputStream
+  ) : Unit
 }
 
 
@@ -191,9 +208,18 @@ object DummyRoot extends Root {
 }
 
 object DummyPlugged extends Plugged{
-  override def postUnplug: Unit = ()
-  override def preUnplug: Any = ()
+//  override def postUnplug: Unit = ()
+//  override def preUnplug: Any = ()
   override def marked[In, Out](marker: RequestMarker[In, Out], in: In): Out = ???
+  override def stop(): Unit = ()
+
+  val Config = PluggedConfig(
+    this,
+    ClassLoaderConfig(
+      Vector.empty,
+      DummyPlugged.getClass.getName
+    )
+  )
 }
 
 object ClassLoaderConfig {
@@ -204,6 +230,43 @@ case class ClassLoaderConfig[T](
   className: String
 )
 
-class RootContext[P <: Plugged](
-  var root: P
+case class PluggedConfig(
+  plugged: Plugged,
+  classLoaderConfig: ClassLoaderConfig[Root]
 )
+class RootContext(
+  root: PluggedConfig,
+  rootDir: File,
+  val cache: JarCache,
+  val dataDir: File,
+  val parent: ClassLoader
+) extends StrictLogging with LogTools {
+  val holder = Atomic(root)
+
+  def stop() : Unit = {
+    holder.transform { r =>
+      quietly { r.plugged.stop() }
+      DummyPlugged.Config
+    }
+  }
+
+  def persist() = {
+    val clc =
+      holder
+        .get
+        .classLoaderConfig
+
+    val os =
+      new ObjectOutputStream(
+        new FileOutputStream(
+          StreamAppMain.rootConfigFileFor(rootDir)
+        )
+      )
+
+    try {
+      os.writeObject(clc)
+    } finally {
+      os.close()
+    }
+  }
+}

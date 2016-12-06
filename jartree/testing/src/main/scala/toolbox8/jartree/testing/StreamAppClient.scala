@@ -11,6 +11,7 @@ import toolbox8.jartree.common.JarKey
 import toolbox8.jartree.streamapp._
 import toolbox8.modules.JarTree8Modules
 import toolbox8.jartree.common.JarTreeApp.Config
+import toolbox8.jartree.requests.{PluggedRequestable, PutRootStopFirstRequest}
 
 /**
   * Created by maprohu on 21-11-2016.
@@ -138,7 +139,11 @@ object StreamAppClient extends LazyLogging {
           os
         )
         fis.close()
+
+        logger.info("waiting for confirmation")
+        require(dis.readObject() == Done)
       })
+
 
     vreq.jars
   }
@@ -163,57 +168,99 @@ object StreamAppClient extends LazyLogging {
     target: Config,
     targetPath: ModulePath = StreamAppPath
   ) : Unit = {
-    val c = open(target)
-    val jars = putCacheMulti(
-      module,
-      c,
+
+    request(
+      JarTree8Modules.Requests,
+      classOf[PutRootStopFirstRequest].getName,
+      { c =>
+        val jars = putCacheMulti(
+          module,
+          c,
+          targetPath
+        )
+
+        { (is, os) =>
+          val dos = new ObjectOutputStream(os)
+          dos.writeObject(
+            ClassLoaderConfig(
+              jars,
+              rootClassName
+            )
+          )
+          dos.flush()
+        }
+      },
+      target,
       targetPath
     )
-    import c._
-
-
-    val preq =
-      PutRoot(
-        ClassLoaderConfig[Root](
-          jars,
-          rootClassName
-        )
-      )
-    println(preq)
-    dos.writeObject(preq)
-    dos.flush()
-
-    c.close()
   }
 
-  def request[In, Out](
+  type RequestHandler[T] = (InputStream, OutputStream) => T
+  type RequestConnectionHandler[T] = StreamAppConnection => RequestHandler[T]
+
+  def requestPlugged[T](
     module: Module,
     requestableClassName: String,
-    inputParam: In,
+    handler: RequestHandler[T],
+    target: Config,
+    moduleTargetPath: ModulePath,
+    targetPath: ModulePath = StreamAppPath
+  ) : T = {
+    request(
+      JarTree8Modules.Requests,
+      classOf[PluggedRequestable].getName,
+      { c =>
+        val jars = putCache(module, c, moduleTargetPath)
+        import c._
+
+        { (is, os) =>
+          val clc =
+            ClassLoaderConfig[Requestable](
+              jars,
+              requestableClassName
+            )
+          dos.writeObject(clc)
+          dos.flush()
+
+          handler(is, os)
+        }
+      },
+      target,
+      targetPath
+    )
+
+  }
+
+  def request[T](
+    module: Module,
+    requestableClassName: String,
+    handler: RequestConnectionHandler[T],
     target: Config,
     targetPath: ModulePath = StreamAppPath
-  ) : Out = {
+  ) : T = {
     val c = open(target)
     try {
       val jars = putCache(module, c, targetPath)
+
+      val h = handler(c)
+
       import c._
 
       val preq =
         RunRequest(
-          ClassLoaderConfig[Requestable[Plugged, In, Out]](
+          ClassLoaderConfig[Requestable](
             jars,
             requestableClassName
           )
         )
       println(preq)
       dos.writeObject(preq)
-      dos.writeObject(RunRequestInput(inputParam))
       dos.flush()
 
-      val result =
-        dis
-          .readObject()
-          .asInstanceOf[Out]
+      val result = h(is, os)
+
+      logger.info("waiting for confirmation")
+      require(dis.readObject() == Done)
 
       result
     } finally {
@@ -221,5 +268,6 @@ object StreamAppClient extends LazyLogging {
     }
 
   }
+
 
 }

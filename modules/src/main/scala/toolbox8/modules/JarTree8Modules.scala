@@ -125,13 +125,25 @@ object JarTree8Modules {
   object Request extends ScalaModule(
     "request",
     RequestApi,
-    JarTree8Modules.StreamApp
+    StreamApp
+  )
+
+  object Requests extends ScalaModule(
+    "requests",
+    StreamApp
+  )
+
+  object PluggedNull extends ScalaModule(
+    "pluggednull",
+    StreamApp
   )
 
   object Testing extends ScalaModule(
     "testing",
 //    Standalone,
     Toolbox8Modules.Modules,
+    PluggedNull,
+    Requests,
 //    Echo,
     JarTreeModules.Packaging,
     Client,
