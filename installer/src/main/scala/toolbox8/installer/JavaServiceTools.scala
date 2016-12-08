@@ -21,7 +21,7 @@ object JavaServiceTools {
        |[Unit]
        |Description=${name}
        |[Service]
-       |ExecStart=/usr/bin/java ${if (debug) "-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n" else ""} -jar /opt/${name}/lib/${name}.jar ${name} ${bindAddress} ${port}
+       |ExecStart=/usr/bin/java -Djava.library.path=/usr/lib/jni ${if (debug) "-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n" else ""} -jar /opt/${name}/lib/${name}.jar ${name} ${bindAddress} ${port}
        |User=${user}
        |SuccessExitStatus=143
        |[Install]
