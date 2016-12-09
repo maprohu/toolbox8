@@ -167,50 +167,6 @@ class StreamAppThread(
 
               true
 
-//            case p : PutRoot =>
-//              logger.info("put root: {}", p)
-//
-//              logger.info("loading new root instance")
-//              val r = cache.loadInstance(
-//                p.classLoaderConfig,
-//                getClass.getClassLoader
-//              )
-//
-//              val oldRoot = ctx.synchronized {
-//                logger.info("pre unplugging old instance")
-//                val prev =
-//                   ctx.root.preUnplug
-//
-//                logger.info("plugging new instance")
-//                val plugged =
-//                  r
-//                    .plug(
-//                      PlugParams(
-//                        prev,
-//                        cache,
-//                        rootDir
-//                      )
-//                    )
-//                    .asInstanceOf[P]
-//
-//                val oldRoot = ctx.root
-//                ctx.root = plugged
-//                oldRoot
-//              }
-//              quietly {
-//                logger.info("post unplugging old instance")
-//                oldRoot.postUnplug
-//              }
-//              logger.info("saving root config")
-//              val fos = new ObjectOutputStream(new FileOutputStream(rootConfigFile))
-//              try {
-//                fos.writeObject(p.classLoaderConfig)
-//              } finally {
-//                fos.close()
-//              }
-//
-//              true
-
             case End =>
               false
           }
