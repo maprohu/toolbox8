@@ -98,6 +98,12 @@ object StreamAppClient extends LazyLogging {
         })
         .distinct
 
+    println(
+      s"""putting:
+        |${jars.mkString("\n")}
+      """.stripMargin
+    )
+
     val vreq = VerifyCacheRequest(
       jars =
         jars

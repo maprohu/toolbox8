@@ -31,6 +31,12 @@ class PutRootStopFirstRequest extends Requestable with StrictLogging with LogToo
         .readObject()
         .asInstanceOf[ClassLoaderConfig[Root]]
 
+    logger.info(
+      s"""plugging '${clc.className}' from:
+        |${clc.jars.mkString("\n")}
+      """.stripMargin
+    )
+
     logger.info("creating new root instance")
     val newRoot =
       ctx
