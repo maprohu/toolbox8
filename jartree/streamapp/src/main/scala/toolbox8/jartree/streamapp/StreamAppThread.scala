@@ -107,7 +107,7 @@ class StreamAppThread(
 
                 val cl = cache.classLoader(
                   p.jars,
-                  root.getClass.getClassLoader
+                  root.classLoader
                 )
 
                 val input = withInputClassLoader(cl) { () =>

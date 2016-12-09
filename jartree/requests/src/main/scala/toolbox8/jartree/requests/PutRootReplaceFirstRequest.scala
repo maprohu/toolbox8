@@ -22,10 +22,10 @@ class PutRootReplaceFirstRequest extends Requestable with StrictLogging with Log
         .asInstanceOf[ClassLoaderConfig[Root]]
 
     logger.info("creating new root instance")
-    val newRoot =
+    val (newRoot, cl) =
       ctx
         .cache
-        .loadInstance(
+        .loadInstanceWithClassLoader(
           clc,
           ctx.parent
         )
@@ -47,6 +47,7 @@ class PutRootReplaceFirstRequest extends Requestable with StrictLogging with Log
         .getAndSet(
           PluggedConfig(
             newPlugged,
+            cl,
             clc
           )
         )

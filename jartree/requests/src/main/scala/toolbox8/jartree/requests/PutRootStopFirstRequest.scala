@@ -38,10 +38,10 @@ class PutRootStopFirstRequest extends Requestable with StrictLogging with LogToo
     )
 
     logger.info("creating new root instance")
-    val newRoot =
+    val (newRoot, cl) =
       ctx
         .cache
-        .loadInstance(
+        .loadInstanceWithClassLoader(
           clc,
           ctx.parent
         )
@@ -62,6 +62,7 @@ class PutRootStopFirstRequest extends Requestable with StrictLogging with LogToo
       .set(
         PluggedConfig(
           newPlugged,
+          cl,
           clc
         )
       )

@@ -54,7 +54,7 @@ object StreamAppMain extends StrictLogging with LogTools {
             is.close()
           }
 
-          val ri = cache.loadInstance(
+          val (ri, cl) = cache.loadInstanceWithClassLoader(
             r,
             StreamAppMain.getClass.getClassLoader
           )
@@ -70,6 +70,7 @@ object StreamAppMain extends StrictLogging with LogTools {
 
           PluggedConfig(
             pl,
+            cl,
             r
           )
 
@@ -215,6 +216,7 @@ object DummyPlugged extends Plugged{
 
   val Config = PluggedConfig(
     this,
+    DummyPlugged.getClass.getClassLoader,
     ClassLoaderConfig(
       Vector.empty,
       DummyPlugged.getClass.getName
@@ -232,6 +234,7 @@ case class ClassLoaderConfig[T](
 
 case class PluggedConfig(
   plugged: Plugged,
+  classLoader: ClassLoader,
   classLoaderConfig: ClassLoaderConfig[Root]
 )
 class RootContext(

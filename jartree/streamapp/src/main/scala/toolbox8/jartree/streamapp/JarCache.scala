@@ -45,6 +45,16 @@ class JarCache(
   def loadInstance[T](
     config: ClassLoaderConfig[T],
     parent: ClassLoader
+  ) : T = {
+    loadInstanceWithClassLoader(
+      config,
+      parent
+    )._1
+  }
+
+  def loadInstanceWithClassLoader[T](
+    config: ClassLoaderConfig[T],
+    parent: ClassLoader
   ) = {
     val cl = classLoader(
       config.jars,
@@ -53,7 +63,7 @@ class JarCache(
 
     val clazz = cl.loadClass(config.className)
 
-    clazz.newInstance().asInstanceOf[T]
+    (clazz.newInstance().asInstanceOf[T], cl)
   }
 
 }
