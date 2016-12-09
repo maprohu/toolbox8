@@ -162,6 +162,7 @@ class StreamAppThread(
                   logger.warn("request processing failed", ex)
               }
 
+
               dos.writeObject(Done)
               dos.flush()
 
@@ -176,6 +177,12 @@ class StreamAppThread(
         quietly { os.close() }
         quietly { socket.close() }
         quietly { onStop(this) }
+
+        logger.info("running gc and finalization")
+        System.gc()
+        System.runFinalization()
+        System.gc()
+        System.runFinalization()
       }
     }
 

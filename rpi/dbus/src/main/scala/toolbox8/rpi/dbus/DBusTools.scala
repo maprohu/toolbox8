@@ -1,5 +1,7 @@
 package toolbox8.rpi.dbus
 
+import javax.xml.parsers.DocumentBuilderFactory
+
 //import java.io.{File, FileOutputStream, PrintStream, StringReader}
 //import javax.xml.parsers.DocumentBuilderFactory
 //
@@ -238,4 +240,13 @@ package toolbox8.rpi.dbus
 //  factory.setFeature("http://xml.org/sax/features/external-general-entities", false)
 //  factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
 //
+//}
+//
+//object DBF {
+//  def init() = {
+//    System.setProperty(
+//      classOf[DocumentBuilderFactory].getName,
+//      classOf[DBF].getName
+//    )
+//  }
 //}

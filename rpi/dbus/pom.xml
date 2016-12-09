@@ -108,11 +108,6 @@
     </build>
     <dependencies>
         <dependency>
-            <groupId>toolbox6</groupId>
-            <artifactId>toolbox6-macros</artifactId>
-            <version>2-SNAPSHOT</version>
-        </dependency>
-        <dependency>
             <groupId>libdbus-java</groupId>
             <artifactId>dbus</artifactId>
             <version>2.8</version>
@@ -136,16 +131,6 @@
             <groupId>libmatthew-debug-java</groupId>
             <artifactId>debug-enable</artifactId>
             <version>1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.scala-lang.modules</groupId>
-            <artifactId>scala-xml_2.11</artifactId>
-            <version>1.0.6</version>
-        </dependency>
-        <dependency>
-            <groupId>com.eed3si9n</groupId>
-            <artifactId>treehugger_2.11</artifactId>
-            <version>0.4.1</version>
         </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>

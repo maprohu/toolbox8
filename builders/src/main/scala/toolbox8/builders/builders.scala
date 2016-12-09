@@ -45,6 +45,11 @@ object build_toolbox8_rpi_installer extends mvnmod.builder.ModuleBuilder(
   "./rpi/installer"
 )
            
+object build_toolbox8_rpi_dbus extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./rpi/dbus"
+)
+           
 object build_toolbox8_dummy extends mvnmod.builder.ModuleBuilder(
   toolbox8.modules.Place.RootPath,
   "./dummy"

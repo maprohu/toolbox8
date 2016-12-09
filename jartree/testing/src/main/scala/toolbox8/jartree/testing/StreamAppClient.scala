@@ -217,9 +217,10 @@ object StreamAppClient extends LazyLogging {
       classOf[PluggedRequestable].getName,
       { c =>
         val jars = putCache(module, c, moduleTargetPath)
-        import c._
+//        import c._
 
         { (is, os) =>
+          val dos = new ObjectOutputStream(os)
           val clc =
             ClassLoaderConfig[Requestable](
               jars,

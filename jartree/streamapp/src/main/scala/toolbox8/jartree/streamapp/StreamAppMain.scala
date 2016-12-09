@@ -155,7 +155,11 @@ object StreamAppMain extends StrictLogging with LogTools {
             ctx,
             { th =>
               if (!stopped) {
-                clientThreads.transform(ct => ct.filterNot(_ == th))
+                clientThreads.transform({ ct =>
+                  val next = ct.filterNot(_ == th)
+                  logger.info(s"stopped thread, remaining: ${next.mkString(", ")}")
+                  next
+                })
               }
             }
           )
