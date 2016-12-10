@@ -8,4 +8,20 @@ trait HealthManager1 extends org.freedesktop.dbus.DBusInterface {
   def DestroyApplication(application: org.freedesktop.dbus.DBusInterface) : scala.Unit
                
 }
+
+object HealthManager1 extends toolbox8.rpi.dbus.DBInterfaceCompanion[HealthManager1](classOf[HealthManager1], "org.bluez.HealthManager1") {
+
+  object Props {
+
+  }
+
+  object Instances {
+
+    object `org.bluez` extends BusInstances("org.bluez") {
+      val `/org/bluez` = instance("/org/bluez")
+    }
+                 
+  }
+
+}
            

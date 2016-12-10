@@ -5,4 +5,21 @@ trait Generic extends org.freedesktop.dbus.DBusInterface {
 
 
 }
+
+object Generic extends toolbox8.rpi.dbus.DBInterfaceCompanion[Generic](classOf[Generic], "org.freedesktop.NetworkManager.Device.Generic") {
+
+  object Props {
+    val HwAddress = read[java.lang.String]("HwAddress")
+    val TypeDescription = read[java.lang.String]("TypeDescription")
+  }
+
+  object Instances {
+
+    object `org.freedesktop.NetworkManager` extends BusInstances("org.freedesktop.NetworkManager") {
+      val `/org/freedesktop/NetworkManager/Devices/2` = instance("/org/freedesktop/NetworkManager/Devices/2")
+    }
+                 
+  }
+
+}
            

@@ -12,4 +12,20 @@ trait ProfileManager1 extends org.freedesktop.dbus.DBusInterface {
   def UnregisterProfile(profile: org.freedesktop.dbus.DBusInterface) : scala.Unit
                
 }
+
+object ProfileManager1 extends toolbox8.rpi.dbus.DBInterfaceCompanion[ProfileManager1](classOf[ProfileManager1], "org.bluez.ProfileManager1") {
+
+  object Props {
+
+  }
+
+  object Instances {
+
+    object `org.bluez` extends BusInstances("org.bluez") {
+      val `/org/bluez` = instance("/org/bluez")
+    }
+                 
+  }
+
+}
            
