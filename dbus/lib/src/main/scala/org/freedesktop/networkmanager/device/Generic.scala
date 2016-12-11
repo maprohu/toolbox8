@@ -16,7 +16,7 @@ object Generic extends toolbox8.dbus.common.DBInterfaceCompanion[Generic](classO
   object Instances {
 
     object `org.freedesktop.NetworkManager` extends BusInstances("org.freedesktop.NetworkManager") {
-      val `/org/freedesktop/NetworkManager/Devices/0` = instance("/org/freedesktop/NetworkManager/Devices/0")
+      val `/org/freedesktop/NetworkManager/Devices/2` = instance("/org/freedesktop/NetworkManager/Devices/2")
     }
                  
   }

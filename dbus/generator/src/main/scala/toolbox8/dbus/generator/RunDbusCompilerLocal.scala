@@ -18,7 +18,7 @@ object RunDbusCompilerLocal {
 //      //      "unix:abstract=/tmp/custom_dbus_name"
 //    )
     def conn() = DBusConnection.getConnection(
-      "tcp:host=localhost,port=7733"
+      "tcp:host=localhost,port=7771"
 //      DBusConnection.SYSTEM
     )
 

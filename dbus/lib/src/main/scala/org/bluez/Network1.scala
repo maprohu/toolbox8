@@ -20,7 +20,6 @@ object Network1 extends toolbox8.dbus.common.DBInterfaceCompanion[Network1](clas
   object Instances {
 
     object `org.bluez` extends BusInstances("org.bluez") {
-      val `/org/bluez/hci0/dev_68_A8_6D_42_CE_07` = instance("/org/bluez/hci0/dev_68_A8_6D_42_CE_07")
       val `/org/bluez/hci0/dev_B8_27_EB_C9_F1_08` = instance("/org/bluez/hci0/dev_B8_27_EB_C9_F1_08")
     }
                  
