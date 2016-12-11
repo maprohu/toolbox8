@@ -15,6 +15,11 @@ object build_toolbox8_jartree extends mvnmod.builder.ModuleBuilder(
   "./jartree"
 )
            
+object build_toolbox8_dbus extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./dbus"
+)
+           
 object build_toolbox8_modules extends mvnmod.builder.ModuleBuilder(
   toolbox8.modules.Place.RootPath,
   "./modules"
@@ -108,6 +113,21 @@ object build_toolbox8_jartree_pluggednull extends mvnmod.builder.ModuleBuilder(
 object build_toolbox8_jartree_testing extends mvnmod.builder.ModuleBuilder(
   toolbox8.modules.Place.RootPath,
   "./jartree/testing"
+)
+           
+object build_toolbox8_dbus_common extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./dbus/common"
+)
+           
+object build_toolbox8_dbus_lib extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./dbus/lib"
+)
+           
+object build_toolbox8_dbus_generator extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./dbus/generator"
 )
            
        

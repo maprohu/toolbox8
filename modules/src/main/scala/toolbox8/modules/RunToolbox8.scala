@@ -48,7 +48,10 @@ object RunToolbox8 {
     JarTree8Modules.Request,
     JarTree8Modules.Requests,
     JarTree8Modules.PluggedNull,
-    JarTree8Modules.Testing
+    JarTree8Modules.Testing,
+    DBusModules.Common,
+    DBusModules.Lib,
+    DBusModules.Generator
 //    Extra8Modules.Shared,
 //    Extra8Modules.Client,
 //    Extra8Modules.Server,

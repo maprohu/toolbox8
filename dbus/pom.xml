@@ -1,7 +1,7 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0">
     <modelVersion>4.0.0</modelVersion>
     <groupId>toolbox8</groupId>
-    <artifactId>toolbox8</artifactId>
+    <artifactId>toolbox8-dbus</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
     <build>
@@ -14,14 +14,8 @@
         </plugins>
     </build>
     <modules>
-        <module>rpi</module>
-        <module>jartree</module>
-        <module>dbus</module>
-        <module>modules</module>
         <module>common</module>
-        <module>leveldb</module>
-        <module>installer</module>
-        <module>dummy</module>
-        <module>builders</module>
+        <module>lib</module>
+        <module>generator</module>
     </modules>
 </project>
