@@ -35,12 +35,12 @@ object RpiModules {
 
 
 
-  object DBus extends ScalaModule(
-    "dbus",
-    mvn.`libdbus-java:dbus:jar:2.8`,
-    mvn.`libdbus-java:dbus-bin:jar:2.8`,
-    mvn.`libunix-java:unix:jar:0.5`,
-    mvn.`libmatthew-debug-java:hexdump:jar:0.2`,
-    mvn.`libmatthew-debug-java:debug-enable:jar:1.1`
-  )
+//  object DBus extends ScalaModule(
+//    "dbus",
+//    mvn.`libdbus-java:dbus:jar:2.8`,
+//    mvn.`libdbus-java:dbus-bin:jar:2.8`,
+//    mvn.`libunix-java:unix:jar:0.5`,
+//    mvn.`libmatthew-debug-java:hexdump:jar:0.2`,
+//    mvn.`libmatthew-debug-java:debug-enable:jar:1.1`
+//  )
 }

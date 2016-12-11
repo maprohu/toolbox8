@@ -28,7 +28,7 @@ object RunToolbox8 {
     Toolbox8Modules.Installer,
     RpiModules.Remote,
     RpiModules.Installer,
-    RpiModules.DBus,
+//    RpiModules.DBus,
 //    RpiModules.Bluetooth,
     Toolbox8Modules.Dummy,
 //    JarTree8Modules.Akka,

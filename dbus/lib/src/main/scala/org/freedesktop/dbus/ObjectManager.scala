@@ -19,10 +19,6 @@ object ObjectManager extends toolbox8.dbus.common.DBInterfaceCompanion[ObjectMan
       val `/` = instance("/")
     }
                  
-    object `org.freedesktop.NetworkManager` extends BusInstances("org.freedesktop.NetworkManager") {
-      val `/org/freedesktop` = instance("/org/freedesktop")
-    }
-                 
   }
 
 }

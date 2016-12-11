@@ -27,13 +27,13 @@ object MediaControl1 extends toolbox8.dbus.common.DBInterfaceCompanion[MediaCont
 
   object Props {
     val Connected = read[java.lang.Boolean]("Connected")
-    val Player = read[org.freedesktop.dbus.DBusInterface]("Player")
   }
 
   object Instances {
 
     object `org.bluez` extends BusInstances("org.bluez") {
       val `/org/bluez/hci0/dev_0C_E0_E4_F2_34_C0` = instance("/org/bluez/hci0/dev_0C_E0_E4_F2_34_C0")
+      val `/org/bluez/hci0/dev_68_A8_6D_42_CE_07` = instance("/org/bluez/hci0/dev_68_A8_6D_42_CE_07")
       val `/org/bluez/hci0/dev_B8_27_EB_C9_F1_08` = instance("/org/bluez/hci0/dev_B8_27_EB_C9_F1_08")
     }
                  

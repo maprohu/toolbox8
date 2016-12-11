@@ -41,7 +41,9 @@ object Device1 extends toolbox8.dbus.common.DBInterfaceCompanion[Device1](classO
 
     object `org.bluez` extends BusInstances("org.bluez") {
       val `/org/bluez/hci0/dev_0C_E0_E4_F2_34_C0` = instance("/org/bluez/hci0/dev_0C_E0_E4_F2_34_C0")
+      val `/org/bluez/hci0/dev_68_A8_6D_42_CE_07` = instance("/org/bluez/hci0/dev_68_A8_6D_42_CE_07")
       val `/org/bluez/hci0/dev_B8_27_EB_C9_F1_08` = instance("/org/bluez/hci0/dev_B8_27_EB_C9_F1_08")
+      val `/org/bluez/hci0/dev_FF_FF_C0_00_42_90` = instance("/org/bluez/hci0/dev_FF_FF_C0_00_42_90")
     }
                  
   }

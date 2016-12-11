@@ -37,7 +37,6 @@ object Connection extends toolbox8.dbus.common.DBInterfaceCompanion[Connection](
       val `/org/freedesktop/NetworkManager/Settings/2` = instance("/org/freedesktop/NetworkManager/Settings/2")
       val `/org/freedesktop/NetworkManager/Settings/1` = instance("/org/freedesktop/NetworkManager/Settings/1")
       val `/org/freedesktop/NetworkManager/Settings/0` = instance("/org/freedesktop/NetworkManager/Settings/0")
-      val `/org/freedesktop/NetworkManager/Settings/9` = instance("/org/freedesktop/NetworkManager/Settings/9")
     }
                  
   }

@@ -12,7 +12,6 @@ object Wired extends toolbox8.dbus.common.DBInterfaceCompanion[Wired](classOf[Wi
     val Carrier = read[java.lang.Boolean]("Carrier")
     val HwAddress = read[java.lang.String]("HwAddress")
     val PermHwAddress = read[java.lang.String]("PermHwAddress")
-    val S390Subchannels = read[java.util.List[java.lang.String]]("S390Subchannels")
     val Speed = read[org.freedesktop.dbus.UInt32]("Speed")
   }
 

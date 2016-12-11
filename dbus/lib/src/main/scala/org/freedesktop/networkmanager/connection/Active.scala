@@ -29,7 +29,6 @@ object Active extends toolbox8.dbus.common.DBInterfaceCompanion[Active](classOf[
   object Instances {
 
     object `org.freedesktop.NetworkManager` extends BusInstances("org.freedesktop.NetworkManager") {
-      val `/org/freedesktop/NetworkManager/ActiveConnection/1` = instance("/org/freedesktop/NetworkManager/ActiveConnection/1")
       val `/org/freedesktop/NetworkManager/ActiveConnection/0` = instance("/org/freedesktop/NetworkManager/ActiveConnection/0")
     }
                  

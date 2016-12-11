@@ -26,7 +26,7 @@ object Wireless extends toolbox8.dbus.common.DBInterfaceCompanion[Wireless](clas
   object Instances {
 
     object `org.freedesktop.NetworkManager` extends BusInstances("org.freedesktop.NetworkManager") {
-      val `/org/freedesktop/NetworkManager/Devices/0` = instance("/org/freedesktop/NetworkManager/Devices/0")
+      val `/org/freedesktop/NetworkManager/Devices/2` = instance("/org/freedesktop/NetworkManager/Devices/2")
     }
                  
   }

@@ -21,8 +21,6 @@ trait NetworkManager extends org.freedesktop.dbus.DBusInterface {
                
   def Enable(enable: java.lang.Boolean) : scala.Unit
                
-  def GetAllDevices() : java.util.List[org.freedesktop.dbus.DBusInterface]
-               
   def GetDeviceByIpIface(iface: java.lang.String) : org.freedesktop.dbus.DBusInterface
                
   def GetDevices() : java.util.List[org.freedesktop.dbus.DBusInterface]
@@ -30,8 +28,6 @@ trait NetworkManager extends org.freedesktop.dbus.DBusInterface {
   def GetLogging() : toolbox8.dbus.common.DBTuple2[java.lang.String, java.lang.String]
                
   def GetPermissions() : java.util.Map[java.lang.String, java.lang.String]
-               
-  def Reload(flags: org.freedesktop.dbus.UInt32) : scala.Unit
                
   def SetLogging(
     level: java.lang.String,
@@ -49,14 +45,10 @@ object NetworkManager extends toolbox8.dbus.common.DBInterfaceCompanion[NetworkM
   object Props {
     val ActivatingConnection = read[org.freedesktop.dbus.DBusInterface]("ActivatingConnection")
     val ActiveConnections = read[java.util.List[org.freedesktop.dbus.DBusInterface]]("ActiveConnections")
-    val AllDevices = read[java.util.List[org.freedesktop.dbus.DBusInterface]]("AllDevices")
     val Connectivity = read[org.freedesktop.dbus.UInt32]("Connectivity")
     val Devices = read[java.util.List[org.freedesktop.dbus.DBusInterface]]("Devices")
-    val GlobalDnsConfiguration = readwrite[java.util.Map[java.lang.String, org.freedesktop.dbus.Variant[_]]]("GlobalDnsConfiguration")
-    val Metered = read[org.freedesktop.dbus.UInt32]("Metered")
     val NetworkingEnabled = read[java.lang.Boolean]("NetworkingEnabled")
     val PrimaryConnection = read[org.freedesktop.dbus.DBusInterface]("PrimaryConnection")
-    val PrimaryConnectionType = read[java.lang.String]("PrimaryConnectionType")
     val Startup = read[java.lang.Boolean]("Startup")
     val State = read[org.freedesktop.dbus.UInt32]("State")
     val Version = read[java.lang.String]("Version")

@@ -16,6 +16,5 @@
     <modules>
         <module>remote</module>
         <module>installer</module>
-        <module>dbus</module>
     </modules>
 </project>
