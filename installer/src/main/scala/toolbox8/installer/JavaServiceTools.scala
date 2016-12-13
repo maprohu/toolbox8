@@ -45,7 +45,7 @@ object JavaServiceTools {
     name: String,
     module: NamedModule,
     mainClass: String,
-    user: String = "pi",
+    processUser: String,
     bindAddress: String,
     port: Int
   )(implicit
@@ -149,12 +149,12 @@ object JavaServiceTools {
         )
       }
 
-    commandInteractive(s"sudo chown -R ${user}: ${targetRoot}")
+    commandInteractive(s"sudo chown -R ${processUser}: ${targetRoot}")
     commandInteractive(s"sudo systemctl status ${name}")
     commandInteractive(s"sudo systemctl stop ${name}")
     commandInteractive(s"sudo systemctl disable ${name}")
 //    command(s"sudo rm -rf /opt/${name}/data")
-    commandInteractive(JavaServiceTools.installCommand(name, user, bindAddress, port))
+    commandInteractive(JavaServiceTools.installCommand(name, processUser, bindAddress, port))
     commandInteractive("sudo systemctl daemon-reload")
     commandInteractive(s"sudo systemctl enable ${name}")
     commandInteractive(s"sudo systemctl start ${name}")
