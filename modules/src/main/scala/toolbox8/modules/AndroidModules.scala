@@ -1,6 +1,6 @@
 package toolbox8.modules
 
-import mvnmod.builder.{ScalaModule, SubModuleContainer}
+import mvnmod.builder.{NamedModule, ScalaModule, SubModuleContainer}
 import mvnmod.modules.MvnmodModules
 
 /**
@@ -33,7 +33,8 @@ object AndroidModules {
     Toolbox8Modules.Modules
   )
 
-  object Runtime extends ScalaModule(
+  object Runtime extends NamedModule(
+    Container,
     "runtime",
     mvn.`com.google.android:android:jar:4.1.1.4`
   )

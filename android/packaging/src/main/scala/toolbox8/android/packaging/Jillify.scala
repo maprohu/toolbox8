@@ -47,7 +47,7 @@ object Jillify {
       .run()
   }
 
-  val JilledFileName = "jilled.dx"
+  val JilledFileName = "library.jack"
   val LockFileName = "lock.txt"
   val HashFileName = "hash.txt"
 
