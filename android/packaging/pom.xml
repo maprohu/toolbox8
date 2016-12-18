@@ -108,6 +108,21 @@
     </build>
     <dependencies>
         <dependency>
+            <groupId>mvnmod</groupId>
+            <artifactId>mvnmod-common</artifactId>
+            <version>2-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>toolbox8</groupId>
+            <artifactId>toolbox8-jartree-client</artifactId>
+            <version>2-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.lihaoyi</groupId>
+            <artifactId>ammonite-ops_2.11</artifactId>
+            <version>0.8.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.android.tools</groupId>
             <artifactId>sdk-common</artifactId>
             <version>25.2.0</version>
