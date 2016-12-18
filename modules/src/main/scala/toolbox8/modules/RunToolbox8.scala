@@ -51,7 +51,10 @@ object RunToolbox8 {
     JarTree8Modules.Testing,
     DBusModules.Common,
     DBusModules.Lib,
-    DBusModules.Generator
+    DBusModules.Generator,
+    AndroidModules.Packaging,
+    AndroidModules.Testing
+
 //    Extra8Modules.Shared,
 //    Extra8Modules.Client,
 //    Extra8Modules.Server,

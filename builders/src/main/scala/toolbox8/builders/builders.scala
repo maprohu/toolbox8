@@ -20,6 +20,11 @@ object build_toolbox8_dbus extends mvnmod.builder.ModuleBuilder(
   "./dbus"
 )
            
+object build_toolbox8_android extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./android"
+)
+           
 object build_toolbox8_modules extends mvnmod.builder.ModuleBuilder(
   toolbox8.modules.Place.RootPath,
   "./modules"
@@ -123,6 +128,16 @@ object build_toolbox8_dbus_lib extends mvnmod.builder.ModuleBuilder(
 object build_toolbox8_dbus_generator extends mvnmod.builder.ModuleBuilder(
   toolbox8.modules.Place.RootPath,
   "./dbus/generator"
+)
+           
+object build_toolbox8_android_packaging extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./android/packaging"
+)
+           
+object build_toolbox8_android_testing extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./android/testing"
 )
            
        
