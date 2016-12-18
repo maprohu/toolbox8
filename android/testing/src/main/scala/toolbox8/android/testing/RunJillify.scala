@@ -12,7 +12,7 @@ object RunJillify {
 
     Jillify
       .single(
-        Toolbox6Modules.Logging.R3
+        Toolbox6Modules.Logging.R3.asModule.version
       )
 
   }

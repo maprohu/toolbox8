@@ -1,6 +1,9 @@
 package toolbox8.android.packaging
 
+import java.io.File
+
 import com.android.builder.core.BuildToolsServiceLoader
+import com.android.jack.api.v03.Api03Config
 import mvnmod.builder.{Module, ModulePath}
 import toolbox8.modules.AndroidModules
 
@@ -9,6 +12,8 @@ import toolbox8.modules.AndroidModules
   */
 object Jackify {
   import Androidify._
+  import scala.collection.JavaConversions._
+
 
   val jackService =
     buildToolServiceLoader
@@ -16,8 +21,10 @@ object Jackify {
       .get()
 
   def jack(
-    module: Module
+    module: Module,
+    jackedFile: File
   ) = {
+    jackedFile.getParentFile.mkdirs()
 
     val mods =
       module
@@ -30,8 +37,26 @@ object Jackify {
         .resolve
         .classPath
 
-    Jillify
-      .multi(mods)
+    val jilled =
+      Jillify
+        .multi(mods)
+
+    val cfg =
+      jackService.createConfig(classOf[Api03Config])
+
+    cfg
+      .setImportedJackLibraryFiles(
+        jilled.map(_.toIO)
+      )
+
+    cfg
+      .setOutputJackFile(
+        jackedFile
+      )
+
+    cfg
+      .getTask
+      .run()
 
   }
 
