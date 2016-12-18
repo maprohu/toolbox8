@@ -1,7 +1,7 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0">
     <modelVersion>4.0.0</modelVersion>
     <groupId>toolbox8</groupId>
-    <artifactId>toolbox8-android-packaging</artifactId>
+    <artifactId>toolbox8-android-runtime</artifactId>
     <version>2-SNAPSHOT</version>
     <packaging>jar</packaging>
     <organization>
@@ -108,69 +108,9 @@
     </build>
     <dependencies>
         <dependency>
-            <groupId>toolbox8</groupId>
-            <artifactId>toolbox8-modules</artifactId>
-            <version>2-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>mvnmod</groupId>
-            <artifactId>mvnmod-common</artifactId>
-            <version>2-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>toolbox8</groupId>
-            <artifactId>toolbox8-jartree-client</artifactId>
-            <version>2-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>com.lihaoyi</groupId>
-            <artifactId>ammonite-ops_2.11</artifactId>
-            <version>0.8.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.android.tools</groupId>
-            <artifactId>sdk-common</artifactId>
-            <version>25.2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.android.tools</groupId>
-            <artifactId>common</artifactId>
-            <version>25.2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.android.tools.build</groupId>
-            <artifactId>builder-model</artifactId>
-            <version>2.2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.android.tools.jack</groupId>
-            <artifactId>jack-api</artifactId>
-            <version>0.11.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.android.tools.jill</groupId>
-            <artifactId>jill-api</artifactId>
-            <version>0.10.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.android.tools</groupId>
-            <artifactId>sdklib</artifactId>
-            <version>25.2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.android.tools</groupId>
-            <artifactId>repository</artifactId>
-            <version>25.2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>18.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.android.tools.build</groupId>
-            <artifactId>builder</artifactId>
-            <version>2.2.0</version>
+            <groupId>com.google.android</groupId>
+            <artifactId>android</artifactId>
+            <version>4.1.1.4</version>
         </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>

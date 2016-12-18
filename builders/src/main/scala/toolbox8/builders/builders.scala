@@ -135,6 +135,11 @@ object build_toolbox8_android_packaging extends mvnmod.builder.ModuleBuilder(
   "./android/packaging"
 )
            
+object build_toolbox8_android_runtime extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./android/runtime"
+)
+           
 object build_toolbox8_android_testing extends mvnmod.builder.ModuleBuilder(
   toolbox8.modules.Place.RootPath,
   "./android/testing"

@@ -12,6 +12,7 @@ object AndroidModules {
 
   object Packaging extends ScalaModule(
     "packaging",
+    Toolbox8Modules.Modules,
     MvnmodModules.Common,
     JarTree8Modules.Client,
     mvn.`com.lihaoyi:ammonite-ops_2.11:jar:0.8.0`,
@@ -30,6 +31,11 @@ object AndroidModules {
     "testing",
     Packaging,
     Toolbox8Modules.Modules
+  )
+
+  object Runtime extends ScalaModule(
+    "runtime",
+    mvn.`com.google.android:android:jar:4.1.1.4`
   )
 
 

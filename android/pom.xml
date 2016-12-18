@@ -15,6 +15,7 @@
     </build>
     <modules>
         <module>packaging</module>
+        <module>runtime</module>
         <module>testing</module>
     </modules>
 </project>

@@ -10,7 +10,7 @@ import com.android.repository.Revision
 import com.android.sdklib.BuildToolInfo
 import com.android.utils.StdLogger
 import com.android.utils.StdLogger.Level
-import mvnmod.builder.Module
+import mvnmod.builder.{Module, ModuleVersion}
 import toolbox8.jartree.client.JarResolver
 import toolbox8.jartree.common.JarKey
 
@@ -18,15 +18,7 @@ import toolbox8.jartree.common.JarKey
   * Created by maprohu on 18-12-2016.
   */
 object Jillify {
-
-  val logger = new StdLogger(Level.VERBOSE)
-
-  val buildToolInfo =
-    BuildToolInfo.fromStandardDirectoryLayout(
-      new Revision(25, 0, 2),
-      new File("/media/data/android-sdk/build-tools/25.0.2")
-    )
-  val buildToolServiceLoader = BuildToolsServiceLoader.INSTANCE.forVersion(buildToolInfo)
+  import Androidify._
 
   val jillService =
     buildToolServiceLoader
@@ -84,15 +76,15 @@ object Jillify {
   }
 
   def multi(
-    modules: Seq[Module]
+    modules: Seq[ModuleVersion]
   )(implicit
     config: JillifyConfig = JillifyConfig()
   ) = {
-    modules.foreach(single)
+    modules.map(single)
   }
 
   def single(
-    module: Module
+    moduleVersion: ModuleVersion
   )(implicit
     config: JillifyConfig = JillifyConfig()
   ) = locked {
@@ -100,7 +92,6 @@ object Jillify {
 
     val cache = Path(config.cache.getAbsoluteFile.getCanonicalPath)
 
-    val moduleVersion = module.version
 
     val path : RelPath = empty / moduleVersion.groupId / moduleVersion.artifactId / moduleVersion.version
 
@@ -127,7 +118,6 @@ object Jillify {
         jilled.toIO
       )
     }
-
 
     hashed
       .hash

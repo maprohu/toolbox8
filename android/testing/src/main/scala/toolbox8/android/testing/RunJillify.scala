@@ -10,9 +10,11 @@ object RunJillify {
 
   def main(args: Array[String]): Unit = {
 
-    Jillify.single(
-      Toolbox6Modules.Logging
-    )
+    Jillify
+      .single(
+        Toolbox6Modules.Logging.R3
+      )
+
   }
 
 }
