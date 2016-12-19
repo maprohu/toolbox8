@@ -22,9 +22,9 @@ object Jackify {
 
   def jack(
     module: Module,
-    jackedFile: File
+    jackOutDir: File
   ) = {
-    jackedFile.getParentFile.mkdirs()
+    jackOutDir.mkdirs()
 
     val mods =
       module
@@ -45,13 +45,20 @@ object Jackify {
       jackService.createConfig(classOf[Api03Config])
 
     cfg
+      .setClasspath(
+        Vector(
+          AndroidJar
+        )
+      )
+
+    cfg
       .setImportedJackLibraryFiles(
         jilled.map(_.toIO)
       )
 
     cfg
-      .setOutputJackFile(
-        jackedFile
+      .setOutputDexDir(
+        jackOutDir
       )
 
     cfg
