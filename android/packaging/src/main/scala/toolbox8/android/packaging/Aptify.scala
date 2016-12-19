@@ -17,16 +17,15 @@ object Aptify {
     dir : Path = pwd / up / "toolbox8" / "android" / "packaging" / "target" / "apt"
   ) = {
     rm(dir)
-    mkdir(dir)
 
     val outDir = dir / "out"
 
-
-//    Jackify
-//      .jack(
-//        module,
-//        outDir.toIO
-//      )
+    mkdir(dir)
+    Jackify
+      .jack(
+        module,
+        outDir.toIO
+      )
 
     val ClassesDexName = "classes.dex"
     val classesDex = outDir / ClassesDexName
@@ -38,6 +37,7 @@ object Aptify {
     val amfXml =
       <manifest xmlns:android="http://schemas.android.com/apk/res/android"
                 package={module.pkg}>
+        <uses-permission android:name="android.permission.WAKE_LOCK" />
         <application android:label={module.pkg}>
           <activity android:name=".MainActivity">
             <intent-filter>
@@ -92,9 +92,6 @@ object Aptify {
       aptUnalignedFile.toString(),
       aptAlignedFile.toString()
     )(pwd)
-
-
-
 
 
 

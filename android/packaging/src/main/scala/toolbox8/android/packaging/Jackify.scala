@@ -62,6 +62,11 @@ object Jackify {
       )
 
     cfg
+      .setObfuscationMappingOutputFile(
+        new File(jackOutDir, "obs.txt")
+      )
+
+    cfg
       .getTask
       .run()
 

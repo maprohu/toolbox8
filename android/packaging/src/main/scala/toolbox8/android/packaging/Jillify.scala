@@ -113,6 +113,7 @@ object Jillify {
     val jilled = (dir / JilledFileName)
 
     def doJill() = {
+      println(s"jillifying: ${hashed}")
       jill(
         JarResolver.resolveFile(jarKey),
         jilled.toIO
@@ -136,6 +137,8 @@ object Jillify {
           val currentHash = read(hashFile)
           if (hash != currentHash) {
             doHashJill()
+          } else {
+            println(s"already jillified: ${hashed}")
           }
         } else {
           doHashJill()
@@ -144,6 +147,8 @@ object Jillify {
       .getOrElse({
         if (!jilled.toIO.exists()) {
           doJill()
+        } else {
+          println(s"already jillified: ${hashed}")
         }
       })
 

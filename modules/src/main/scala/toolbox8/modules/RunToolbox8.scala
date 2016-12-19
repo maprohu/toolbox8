@@ -54,6 +54,7 @@ object RunToolbox8 {
     DBusModules.Generator,
     AndroidModules.Packaging,
     AndroidModules.Runtime,
+    AndroidModules.Common,
     AndroidModules.Testing
 
 //    Extra8Modules.Shared,

@@ -39,6 +39,11 @@ object AndroidModules {
     mvn.`com.google.android:android:jar:4.1.1.4`
   )
 
+  object Common extends ScalaModule(
+    "common",
+    Runtime
+  )
+
 
 
 
