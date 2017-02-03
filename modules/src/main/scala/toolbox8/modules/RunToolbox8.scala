@@ -55,7 +55,10 @@ object RunToolbox8 {
     AndroidModules.Packaging,
     AndroidModules.Runtime,
     AndroidModules.Common,
-    AndroidModules.Testing
+    AndroidModules.Testing,
+    ScalajsModules.JsDocGen,
+    ScalajsModules.O3D,
+    ScalajsModules.Generator
 
 //    Extra8Modules.Shared,
 //    Extra8Modules.Client,

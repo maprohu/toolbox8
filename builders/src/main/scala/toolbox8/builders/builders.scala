@@ -25,6 +25,11 @@ object build_toolbox8_android extends mvnmod.builder.ModuleBuilder(
   "./android"
 )
            
+object build_toolbox8_scalajs extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./scalajs"
+)
+           
 object build_toolbox8_modules extends mvnmod.builder.ModuleBuilder(
   toolbox8.modules.Place.RootPath,
   "./modules"
@@ -148,6 +153,21 @@ object build_toolbox8_android_common extends mvnmod.builder.ModuleBuilder(
 object build_toolbox8_android_testing extends mvnmod.builder.ModuleBuilder(
   toolbox8.modules.Place.RootPath,
   "./android/testing"
+)
+           
+object build_toolbox8_scalajs_jsdocgen extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./scalajs/jsdocgen"
+)
+           
+object build_toolbox8_scalajs_o3d extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./scalajs/o3d"
+)
+           
+object build_toolbox8_scalajs_generator extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./scalajs/generator"
 )
            
        
