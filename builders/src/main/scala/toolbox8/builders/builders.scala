@@ -5,6 +5,11 @@ object build_toolbox8 extends mvnmod.builder.ModuleBuilder(
   "."
 )
            
+object build_toolbox8_tomcat extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./tomcat"
+)
+           
 object build_toolbox8_rpi extends mvnmod.builder.ModuleBuilder(
   toolbox8.modules.Place.RootPath,
   "./rpi"
@@ -28,6 +33,21 @@ object build_toolbox8_android extends mvnmod.builder.ModuleBuilder(
 object build_toolbox8_scalajs extends mvnmod.builder.ModuleBuilder(
   toolbox8.modules.Place.RootPath,
   "./scalajs"
+)
+           
+object build_toolbox8_tomcat_jarservlet extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./tomcat/jarservlet"
+)
+           
+object build_toolbox8_tomcat_testing extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./tomcat/testing"
+)
+           
+object build_toolbox8_tomcat_packaging extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./tomcat/packaging"
 )
            
 object build_toolbox8_modules extends mvnmod.builder.ModuleBuilder(

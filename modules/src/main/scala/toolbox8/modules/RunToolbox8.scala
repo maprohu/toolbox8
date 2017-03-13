@@ -22,6 +22,9 @@ object RunToolbox8 {
   )
 
   val Modules = Seq[ConfiguredModule](
+    Tomcat8Modules.JarServlet,
+    Tomcat8Modules.Testing,
+    Tomcat8Modules.Packaging,
     Toolbox8Modules.Modules,
     Toolbox8Modules.Common,
     Toolbox8Modules.Leveldb,
