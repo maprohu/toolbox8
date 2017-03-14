@@ -182,9 +182,10 @@ abstract class PersistedProvider extends JarServletProvider with StrictLogging {
     jarFile(jarCoords).exists()
   }
 
+  LogbackConfigurator.reset()
+  LogbackConfigurator.configure(appName, new File(logsDir))
+
   override def apply(servletContext: ServletContext, global: Global): Plugged = {
-    LogbackConfigurator.reset()
-    LogbackConfigurator.configure(appName, new File(logsDir))
 
     val serverContainer =
       servletContext
