@@ -35,6 +35,16 @@ object build_toolbox8_scalajs extends mvnmod.builder.ModuleBuilder(
   "./scalajs"
 )
            
+object build_toolbox8_tomcat_shared extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./tomcat/shared"
+)
+           
+object build_toolbox8_tomcat_testapp extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./tomcat/testapp"
+)
+           
 object build_toolbox8_tomcat_jarservlet extends mvnmod.builder.ModuleBuilder(
   toolbox8.modules.Place.RootPath,
   "./tomcat/jarservlet"

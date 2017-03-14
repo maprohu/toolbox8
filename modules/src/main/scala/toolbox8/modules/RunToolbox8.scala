@@ -22,6 +22,8 @@ object RunToolbox8 {
   )
 
   val Modules = Seq[ConfiguredModule](
+    Tomcat8Modules.Shared,
+    Tomcat8Modules.TestApp,
     Tomcat8Modules.JarServlet,
     Tomcat8Modules.Testing,
     Tomcat8Modules.Packaging,
