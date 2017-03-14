@@ -8,9 +8,15 @@ import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
   urlPatterns = Array("/*")
 )
 class JarServlet extends HttpServlet {
-  override def doGet(req: HttpServletRequest, resp: HttpServletResponse): Unit = {
-    val out = resp.getWriter
-    out.println("hello")
-    out.flush()
-  }
+  override def service(req: HttpServletRequest, resp: HttpServletResponse): Unit = super.service(req, resp)
+}
+
+object JarServlet {
+
+  type Handler = (HttpServletRequest, HttpServletResponse) => Unit
+
+  val DefaultHandler : Handler = { (_, _) => }
+
+  val service = Atomic(DefaultHandler)
+
 }

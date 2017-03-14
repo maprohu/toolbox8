@@ -29,6 +29,7 @@ object Tomcat8Modules {
 
   object JarServlet extends Scala212Module(
     "jarservlet",
+    mvn.`io.monix:monix-eval_2.12:jar:2.2.3`,
     mvn.`javax.servlet:javax.servlet-api:jar:3.1.0`,
     mvn.`javax.websocket:javax.websocket-api:jar:1.1`
   )

@@ -19,3 +19,7 @@ class JarServletWsEndpoint {
 
 
 }
+
+object JarServletWsEndpoint {
+
+}
