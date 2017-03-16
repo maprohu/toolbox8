@@ -1,7 +1,7 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0">
     <modelVersion>4.0.0</modelVersion>
     <groupId>toolbox8</groupId>
-    <artifactId>toolbox8-tomcat-testing</artifactId>
+    <artifactId>toolbox8-tomcat-clients</artifactId>
     <version>2-SNAPSHOT</version>
     <packaging>jar</packaging>
     <organization>
@@ -113,35 +113,9 @@
             <version>2-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>toolbox8</groupId>
-            <artifactId>toolbox8-tomcat-testapp</artifactId>
-            <version>2-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>toolbox8</groupId>
-            <artifactId>toolbox8-modules</artifactId>
-            <version>2-SNAPSHOT</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.scala-lang</groupId>
-                    <artifactId>scala-library</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tomcat.embed</groupId>
-            <artifactId>tomcat-embed-core</artifactId>
-            <version>8.5.11</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tomcat.embed</groupId>
-            <artifactId>tomcat-embed-jasper</artifactId>
-            <version>8.5.11</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tomcat.embed</groupId>
-            <artifactId>tomcat-embed-websocket</artifactId>
-            <version>8.5.11</version>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+            <version>2.12.1</version>
         </dependency>
         <dependency>
             <groupId>org.scala-lang</groupId>

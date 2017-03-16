@@ -1,7 +1,9 @@
 package toolbox8.modules
 
-import mvnmod.builder.{Scala212Module, ScalaModule, SubModuleContainer}
+import mvnmod.builder.{ModuleId, Scala212Module, ScalaModule, SubModuleContainer}
 import mvnmod.modules.MvnmodModules
+
+import scala.collection.immutable._
 
 /**
   * Created by martonpapp on 31/08/16.
@@ -39,10 +41,21 @@ object Tomcat8Modules {
     JarServlet
   )
 
+  object Clients extends Scala212Module(
+    "clients",
+    JarServlet,
+    mvn.`org.scala-lang:scala-compiler:jar:2.12.1`
+  )
+
+  object Uploads extends Scala212Module(
+    "uploads"
+  )
+
   object Testing extends Scala212Module(
     "testing",
     JarServlet,
     TestApp,
+    Toolbox8Modules.Modules.asModule.copy(excludes = Set(mvn.`org.scala-lang:scala-library:jar:2.11.8`.moduleId)),
     mvn.`org.apache.tomcat.embed:tomcat-embed-core:jar:8.5.11`,
     mvn.`org.apache.tomcat.embed:tomcat-embed-jasper:jar:8.5.11`,
     mvn.`org.apache.tomcat.embed:tomcat-embed-websocket:jar:8.5.11`

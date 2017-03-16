@@ -1,6 +1,6 @@
 package toolbox8.modules
 
-import mvnmod.builder.{MavenCentralModule, RootModuleContainer, ScalaModule}
+import mvnmod.builder.{MavenCentralModule, RootModuleContainer, Scala212Module, ScalaModule}
 import mvnmod.modules.MvnmodModules
 import toolbox6.modules.Toolbox6Modules
 

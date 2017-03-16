@@ -50,6 +50,11 @@ object build_toolbox8_tomcat_jarservlet extends mvnmod.builder.ModuleBuilder(
   "./tomcat/jarservlet"
 )
            
+object build_toolbox8_tomcat_clients extends mvnmod.builder.ModuleBuilder(
+  toolbox8.modules.Place.RootPath,
+  "./tomcat/clients"
+)
+           
 object build_toolbox8_tomcat_testing extends mvnmod.builder.ModuleBuilder(
   toolbox8.modules.Place.RootPath,
   "./tomcat/testing"

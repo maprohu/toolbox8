@@ -17,6 +17,7 @@
         <module>shared</module>
         <module>testapp</module>
         <module>jarservlet</module>
+        <module>clients</module>
         <module>testing</module>
         <module>packaging</module>
     </modules>

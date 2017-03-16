@@ -25,6 +25,7 @@ object RunToolbox8 {
     Tomcat8Modules.Shared,
     Tomcat8Modules.TestApp,
     Tomcat8Modules.JarServlet,
+    Tomcat8Modules.Clients,
     Tomcat8Modules.Testing,
     Tomcat8Modules.Packaging,
     Toolbox8Modules.Modules,
