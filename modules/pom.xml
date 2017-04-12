@@ -109,7 +109,7 @@
     <dependencies>
         <dependency>
             <groupId>mvnmod</groupId>
-            <artifactId>mvnmod-builder</artifactId>
+            <artifactId>mvnmod-modules_2.12</artifactId>
             <version>2-SNAPSHOT</version>
         </dependency>
         <dependency>
